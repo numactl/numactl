@@ -11,5 +11,8 @@ extern int numa_sched_getaffinity(pid_t pid, unsigned len, unsigned long *mask);
 
 #define array_len(x) (sizeof(x)/sizeof(*(x)))
 
-#define CPU_BYTES(x) (((x) + BITS_PER_LONG - 1) / 8)
+#define round_up(x,y) (((x) + (y) - 1) & ~((y)-1))
+
+
+#define CPU_BYTES(x) round_up(x, BITS_PER_LONG)
 #define CPU_WORDS(x) (CPU_BYTES(x) / sizeof(long))

@@ -1,3 +1,4 @@
+
 - more bugfixes
 - replace forward backward with STREAM test in numademo
 
@@ -5,4 +6,13 @@
 
 - make headers C++ clean
 
-0.6.2
+0.6.2 
+
+- use more accurate buffer length for cpumask
+- add --cpubind to test suite
+
+0.6.3
+
+- fix cpumask parser for large number of cpus.
+Note that you need a kernel patch (as of 2.6.7-pre) for that too
+if the cpumask is longer than 99 characters.

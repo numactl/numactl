@@ -40,6 +40,9 @@ nstat() {
     done
 }
 
+numactl --cpubind=0 /bin/true
+numactl --cpubind=1 /bin/true
+
 numactl -s
 numactl --hardware
 

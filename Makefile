@@ -1,4 +1,4 @@
-CFLAGS := -g -Wall -I. -O2
+CFLAGS := -g -Wall -I.
 
 CLEANFILES := libnuma.a numactl.o libnuma.o numactl numademo numademo.o \
 	      memhog libnuma.so libnuma.so.1 numamon numamon.o syscall.o \

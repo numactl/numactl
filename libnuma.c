@@ -389,7 +389,6 @@ void numa_free(void *mem, size_t size)
 	munmap(mem, size); 
 } 
 
-static unsigned long *cpusmask; 
 static unsigned long *node_cpu_mask[NUMA_NUM_NODES];  
 
 /* This would be better with some locking, but I don't want to make libnuma
@@ -403,79 +402,80 @@ int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen)
 	char *s;
 	int n;
 	int buflen_needed;
-	unsigned long *mask;
+	unsigned *mask, prev;
 	int ncpus = number_of_cpus();
-	if (!cpusmask) { 
-		/* should have a lock here, but a race can just cause a one time
-		   loss of memory */
-		cpusmask = malloc(ncpus / 8); 
-		if (!cpusmask) { 
-			errno = ENOMEM; 
-			return -1;
-		}
-		memset(cpusmask, 0,  ncpus/8);
-	} 		
+
 	buflen_needed = CPU_BYTES(ncpus);
-	memset(buffer, 0, bufferlen); 
 	if ((unsigned)node > maxnode || bufferlen < buflen_needed) { 
 		errno = ERANGE;
 		return -1;
 	}
 
 	if (node_cpu_mask[node]) { 
+		if (bufferlen > buflen_needed)
+			memset(buffer, 0, bufferlen); 
 		memcpy(buffer, node_cpu_mask[node], buflen_needed);
 		return 0;
 	}
 
-	mask = cpusmask + node;
+	mask = malloc(buflen_needed);
+	if (!mask) 
+		mask = (unsigned *)buffer; 
+	memset(mask, 0, buflen_needed); 
+			
 	sprintf(fn, "/sys/devices/system/node/node%d/cpumap", node); 
 	f = fopen(fn, "r"); 
 	if (!f || getdelim(&line, &len, '\n', f) < 1) { 
 		numa_warn(W_nosysfs2,
 		   "/sys not mounted or invalid. Assuming nodes equal CPU: %s",
 			  strerror(errno)); 
-		set_bit(node, mask);
+		set_bit(node, (unsigned long *)mask);
 		goto out;
 	} 
 	n = 0;
 	s = line;
-	memset(mask, 0, buflen_needed);
+	prev = 0; 
 	while (*s) {
- 		unsigned short num; 
+ 		unsigned num; 
 		int i;
 		num = 0;
-		for (i = 0; i < 4 && s[i]; i++) { 
+		for (i = 0; s[i] && s[i] != ','; i++) { 
 			static const char hexdigits[] = "0123456789abcdef";
 			char *w = strchr(hexdigits, tolower(s[i]));
 			if (!w) { 
 				if (isspace(s[i]))
 					break;
 				numa_warn(W_cpumap, 
-                       "Unexpected character `%c' in sysfs cpumap", s[i]);
+					  "Unexpected character `%c' in sysfs cpumap", s[i]);
 				set_bit(node, mask);
 				goto out;
 			}
 			num = (num*16) + (w - hexdigits); 
 		}
 		if (i == 0) 
-			break; 		
-		if (n >= array_len(mask)) { 
-			if (num) { 
-				numa_warn(W_numcpus, 
-                       "Too many CPUs in cpumap. Recompile libnuma."); 
-				break;
-			}
-			break;
-		}
-		mask[n] = num;
-		n++;
+			break; 
 		s += i;
-	} 	
+		if (*s == ',')
+			s++;
+		/* skip leading zeros */
+		if (num == 0 && prev == 0) 
+			continue;
+		prev |= num; 
+		memmove(mask + 1, mask, buflen_needed - sizeof(unsigned)); 
+		mask[0] = num; 
+	}
  out:
-	node_cpu_mask[node] = mask;
 	free(line);
 	fclose(f);
-	memcpy(buffer, node_cpu_mask[node], buflen_needed);
+	memcpy(buffer, mask, buflen_needed);
+
+	/* slightly racy, see above */ 
+	if (node_cpu_mask[node]) {
+		if (mask != (unsigned *)buffer)
+			free(mask); 	       
+	} else {
+		node_cpu_mask[node] = (unsigned long *)mask; 
+	} 
 	return 0; 
 } 
 
