@@ -16,3 +16,8 @@
 - fix cpumask parser for large number of cpus.
 Note that you need a kernel patch (as of 2.6.7-pre) for that too
 if the cpumask is longer than 99 characters.
+
+0.6.4
+
+- Add Coppyright headers
+

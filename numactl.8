@@ -1,4 +1,22 @@
 .\" t
+.\" Copyright 2003,2004 Andi Kleen, SuSE Labs.
+.\"
+.\" Permission is granted to make and distribute verbatim copies of this
+.\" manual provided the copyright notice and this permission notice are
+.\" preserved on all copies.
+.\"
+.\" Permission is granted to copy and distribute modified versions of this
+.\" manual under the conditions for verbatim copying, provided that the
+.\" entire resulting derived work is distributed under the terms of a
+.\" permission notice identical to this one.
+.\" 
+.\" Since the Linux kernel and libraries are constantly changing, this
+.\" manual page may be incorrect or out-of-date.  The author(s) assume no
+.\" responsibility for errors or omissions, or for damages resulting from
+.\" the use of the information contained herein.  
+.\" 
+.\" Formatted or processed versions of this manual, if unaccompanied by
+.\" the source, must acknowledge the copyright and authors of this work.
 .TH NUMACTL 8 "Mar 2004" "SuSE Labs" "Linux Administrator's Manual"
 .SH NAME
 numactl \- Control NUMA policy for processes or shared memory 
@@ -197,8 +215,12 @@ Requires an NUMA policy aware kernel.
 Command is not executed using a shell. If you want to use shell metacharacters
 in the child use sh -c as wrapper.
 
-Setting policy for a hugetlbfs file does currently not work
+Setting policy for a hugetlbfs file does currently not work because
 it cannot be extended by truncate.
+
+Shared memory segments larger than numactl's address space cannot 
+be completely policied. This could be a problem on 32bit architectures.
+Changing it piece by piece may work.
 
 .SH FILES
 .I /proc/cpuinfo
@@ -208,6 +230,10 @@ for details.
 
 .I /sys/devices/system/node/node*/numastat
 for NUMA memory hit statistics.
+
+.SH COPYRIGHT
+Copyright 2002,2004 Andi Kleen, SuSE Labs.
+numactl and the demo programs are under the GNU General Public License, v.2
 
 .SH SEE ALSO
 .I set_mempolicy(2)

@@ -1,8 +1,21 @@
 /* Simple NUMA library.
+   Copyright (C) 2003,2004 Andi Kleen, SuSE Labs.
 
-   All calls are undefined when numa_available returns an error.
+   libnuma is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; version
+   2.1.
 
-   Copyright 2003,2004 Andi Kleen, SuSE Labs.   */
+   libnuma is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should find a copy of v2.1 of the GNU Lesser General Public License
+   somewhere on your Linux system; if not, write to the Free Software 
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+
+   All calls are undefined when numa_available returns an error. */
 #define _GNU_SOURCE 1
 #include <stdlib.h>
 #include <stdio.h>

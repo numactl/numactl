@@ -1,7 +1,20 @@
 #!/usr/bin/perl
-#print numastat for all nodes
-#Copyright 2003, Andi Kleen, SuSE Labs.
-#Subject to the Gnu Public License, v.2
+# Print numa statistics for all nodes
+# Copyright (C) 2003,2004 Andi Kleen, SuSE Labs.
+#
+# numastat is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation; version
+# 2.
+#
+# numastat is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+
+# You should find a copy of v2 of the GNU General Public License somewhere
+# on your Linux system; if not, write to the Free Software Foundation, 
+# Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
 
 if (! -d "/sys/devices/system/node" ) { 
 	print STDERR "sysfs not mounted or system not NUMA aware\n";

@@ -1,5 +1,21 @@
-/* Display some numa statistics collected by the CPU */
-/* Opteron specific. Also not completely reliable. */
+/* Copyright (C) 2003,2004 Andi Kleen, SuSE Labs.
+
+   numamon is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public
+   License as published by the Free Software Foundation; version
+   2.
+
+   numamon is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should find a copy of v2 of the GNU General Public License somewhere
+   on your Linux system; if not, write to the Free Software Foundation, 
+   Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
+
+   Display some numa statistics collected by the CPU.
+   Opteron specific. Also not completely reliable. */
 #define _LARGE_FILE_SOURCE 1
 #define _GNU_SOURCE 1
 #include <string.h>

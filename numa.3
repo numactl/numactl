@@ -1,3 +1,21 @@
+.\" Copyright 2003,2004 Andi Kleen, SuSE Labs.
+.\"
+.\" Permission is granted to make and distribute verbatim copies of this
+.\" manual provided the copyright notice and this permission notice are
+.\" preserved on all copies.
+.\"
+.\" Permission is granted to copy and distribute modified versions of this
+.\" manual under the conditions for verbatim copying, provided that the
+.\" entire resulting derived work is distributed under the terms of a
+.\" permission notice identical to this one.
+.\" 
+.\" Since the Linux kernel and libraries are constantly changing, this
+.\" manual page may be incorrect or out-of-date.  The author(s) assume no
+.\" responsibility for errors or omissions, or for damages resulting from
+.\" the use of the information contained herein.  
+.\" 
+.\" Formatted or processed versions of this manual, if unaccompanied by
+.\" the source, must acknowledge the copyright and authors of this work.
 .TH NUMA 3 "May 2004" "SuSE Labs" "Linux Programmer's Manual"
 .SH NAME
 numa \- NUMA policy library
@@ -384,6 +402,10 @@ are process global. The other calls are thread safe. Memory policy for
 an specific memory when
 changed affects the whole process and possible other processes mapping
 the same memory.
+
+.SH COPYRIGHT
+Copyright 2002,2004 Andi Kleen, SuSE Labs.
+libnuma is under the GNU Lesser General Public License, v2.1.
 
 .SH SEE ALSO
 .I getpagesize(2)
