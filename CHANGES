@@ -1,7 +1,8 @@
-
 - more bugfixes
-- add preliminary 
 - replace forward backward with STREAM test in numademo
 
 0.6.1
 
+- make headers C++ clean
+
+0.6.2

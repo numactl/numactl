@@ -12,6 +12,10 @@
 #define NUMA_NUM_NODES	2048
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct { 
 	unsigned long n[NUMA_NUM_NODES/(sizeof(unsigned long)*8)];
 } nodemask_t;
@@ -149,5 +153,9 @@ int numa_exit_on_error;
 /* Warning function. Can also be overwritten. Default is to print on stderr
    once. */
 void numa_warn(int num, char *fmt, ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,6 +1,10 @@
 #ifndef NUMAIF_H
 #define NUMAIF_H 1
 
+#ifdef __cplusplus
+extern "C" { 
+#endif
+
 /* Kernel interface for NUMA API */
 
 /* System calls */
@@ -26,5 +30,9 @@ extern long set_mempolicy(int mode, unsigned long *nmask,
 
 /* Flags for mbind */
 #define MPOL_MF_STRICT  (1<<0)  /* Verify existing pages in the mapping */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
