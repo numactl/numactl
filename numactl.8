@@ -1,0 +1,147 @@
+'\" t
+.TH NUMACTL 8 "May 2003" "SuSE Labs" "Linux Administrator's Manual"
+.SH NAME
+numactl \- Control NUMA policy for processes
+.SH SYNOPSIS
+.B numactl
+[
+.B \-\-interleave=nodes
+] [
+.B \-\-homenode=homenode|reset
+] [ 
+.B \-\-nodebind=nodes
+] [ 
+.B \-\-membind=nodes
+] [
+.B \-\-localalloc
+] [
+command {arguments ...}
+.br
+.br
+.B numactl
+[
+.B \-i nodes
+] [
+.B \-h homenode
+] [
+.B \-m nodes
+] [ 
+.B \-b nodes
+] command {arguments ...}
+.br
+.B numactl \-\-show
+.SH DESCRIPTION
+.B numactl
+runs processes with a specific NUMA scheduling or memory placement policy.
+The policy is set for command and inherited by all of its children.
+.TP
+Policy settings are:
+.TP
+.B \-\-interleave=nodes, \-i nodes
+Set an memory interleave policy. Memory will be allocated using round robin
+on nodes.
+.TP
+.B \-\-homenode=node, \-h node
+Set the homenode of 
+.I command and its children to node. The
+homenode will
+not be auto balanced for them until this option is disabled
+with 
+.I --homenode=reset again.
+homenode is the node the process first tries
+to allocate memory from. Normally it is assigned dynamically at 
+.I exec(2)
+or 
+.I fork(2)
+/
+.I clone(2)
+time.  
+In addition the scheduler gives strong preference to the homenode
+to schedule the process near its memory.
+If the memory allocation does not succeed the allocation is tried on other
+nodes. 
+.I \-\-homenode=reset 
+restores automatic balancing. 
+.TP
+.B \-\-membind=nodes, \-m nodes
+Only allocate memory from nodes. 
+.TP
+.B \-\-nodebind=nodes, \-b nodes
+Only execute process on 
+.I nodes. 
+.TP
+.B \-\-localalloc, \-l 
+Do always local allocation on the current node. This overwrites the 
+.I homenode
+and
+.I interleave
+settings. It is also default when the 
+.I vm.node_local_alloc
+sysctl is set.
+.TP
+.B \-\-show, \-s
+Show current NUMA policy settings.
+.TP
+Valid node specifiers
+.TS
+tab(:);
+l l. 
+all:All nodes
+number:Node containing CPU number.
+number1{,number2}:Set of nodes containing the CPUs number1 and number2 
+number1-number2:Nodes containing CPUs from number1 to number2
+! nodes:Invert selection of the following specification.
+.TE
+.SH EXAMPLES
+numactl --interleave=all bigdatabase arguments
+Run big database with its memory interleaved on all CPUs.
+
+numactl --homenode=0 --membind=0,1 process
+Run process preferably on node 0 with memory allocated on node 0 and 1.
+
+.SH SYSCTLS
+
+.I kernel.homenode_balance_threads
+Balance the homenode on fork and clone for all threads. Otherwise it is only
+balanced at 
+.I execve(2) 
+time.
+
+.I vm.node_local_alloc
+Enable local node allocation policy for all processes. This disables the
+homenode and NUMA policy settings except CPU and memory binding.
+
+.SH NOTES
+Requires an NUMA aware kernel with the homenode scheduling / NUMA policy 
+patch applied.
+
+Command is not executed using a shell. If you want to use shell metacharacters
+in the child use sh -c as wrapper.
+
+.SH FILES
+.I /proc/cpuinfo
+for the listing of active CPUs. See 
+.I proc(5)
+for details.
+
+.I /proc/numa
+for NUMA memory hit statistics.
+.SH BUGS
+
+Currently only works on architectures with Node equal CPU (in particular on
+AMD64)
+
+.SH SEE ALSO
+.I fork(2)
+,
+.I execve(2) 
+,
+.I clone(2)
+, 
+.I sched_setaffinity(2)
+, 
+.I sched_getaffinity(2)
+,
+.I proc(5)
+.SH AUTHOR
+numactl was written by Andi Kleen.

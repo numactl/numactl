@@ -1,0 +1,37 @@
+#!/bin/bash
+# simple regression test for numactl/numaapi
+# XXX: needs a lot more tests
+
+BASE=`pwd`/..
+export LD_LIBRARY_PATH=$BASE
+export PATH=$BASE:$PATH
+
+#numnodes=$(numactl -s | awk '/available/ { print $2 }')
+
+numactl -s
+
+test() {
+    echo "$@" 
+    numactl "$@" memhog 100m  || exit 1
+} 
+
+# process state
+test --interleave=0,1
+test --membind=0 
+test --membind=1
+test --membind=0,1 
+test --prefered=0
+test --prefered=1
+test --localalloc 
+
+numastat
+
+# mbind
+memhog 100m interleave 0,1
+memhog 100m membind 0
+memhog 100m membind 1
+memhog 100m prefered 1
+memhog 100m prefered 0
+memhog 100m
+
+numastat

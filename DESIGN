@@ -1,0 +1,76 @@
+
+[Rather outdated now]
+
+(slightly edited email, somewhat out of date) 
+
+For some tunings on AMD64 I implemented simple prctl based commands for an 2.4
+kernel. It allows to page interleave memory over nodes, allocate memory
+locally or allocate memory only on a specific set of nodes.
+
+To make it easier to use and shield the application from changing kernel
+APIs (2.5 is already different) I implemented a simple higher level library
+on top of it.
+
+Here is the current specification of it. I would appreciate comments.
+
+To be honest I'm not very interested in feature requests (e.g. if you
+want a fully directed visible graph of node distances or similar the simple
+NUMA library is probably not the right place), more possible simplifications
+where this library should be hard to port to other NUMA architectures.
+
+There is a matching numactl utility to set all this on the command line.
+
+Design notes:
+
+It aims to be simple, not a great design.
+
+In my implementation all NUMA policy is applied at fault time, not map time.
+This currently shines through in the library. This is a particularity of my
+current implementation.  2.5 seems to go more towards per VMA policy. I
+decided to keep it like this for now.
+
+The reason I exposed this in the library is that I didn't want to add a new
+numa_alloc_* family for shared memory. There are multiple ways to get
+shared memory (mmap, shmat etc.), and adding them all to the library would
+be quite complicated. Keeping the allocation of shared memory to the application
+and just providing "police" functions to change the policy seemed simpler.
+
+In an application with per VMA policy it could be possibly implemented
+by implementing a new system call that changes the policy for an existing
+VMA.
+
+The way to deal with changing kernel APIs is very simple: it's only
+compiled as a shared library. If the kernel API changes the shared library
+can be hopefully simply replaced for existing applications.
+
+It only deals with nodes, not CPUs. One reason for this is that it is
+AMD64 centric where CPU equals node, but even on other architectures with
+multiple CPUs per node more finegrained settings than nodes do not seem to be
+commonly used. Inside a node conventional SMP tunings can be used, no need
+for an NUMA library.
+
+The only possible exception is the CPU binding (numa_run_on_node*), but
+node granuality seems to be enough for that too. If it should be a problem
+the application can call sched_setaffinity directly.
+
+Possible distance between nodes is ignored. On current AMD64 it doesn't
+exist and it seems like a very big complication for little gain even
+on other architectures. If it should be needed it can be read from
+sysfs in 2.5.
+
+The set of nodes is defined as unsigned long. I did this because I don't see
+Linux breaking this limit any time soon (note this is talking about nodes, not
+CPUs again; e.g. on a 64bit 4cpus per node machine the CPU limit is 256 CPUs).
+On AMD64 it allows upto 64 CPUs.  I expect this to be controversal, but the
+alternatives (defining bitset types etc.) seemed too ugly.
+
+Homenode is a specific concept from my NUMA scheduler that may not exist
+in others (e.g. it doesn't in 2.5). I decided to show it in the library for now,
+but it's only a hint and could be ignored. The main reason I did this is
+that the automatic balancing has some nasty corner cases where it may make
+sense for the application or numactl to overwrite it. The concept of a homenode is
+different from just memory binding because it implies order.
+
+Ignoring the homenode hint scheduler changes the changes in the kernel to implement
+this are all rather simple.  Basically it only consists of a couple
+or prctls and some simple changes to the page allocation function.

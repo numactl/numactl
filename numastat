@@ -1,0 +1,33 @@
+#!/usr/bin/perl
+#print numastat for all nodes
+#Copyright 2003, Andi Kleen, SuSE Labs.
+#Subject to the Gnu Public License, v.2
+
+if (! -d "/sys/devices/system/node" ) { 
+	print STDERR "sysfs not mounted or system not NUMA aware\n";
+	exit 1;
+} 
+
+%stat = (); 
+$title = "\t\t"; 
+opendir(NODES, "/sys/devices/system/node") || exit 1;
+foreach $nd (readdir(NODES)) { 
+	next unless $nd =~ /node(\d+)/; 
+	open(STAT, "/sys/devices/system/node/$nd/numastat") || 
+			die "cannot open $nd: $!\n"; 
+	$title .= "$nd\t"; 
+	@fields = ();
+	while (<STAT>) { 
+		($name, $val) = split;
+		$stat{$name} .= "$val\t";
+		push(@fields, $name); 
+	} 
+	close STAT; 
+} 
+closedir NODES;
+
+print "$title\n";
+foreach (@fields) { 
+	print "$_\t$stat{$_}\n"; 
+} 
+

@@ -1,0 +1,50 @@
+.TH GET_MEMPOLICY "Nov 2003" "SuSE Labs" "Linux Programmer's Manual"
+.SH NAME
+.\" need an include for the prototype
+.B "#include <linux/mempolicy.h>" 
+.sp
+.B int get_mempolicy(int *policy, unsigned long *nodemask, unsigned long maxnode, unsigned long addr, unsigned long flags) 
+.\" TBD rewrite this. it is confusing.
+.SH DESCRIPTION
+.B get_mempolicy
+retrieves the NUMA policy of the current process or an memory address.
+A NUMA machine has different
+memory controllers with different distances to specific CPUs.
+The memory policy defines in which node memory is allocated for 
+the process.   
+.I get_mempolicy
+gets the memory policy of the current process. The policy is stored into
+.I policy
+when not zero, with the associated nodemask stored into 
+.I nodemask.
+.I maxnode 
+is the maximum bit number plus one that can be stored into 
+.I nodemask.
+The bit number is always rounded to an multiple of unsigned long.
+
+The other valid flag is 
+.I MPOL_F_ILNODE.
+It is only valid when the policy is 
+.I MPOL_INTERLEAVE.
+In this case not the interleave mask, but an unsigned long with the next
+node that would be used for interleaving is returned in 
+.I nodemask.
+
+Other flag values are reserved.
+
+For an overview of the possible policies see the
+.I set_mempolicy(2)
+manpage.
+
+.SH RETURN VALUE
+.I get_mempolicy
+returns -1 when an error occurred, otherwise 0.
+
+.\" .SH ERRORS
+.\" writeme
+
+.SH SEE ALSO
+.I mbind(2),
+.I set_mempolicy(2),
+.I numactl(8),
+.I numa(3)

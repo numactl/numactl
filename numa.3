@@ -1,0 +1,378 @@
+.TH NUMA 3 "May 2003" "SuSE Labs" "Linux Programmer's Manual"
+.SH NAME
+numa \- NUMA policy library
+.SH SYNOPSIS
+.B #include <numa.h>
+.sp
+.B cc ... -lnuma
+.sp
+.B int numa_available(void)
+.sp
+.B int numa_max_node(void)
+.br
+.B int numa_homenode(void)
+.br
+.B long numa_node_size(int node, long *freep)
+.sp
+.B nodemask_t numa_all_nodes
+.br
+.B nodemask_t numa_no_nodes
+.sp
+.B void numa_set_interleave_mask(nodemask_t *nodemask)
+.br
+.B nodemask_t numa_get_interleave_mask(void)
+.br
+.B void numa_bind(nodemask_t *nodemask)
+.br
+.B void numa_set_homenode(int node)
+.br
+.B void numa_set_localalloc(int flag)
+.br
+.B void numa_set_membind(nodemask_t *nodemask)
+.br
+.B nodemask_t numa_get_membind(void)
+.sp
+.B void *numa_alloc_interleaved_subset(size_t size, nodemask_t *nodemask)
+.br
+.B void *numa_alloc_interleaved(size_t size)
+.br
+.B void *numa_alloc_onnode(size_t size, int node)
+.br
+.B void *numa_alloc_local(size_t size)
+.br
+.B void *numa_alloc(size_t size)
+.br
+.B void numa_free(void *start, size_t size)
+.sp
+.B int numa_run_on_node_mask(nodemask_t *nodemask)
+.br
+.B int numa_run_on_node(int node)
+.sp
+.B void numa_interleave_memory(void *start, size_t size, nodemask_t *nodemask)
+.br
+.B void numa_tonode_memory(void *start, size_t size, int node)
+.br
+.B void numa_setlocal_memory(void *start, size_t size)
+.br
+.B void numa_police_memory(void *start, size_t size)
+.br
+.B void numa_set_bind_policy(int strict) 
+.br
+.B void numa_error(char *where)
+.br
+.B extern int numa_exit_on_error
+.SH DESCRIPTION
+.B libnuma 
+offers a simple programming interface to the 
+.I NUMA policy supported by the 
+Linux kernel. On a NUMA (Non Uniform Memory Access) architecture some
+memory areas have different latency or bandwidth than others.
+Available policies are page interleaving, home node allocation, local allocation,
+allocation only on specific nodes.
+It also allows to bind threads to specific nodes. All policy exists per thread, but is
+inherited to children. For setting global policy per process it is easiest
+to run it using the 
+.B numactl(8)
+utility. For more finegrained policy inside an application this library
+can be used.
+
+All numa memory allocation policy only takes effect when a page is actually
+faulted into the address space of a process by accessing it. The 
+.I numa_alloc_*
+functions take care of this automatically.
+
+A node is defined as an area where all memory has the same speed as seen from 
+a particular CPU. Caches are ignored for this definition. 
+
+The mapping of nodes to cpus depends on the architecture. On the 
+.I AMD64 
+architecture each CPU is an own node. This library is only concerned about nodes.
+
+Before any other calls in this library can be used
+.B numa_available
+must be called. When it returns an negative value all other functions in this
+library are undefined.
+
+.B numa_max_node
+returns the highest node number available on the current system. When a node
+number or a node mask with a bit set above the value returned by this function
+is passed to a 
+.I libnuma
+the result is undefined. The
+.B numa_node_size
+function returns the memory size of a node. When the argument
+.I freep
+is not NULL the free memory of the node is written to it.
+On error it returns -1.
+
+Some of these functions accept or return a 
+.I nodemask.
+A nodemask has type 
+.B nodemask_t 
+which is an abstract bitmap type containing a bit set of nodes. 
+The maximum node number depends 
+on the architecture, but is not bigger than
+.B NUMA_MAX_NODE.
+When happens in 
+.I libnuma
+calls when bits above 
+.I numa_max_node
+are passed is undefined.
+An 
+.I nodemask_t 
+should be only manipulated with the
+.I nodemask_zero,
+.I nodemask_clr,
+.I nodemask_isset,
+.I nodemask_set
+functions.  
+.B nodemask_zero
+clears an 
+.I nodemask_t,
+.B nodemask_isset
+returns true when 
+.I node
+is set in the passed
+.I nodemask,
+.B nodemask_clr
+clears 
+.I node
+in 
+.I nodemask,
+.B nodemask_set
+sets 
+.I node
+in 
+.I nodemask.
+The predefined variable 
+.B numa_all_nodes
+has all available nodes set, 
+.B numa_no_nodes
+is the empty set.
+.B nodeset_equal 
+returns non zero when the two nodesets are equal.
+
+.B numa_homenode
+returns the homenode of the current thread. It is the node the kernel preferably
+allocates memory on, unless some other policy overwrites this.
+
+.B numa_set_interleave_mask
+Set an memory interleave mask for the current thread to 
+.I nodemask.
+All new memory allocations
+are page interleaved over all nodes in the interleave mask. Interleaving
+can be turned off again by passing a zero mask.
+The page interleaving only occurs on the actual page fault that puts a new
+page into the current address space. It is also only a hint, the kernel
+will fall back to other nodes if no memory is available on the interleave
+target. This is a low level
+function, it may be more convenient to use the higher level functions like
+.I numa_alloc_interleaved
+or
+.I numa_alloc_interleaved_subset.
+
+.B numa_get_interleave_mask
+returns the current interleave mask. 
+
+.B numa_bind
+binds the current thread and its children to the nodes 
+specified in 
+.I nodemask.
+They will only run on the CPUs of the specified nodes and only able to allocate
+memory from them.
+This function is equivalent to calling
+.I numa_run_on_node_mask
+and 
+.I numa_set_membind
+with the same argument.
+
+.B numa_set_homenode
+sets the homenode for the current thread to
+.I node.
+Homenode is the node memory is 
+preferably allocated from. The homenode stays locked for the current
+thread and its children until it is reset using 
+.I numa_set_homenode(-1).
+
+.B numa_set_localalloc
+sets a local memory allocation policy for the current thread. When
+.I flag
+is not null memory is preferably allocated from the current node. 
+Otherwise it is allocated from the homenode. These are normally identical,
+but can differ in some special situations.
+
+.B numa_set_membind
+sets the memory allocation mask.
+The thread will only allocate memory from the nodes set in 
+.I nodemask.
+Passing an argument of
+.I numa_no_nodes
+or
+.I numa_all_nodes
+turns off memory binding to specific nodes. 
+
+.B numa_get_membind
+returns the current node mask from which memory can be allocated.
+.I numa_no_nodes
+or
+.I numa_all_nodes
+means all nodes are available for memory allocation.
+
+.B numa_alloc_interleaved
+allocates 
+.I size
+bytes of memory page interleaved on all nodes. This function is relatively slow
+and should only be used for large areas consisting of multiple pages. The 
+interleaving works on page level and will only show an effect when the 
+area is large. It must be freed with
+.I numa_free.
+On errors NULL is returned. 
+
+.B numa_alloc_interleaved_subset
+is like
+.I numa_alloc_interleaved
+except that it also accepts a mask of the nodes to interleave on.
+On errors NULL is returned. 
+
+.B numa_alloc_onnode
+allocates memory on a specific node. This function is relatively slow
+and allocations are rounded to pagesize. The memory must be freed
+with
+.I numa_free
+On errors NULL is returned. 
+
+.B numa_alloc_local
+allocates
+.I size
+bytes of memory on the local node. This function is relatively slow
+and allocations are rounded to pagesize. The memory must be freed
+with 
+.I numa_free.
+On errors NULL is returned. 
+
+.B numa_alloc
+allocates
+.I size 
+bytes of memory with the current NUMA policy.  This function is relatively slow
+and allocations are rounded to pagesize. The memory must be freed
+with 
+.I numa_free.
+On errors NULL is returned. 
+
+.B numa_free
+frees 
+.I size
+bytes of memory starting at 
+.I start,
+allocated by the 
+.I numa_alloc_* 
+functions above.
+
+.B numa_run_on_node
+runs the current thread and its children 
+on a specific node. They will not migrate to CPUs of
+other nodes until the node affinity is reset with a new call to
+.I numa_run_on_node_mask.
+Passing
+.I -1
+allows to schedule on all nodes again.
+Returns an negative value and error in errno, or 0 on success.
+
+.B numa_run_on_node_mask
+runs the current thread and its children only on nodes specified in 
+.I nodemask.
+They will not migrate to CPUs of
+other nodes until the node affinity is reset with a new call to
+.I numa_run_on_node_mask.
+Passing 
+.I numa_all_nodes
+allows to schedule on all nodes again.
+Returns an negative value and error in errno, or 0 on success.
+
+.B numa_interleave_memory
+pages interleaves 
+.I size 
+bytes memory from start on nodes
+.I nodemask.
+This is a lower level function to interleave not yet faulted in but  allocated 
+memory. Not yet faulted in means the memory is allocated using 
+.I mmap(2)
+or
+.I shmat(2),
+but has not been accessed by the current process yet. The memory is page
+interleaved to all nodes specified in 
+.I nodemask. 
+Normally 
+.I numa_alloc_interleaved
+should be used for private memory instead, but this function is useful to 
+handle shared memory areas. To be useful the memory area should be 
+significantly larger than a page.
+
+.B numa_tonode_memory
+locates memory on a specific node. The constraints described for 
+.I numa_interleave_memory
+apply here too.
+
+.B numa_setlocal_memory
+locates memory on the current node. The constraints described for 
+.I numa_interleave_memory
+apply here too.
+
+.B numa_police_memory
+locates memory with the current NUMA policy. The constraints described for 
+.I numa_interleave_memory
+apply here too.
+
+.B numa_set_bind_policy
+specifies whether calls that bind memory to a specific node should 
+use the prefered policy or a strict policy. Prefered allows 
+to allocate memory on other nodes when there isn't enough free
+on the target node. strict will fail the allocation in that case.
+Setting the argument to specifies strict, 0 prefered.
+Note that specifying more than one node non strict may only use
+the first node in some kernel versions.
+
+.B numa_error
+is an weak internal libnuma function that can be overwritten by the
+user program. It allows to specify a different error handling strategy
+when an NUMA system call fails. It does not affect
+.I numa_available.
+The default action is to print an error to stderr and exit
+the program when
+.B numa_exit_on_error
+is set to a non zero value. Default is zero.
+
+.SH THREAD SAFETY
+.I numa_set_bind_policy
+and
+.I numa_exit_on_error
+are process global. The other calls are thread safe. Memory policy for 
+an specific memory when
+changed affects the whole process and possible other processes mapping
+the same memory.
+
+.SH NOTES
+The kernel internal interface for 
+.I libnuma 
+is subject to change. For this reason it is recommended to only use 
+.I libnuma
+as shared library so that it can be easily replaced for a new kernel.
+
+All functions return possible errors in errno. errno does not get reset
+over calls, for reliable error reporting it has to be zeroed first. NUMA policy
+is normally only a hint so they can be usually safely ignored.
+
+.SH BUGS
+The library and the kernel interface used by it currently assumes
+internally that each CPU is an own node. This is the case on the
+.I AMD64
+architecture.
+
+.SH SEE ALSO
+.I getpagesize(2)
+.I mmap(2)
+.I shmat(2)
+.I numactl(8)
+
+.SH AUTHOR
+libnuma and the manpage were written by Andi Kleen.

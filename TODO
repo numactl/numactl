@@ -1,0 +1,11 @@
+
+fix for new sysfs nodemask format, check 
+
+numademo numbers seem to be unstable.
+
+get_mempolicy man page is unfinished
+
+manpages need proof reading
+
+need more test programs
+
