@@ -385,23 +385,6 @@ an specific memory when
 changed affects the whole process and possible other processes mapping
 the same memory.
 
-.SH NOTES
-The kernel internal interface for 
-.I libnuma 
-is subject to change. For this reason it is recommended to only use 
-.I libnuma
-as shared library so that it can be easily replaced for a new kernel.
-
-All functions return possible errors in errno. errno does not get reset
-over calls, for reliable error reporting it has to be zeroed first. NUMA policy
-is normally only a hint so they can be usually safely ignored.
-
-.SH BUGS
-The library and the kernel interface used by it currently assumes
-internally that each CPU is an own node. This is the case on the
-.I AMD64
-architecture.
-
 .SH SEE ALSO
 .I getpagesize(2)
 .I mmap(2)

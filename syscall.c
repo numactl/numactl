@@ -7,6 +7,9 @@
 
 #define WEAK __attribute__((weak))
 
+/* Define stub for dummy calls (e.g. for compile testing) */
+#ifndef STUB 
+
 #if defined(__x86_64__)
 
 #define __NR_sched_setaffinity    203
@@ -28,9 +31,18 @@
 #define __NR_get_mempolicy 1260
 #define __NR_set_mempolicy 1261
 
+#elif defined __i386__
+
+/* semi-official allocation (in -mm) */
+
+#define __NR_mbind 274
+#define __NR_get_mempolicy 275
+#define __NR_set_mempolicy 276
+
 #else
-#define STUB 1 
-#warning "Add syscalls for your architecture. Stubbing"
+#error "Add syscalls for your architecture"
+#endif
+
 #endif
 
 #ifdef __x86_64__

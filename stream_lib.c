@@ -35,7 +35,7 @@ static inline double mysecond()
  * Hacked by AK to be a library
  */
 
-#define N	8000000
+long N = 8000000;
 #define NTIMES	10
 #define OFFSET	0
 
@@ -80,13 +80,13 @@ FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX};
 static char *label[4] = { "Copy:      ", "Scale:     ",
 	"Add:       ", "Triad:     "
 };
+char *stream_names[] = { "Copy","Scale","Add","Triad" };
 
-static double bytes[4] = {
-	2 * sizeof(double) * N,
-	2 * sizeof(double) * N,
-	3 * sizeof(double) * N,
-	3 * sizeof(double) * N
-};
+static double bytes[4];
+
+int stream_verbose = 1;
+
+#define Vprintf(x...) do { if (stream_verbose) printf(x); } while(0)
 
 void stream_check(void)
 {
@@ -97,17 +97,17 @@ void stream_check(void)
 
 	/* --- SETUP --- determine precision and check timing --- */
 
-	printf(HLINE);
+	Vprintf(HLINE);
 	BytesPerWord = sizeof(double);
-	printf("This system uses %d bytes per DOUBLE PRECISION word.\n",
+	Vprintf("This system uses %d bytes per DOUBLE PRECISION word.\n",
 	       BytesPerWord);
 
-	printf(HLINE);
-	printf("Array size = %d, Offset = %d\n", N, OFFSET);
-	printf("Total memory required = %.1f MB.\n",
+	Vprintf(HLINE);
+	Vprintf("Array size = %lu, Offset = %d\n", N, OFFSET);
+	Vprintf("Total memory required = %.1f MB.\n",
 	       (3 * N * BytesPerWord) / 1048576.0);
-	printf("Each test is run %d times, but only\n", NTIMES);
-	printf("the *best* time for each is used.\n");
+	Vprintf("Each test is run %d times, but only\n", NTIMES);
+	Vprintf("the *best* time for each is used.\n");
 
 	/* Get initial value for system clock. */
 
@@ -117,13 +117,13 @@ void stream_check(void)
 		c[j] = 0.0;
 	}
 
-	printf(HLINE);
+	Vprintf(HLINE);
 
 	if ((quantum = checktick()) >= 1)
-		printf("Your clock granularity/precision appears to be "
+		Vprintf("Your clock granularity/precision appears to be "
 		       "%d microseconds.\n", quantum);
 	else
-		printf("Your clock granularity appears to be "
+		Vprintf("Your clock granularity appears to be "
 		       "less than one microsecond.\n");
 
 	t = mysecond();
@@ -131,21 +131,21 @@ void stream_check(void)
 		a[j] = 2.0E0 * a[j];
 	t = 1.0E6 * (mysecond() - t);
 
-	printf("Each test below will take on the order"
+	Vprintf("Each test below will take on the order"
 	       " of %d microseconds.\n", (int) t);
-	printf("   (= %d clock ticks)\n", (int) (t / quantum));
-	printf("Increase the size of the arrays if this shows that\n");
-	printf("you are not getting at least 20 clock ticks per test.\n");
+	Vprintf("   (= %d clock ticks)\n", (int) (t / quantum));
+	Vprintf("Increase the size of the arrays if this shows that\n");
+	Vprintf("you are not getting at least 20 clock ticks per test.\n");
 
-	printf(HLINE);
+	Vprintf(HLINE);
 
-	printf("WARNING -- The above is only a rough guideline.\n");
-	printf("For best results, please be sure you know the\n");
-	printf("precision of your system timer.\n");
-	printf(HLINE);
+	Vprintf("WARNING -- The above is only a rough guideline.\n");
+	Vprintf("For best results, please be sure you know the\n");
+	Vprintf("precision of your system timer.\n");
+	Vprintf(HLINE);
 }
 
-void stream_test(void)
+void stream_test(double *res)
 {
 	register int j, k;
 	double scalar, times[4][NTIMES];
@@ -186,14 +186,20 @@ void stream_test(void)
 		}
 	}
 
-	printf
+	Vprintf
 	    ("Function      Rate (MB/s)   RMS time     Min time     Max time\n");
 	for (j = 0; j < 4; j++) {
+		double speed = 1.0E-06 * bytes[j] / mintime[j];
+
 		rmstime[j] = sqrt(rmstime[j] / (double) NTIMES);
 
-		printf("%s%11.4f  %11.4f  %11.4f  %11.4f\n", label[j],
-		       1.0E-06 * bytes[j] / mintime[j],
+		Vprintf("%s%11.4f  %11.4f  %11.4f  %11.4f\n", label[j],
+			speed,
 		       rmstime[j], mintime[j], maxtime[j]);
+
+		if (res)
+			res[j] = speed;
+
 	}
 }
 
@@ -228,6 +234,11 @@ int checktick()
 	return (minDelta);
 }
 
+void stream_setmem(unsigned long size)
+{ 
+	N = (size - OFFSET) / (3*sizeof(double));
+} 
+
 long stream_memsize(void)
 { 
 	return 3*(sizeof(double) * (N+OFFSET)) ;
@@ -235,6 +246,19 @@ long stream_memsize(void)
 
 long stream_init(void *mem) 
 { 
+	int i;
+
+	for (i = 0; i < 4; i++) { 
+		rmstime[i] = 0;
+		maxtime[i] = 0;
+		mintime[i] = FLT_MAX;
+	}
+
+	bytes[0] = 2 * sizeof(double) * N;
+	bytes[1] = 2 * sizeof(double) * N;
+	bytes[2] = 3 * sizeof(double) * N;
+	bytes[3] = 3 * sizeof(double) * N;
+
 	a = mem;
 	b = (double *)mem +   (N+OFFSET);
 	c = (double *)mem + 2*(N+OFFSET);

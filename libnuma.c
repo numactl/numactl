@@ -78,7 +78,7 @@ WEAK void numa_warn(int num, char *fmt, ...)
 
 static void setpol(int policy, nodemask_t mask) 
 { 
-	if (set_mempolicy(policy, mask.n, NUMA_NUM_NODES+1) < 0) 
+	if (set_mempolicy(policy, &mask.n[0], NUMA_NUM_NODES+1) < 0) 
 		numa_error("set_mempolicy");
 } 
 

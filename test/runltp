@@ -6,7 +6,7 @@ LTP=/src/ltp
 LEN=2h
 LTPOPT="-q -p -t $LEN"
 export LD_LIBRARY_PATH=`pwd`/..
-export PATH=$PATH:`pwd`/..
+export PATH=`pwd`/..:$PATH
 
 cd $LTP
 for i in 1 2 3 ; do 

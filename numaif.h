@@ -9,7 +9,8 @@ extern long get_mempolicy(int *policy,
 			  void *addr, int flags);
 extern long mbind(void *start, unsigned long len, int mode, 
 		  unsigned long *nmask, unsigned long maxnode, unsigned flags);
-extern long set_mempolicy(int mode, unsigned long *nmask, unsigned long maxnode);
+extern long set_mempolicy(int mode, unsigned long *nmask, 
+			  unsigned long maxnode);
 
 /* Policies */
 #define MPOL_DEFAULT     0

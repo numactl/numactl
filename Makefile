@@ -28,8 +28,8 @@ stream: util.o stream_lib.o stream_main.o libnuma.so
 
 numactl.o: numactl.c numa.h numaif.h util.h
 
-numademo: numademo.o util.o libnuma.so
-	${CC} ${LDFLAGS} -o numademo $^
+numademo: numademo.o util.o stream_lib.o libnuma.so
+	${CC} ${LDFLAGS} -o numademo $^ -lm
 
 numademo.o: numa.h numademo.c	
 
@@ -81,7 +81,7 @@ MANPAGES := numa.3 numactl.8 mbind.2 set_mempolicy.2 get_mempolicy.2
 install: numactl numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numastat ${MANPAGES}
 	cp numactl ${prefix}/bin
 	cp numademo ${prefix}/bin
-	cp memhog ${prefix}/usr/bin
+	cp memhog ${prefix}/bin
 	cp set_mempolicy.2 ${prefix}/share/man/man2
 	cp mbind.2 ${prefix}/share/man/man2
 	cp numactl.8 ${prefix}/share/man/man8

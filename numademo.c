@@ -6,6 +6,7 @@
 #include "numa.h"
 #include "util.h"
 #include "rdtsc.h"
+#include "stream_int.h"
 
 unsigned long msize; 
 
@@ -14,6 +15,7 @@ enum test {
 	MEMCPY,
 	FORWARD,
 	BACKWARD,
+	STREAM,
 } thistest;
 
 char *delim = " ";
@@ -24,9 +26,24 @@ char *testname[] = {
 	"memcpy",
 	"forward",
 	"backward",
-//	"stream",
+	"stream",
 	NULL,
 }; 
+
+void do_stream(char *name, unsigned char *mem)
+{
+	int i;
+	char title[100];
+	double res[STREAM_NRESULTS];
+	stream_verbose = 0;
+	stream_init(mem); 
+	stream_test(res);
+	sprintf(title, "%s%s%s", name, delim, "STREAM");
+	printf("%-30s", title);
+	for (i = 0; i < STREAM_NRESULTS; i++) 
+		printf("%s%s%s%.2f", delim, stream_names[i], delim, res[i]); 
+	printf("%sMB/s\n", delim);
+}
 
 #define LOOPS 10
 
@@ -36,6 +53,11 @@ void memtest(char *name, unsigned char *mem)
 	unsigned long start, end, max, min, sum; 
 	int i;
 	char title[128], result[128];
+
+	if (thistest == STREAM) { 
+		do_stream(name, mem);
+		goto out;
+	}
 	
 	max = 0; 
 	min = ~0UL; 
@@ -51,6 +73,7 @@ void memtest(char *name, unsigned char *mem)
 			memcpy(mem, mem + msize/2, msize/2); 
 			rdtsc(end); 
 			break;
+
 		case FORWARD: 
 			/* simple kernel to just fetch cachelines and write them back. 
 			   will trigger hardware prefetch */ 
@@ -67,7 +90,7 @@ void memtest(char *name, unsigned char *mem)
 				mem[k]--;
 			rdtsc(end);
 			break;
-			
+
 		default:
 			start = end = 0; /* just to quiten gcc */
 			break;
@@ -90,8 +113,9 @@ void memtest(char *name, unsigned char *mem)
 	if (!isspace(delim[0]))
 		printf("%s%s%s\n", title,delim, result); 
 	else
-		printf("%-40s%35s\n", title, result); 
+		printf("%-30s%35s\n", title, result); 
 
+ out:
 	numa_free(mem, msize); 
 } 
 
@@ -253,25 +277,32 @@ int main(int ac, char **av)
 
 	msize = memsize(av[1]); 
 
+	stream_setmem(msize);
+
 	if (av[2] == NULL) { 
 		test(MEMSET); 
 		test(MEMCPY);
+#if 0
 		test(FORWARD);
 		test(BACKWARD);
+#endif
+		test(STREAM); 
 	} else {
 		int k;
 		for (k = 2; k < ac; k++) { 
 			int i;
 			int found = 0;
 			for (i = 0; testname[i]; i++) { 
-				if (!strcmp(testname[i],*av)) { 
+				if (!strcmp(testname[i],av[k])) { 
 					test(i); 
 					found = 1;
 					break;
 				}
 			} 
-			if (!found) 
-				usage(); 		   
+			if (!found) { 
+				fprintf(stderr,"unknown test `%s'\n", av[k]);
+				usage();
+			}
 		}
 	} 
 	return 0;

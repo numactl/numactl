@@ -174,7 +174,7 @@ number1-number2:Nodes from number1 to number2
 numactl \-\-interleave=all bigdatabase arguments
 Run big database with its memory interleaved on all CPUs.
 
-numactl \-\-cpubind=0 \-\-membind=0,1 process
+numactl \-\-cpubind=0\-\-membind=0,1 process
 Run process on node 0 with memory allocated on node 0 and 1.
 
 numactl \-\-preferred=1 numactl \-\-show
@@ -184,10 +184,10 @@ numactl --interleave=all --shmkeyfile /tmp/shmkey
 Interleave all of the sysv shared memory regiion specified by 
 /tmp/shmkey over all nodes.
 
-numactl --offset=1G --length=1G --membind=1 --file /hugetlbfs/A --touch
-Bind the second gigabyte in the hugetlbfs file /hugetlbfs/A to node 1.
+numactl --offset=1G --length=1G --membind=1 --file /dev/shm/A --touch
+Bind the second gigabyte in the tmpfs file /dev/shm/A to node 1.
 
-numactl --localalloc /shmfs/file
+numactl --localalloc /dev/shm/file
 Reset the policy for the shared memory file 
 .I file
 to the default localalloc policy.
@@ -196,6 +196,9 @@ Requires an NUMA policy aware kernel.
 
 Command is not executed using a shell. If you want to use shell metacharacters
 in the child use sh -c as wrapper.
+
+Setting policy for a hugetlbfs file does currently not work
+it cannot be extended by truncate.
 
 .SH FILES
 .I /proc/cpuinfo

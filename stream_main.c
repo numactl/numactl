@@ -21,6 +21,7 @@ int main(int ac, char **av)
 	long size;
 	int policy;
 	policy = parse_policy(av[1], av[2]); 
+	nodemask_zero(&nodes);
 	if (av[1] && av[2])
 		nodes = nodemask(av[2]);
 	size = stream_memsize();  
@@ -30,6 +31,6 @@ int main(int ac, char **av)
 	if (mbind(map, size, policy, &nodes.n[0], NUMA_NUM_NODES, 0) < 0) 
 		perror("mbind"), exit(1);
 	stream_init(map); 
-	stream_test();
+	stream_test(NULL);
 	return 0;
 }
