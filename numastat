@@ -15,11 +15,11 @@ foreach $nd (readdir(NODES)) {
 	next unless $nd =~ /node(\d+)/; 
 	open(STAT, "/sys/devices/system/node/$nd/numastat") || 
 			die "cannot open $nd: $!\n"; 
-	$title .= "$nd\t"; 
+	$title .= sprintf("%14s",$nd);
 	@fields = ();
 	while (<STAT>) { 
 		($name, $val) = split;
-		$stat{$name} .= "$val\t";
+		$stat{$name} .= sprintf("%14u", $val);
 		push(@fields, $name); 
 	} 
 	close STAT; 

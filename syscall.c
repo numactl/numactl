@@ -7,14 +7,26 @@
 
 #define WEAK __attribute__((weak))
 
-#ifdef __x86_64__
+#if defined(__x86_64__)
 
 #define __NR_sched_setaffinity    203
 #define __NR_sched_getaffinity     204
+
+/* Official allocation */
+
 #define __NR_mbind 237
 #define __NR_set_mempolicy 238
 #define __NR_get_mempolicy 239
 
+#elif defined __ia64__
+#define __NR_sched_setaffinity    1231
+#define __NR_sched_getaffinity    1232
+
+/* Official allocation */
+
+#define __NR_mbind 1259
+#define __NR_get_mempolicy 1260
+#define __NR_set_mempolicy 1261
 
 #else
 #define STUB 1 

@@ -7,15 +7,16 @@
 #include "util.h"
 #include "stream_int.h"
 
-#define err(x) perror(x),exit(1)
+#define terr(x) perror(x)
 
 enum { 
 	UNIT = 10*1024*1024,
 }; 
 
+
 void usage(void)
 { 
-	printf("memhog size[kmg] policy nodeset\n");
+	printf("memhog size[kmg] [policy [nodeset]]\n");
 	print_policies(); 
 	exit(1); 
 } 
@@ -41,32 +42,44 @@ int main(int ac, char **av)
 	char *map; 
 	nodemask_t nodes, gnodes;
 	int policy, gpolicy;
+	int ret = 0;
+	int loose = 0; 
 
 	nodemask_zero(&nodes); 
 	
-	if (!av[1]) usage(); 
-	length = memsize(av[1]); 
-	policy = parse_policy(av[2], av[3]); 
+	if (!av[1]) usage();
+
+	length = memsize(av[1]);
+	if (av[2] && numa_available() < 0) {
+		printf("Kernel doesn't support NUMA policy\n"); 
+		exit(1);
+	} else
+		loose = 1;
+	policy = parse_policy(av[2], av[3]);
 	if (policy != MPOL_DEFAULT)
-		nodes = nodemask(av[3]); 
+		nodes = nodemask(av[3]);
 
 	map = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,
 		   0, 0); 
 	if (map == (char*)-1) 
-		err("mmap"); 
+		err("mmap");
 	
 	if (mbind(map, length, policy, nodes.n, NUMA_NUM_NODES + 1, 0) < 0) 
-		err("mbind"); 
+		terr("mbind");
 	
 	gpolicy = -1; 
-	if (get_mempolicy(&gpolicy, gnodes.n, NUMA_NUM_NODES + 1, map + 1024,
+	if (get_mempolicy(&gpolicy, gnodes.n, NUMA_NUM_NODES + 1, map,
 			  MPOL_F_ADDR) < 0)
-		err("get_mempolicy");
-	if (policy != gpolicy) 
+		terr("get_mempolicy");
+	if (!loose && policy != gpolicy) {
+		ret = 1;
 		printf("policy %d gpolicy %d\n", policy, gpolicy); 
-	if (!nodemask_equal(&gnodes, &nodes))
+	}
+	if (!loose && !nodemask_equal(&gnodes, &nodes)) { 
 		printf("nodes differ %lx, %lx!\n", gnodes.n[0], nodes.n[0]); 
+		ret = 1;
+	}
 
 	hog(map); 
-	return 0;
-} 
+	exit(ret);
+}

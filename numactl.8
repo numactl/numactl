@@ -1,119 +1,198 @@
-'\" t
-.TH NUMACTL 8 "May 2003" "SuSE Labs" "Linux Administrator's Manual"
+.\" t
+.TH NUMACTL 8 "Mar 2004" "SuSE Labs" "Linux Administrator's Manual"
 .SH NAME
-numactl \- Control NUMA policy for processes
+numactl \- Control NUMA policy for processes or shared memory 
 .SH SYNOPSIS
 .B numactl
 [
-.B \-\-interleave=nodes
+.B \-\-interleave nodes
 ] [
-.B \-\-homenode=homenode|reset
+.B \-\-preferred node 
+] [
+.B \-\-membind nodes
 ] [ 
-.B \-\-nodebind=nodes
-] [ 
-.B \-\-membind=nodes
+.B \-\-cpubind nodes
 ] [
 .B \-\-localalloc
-] [
-command {arguments ...}
-.br
-.br
-.B numactl
-[
-.B \-i nodes
-] [
-.B \-h homenode
-] [
-.B \-m nodes
-] [ 
-.B \-b nodes
 ] command {arguments ...}
 .br
 .B numactl \-\-show
+.br
+.B numactl \-\-hardware
+.br
+.B numactl 
+[
+.B \-\-huge
+] [
+.B \-\-offset offset
+] [
+.B \-\-mode shmmode
+] [
+.B \-\-length length
+] [
+.B \-\-strict
+]
+.br
+.B \-\-shmid id
+|
+.B \-\-shm shmkeyfile
+|
+.B \-\-file tmpfsfile
+.br
+[
+.B \-\-touch
+] [
+.B \-\-dump
+]
+memory policy
 .SH DESCRIPTION
 .B numactl
 runs processes with a specific NUMA scheduling or memory placement policy.
 The policy is set for command and inherited by all of its children.
+In addition it can set persistent policy for shared memory segments or files.
 .TP
 Policy settings are:
 .TP
 .B \-\-interleave=nodes, \-i nodes
 Set an memory interleave policy. Memory will be allocated using round robin
-on nodes.
-.TP
-.B \-\-homenode=node, \-h node
-Set the homenode of 
-.I command and its children to node. The
-homenode will
-not be auto balanced for them until this option is disabled
-with 
-.I --homenode=reset again.
-homenode is the node the process first tries
-to allocate memory from. Normally it is assigned dynamically at 
-.I exec(2)
-or 
-.I fork(2)
-/
-.I clone(2)
-time.  
-In addition the scheduler gives strong preference to the homenode
-to schedule the process near its memory.
-If the memory allocation does not succeed the allocation is tried on other
-nodes. 
-.I \-\-homenode=reset 
-restores automatic balancing. 
+on 
+.I nodes.
+When memory cannot be allocated on the current interleave target fall back
+to other nodes.
 .TP
 .B \-\-membind=nodes, \-m nodes
-Only allocate memory from nodes. 
+Only allocate memory from nodes.  Allocation will fail when there
+is not enough memory available on these nodes.
 .TP
-.B \-\-nodebind=nodes, \-b nodes
-Only execute process on 
+.B \-\-cpubind=nodes, \-c nodes
+Only execute process on the CPUs of
 .I nodes. 
 .TP
 .B \-\-localalloc, \-l 
-Do always local allocation on the current node. This overwrites the 
-.I homenode
-and
-.I interleave
-settings. It is also default when the 
-.I vm.node_local_alloc
-sysctl is set.
+Do always local allocation on the current node.
+.TP
+.B \-\-preferred=node
+Preferably allocate memory on 
+.I node,
+but if memory cannot be allocated there fall back to other nodes.
+This option takes only a single node number.
 .TP
 .B \-\-show, \-s
-Show current NUMA policy settings.
+Show NUMA policy settings of the current process. 
+.TP
+.B \-\-hardware, \-H
+Show inventory of available nodes on the system.
+.TP 0
+Numactl can set up policy for a SYSV shared memory segment or a file in shmfs/hugetlbfs.
+ 
+This policy is persistent and will be used by
+all mappings from that shared memory. The order of options matters here.
+The specification must at least include either of 
+.I \-\-shm, 
+.I \-\-shmid, 
+.I \-\-file
+to specify the shared memory segment or file and a memory policy like described 
+above (
+.I \-\-interleave, 
+.I \-\-localalloc, 
+.I \-\-prefered, 
+.I \-\-membind
+).
+.TP
+.B \-\-huge
+When creating a SYSV shared memory segment use huge pages.
+Only valid before \-\-shmid or \-\-shm
+.TP 
+.B \-\-offset
+Specify offset into the shared memory segment. Default 0. 
+Valid units are 
+.I m
+(for MB), 
+.I g 
+(for GB), 
+.I k 
+(for KB),
+otherwise it specifies bytes.
+.TP
+.B \-\-strict
+Give an error when a page in the policied area in the shared memory
+segment already was faulted in with a conflicting policy. Default
+is to silently ignore this.
+.TP
+.B \-\-mode shmmode
+Only valid before \-\-shmid or \-\-shm
+When creating a shared memory segment set it to numeric mode 
+.I shmmode.
+.TP
+.B \-\-length length
+Apply policy to 
+.I length 
+range in the shared memory segment or make 
+the segment length long
+Default is to use the remaining length 
+Required when a shared memory segment is created and specifies the length
+of the new segment then. Valid units are 
+.I m
+(for MB), 
+.I g 
+(for GB), 
+.I k 
+(for KB),
+otherwise it specifies bytes.
+.TP
+.B \-\-shmid id
+Create or use an shared memory segment with numeric ID 
+.I id
+.TP 
+.B \-\-shm shmkeyfile
+Create or use an shared memory segment, with the ID generated
+using 
+.I ftok(3) 
+from shmkeyfile
+.TP
+.B \-\-file tmpfsfile
+Set policy for a file in tmpfs or hugetlbfs
+.TP
+.B \-\-touch
+Touch pages to enforce policy early. Default is to not touch them, the policy
+is applied when an applications maps and accesses a page.
+.TP
+.B \-\-dump
+Dump policy in the specified range.
 .TP
 Valid node specifiers
 .TS
 tab(:);
 l l. 
 all:All nodes
-number:Node containing CPU number.
-number1{,number2}:Set of nodes containing the CPUs number1 and number2 
-number1-number2:Nodes containing CPUs from number1 to number2
+number:Node number
+number1{,number2}:Node number1 and Node number2
+number1-number2:Nodes from number1 to number2
 ! nodes:Invert selection of the following specification.
 .TE
 .SH EXAMPLES
-numactl --interleave=all bigdatabase arguments
+numactl \-\-interleave=all bigdatabase arguments
 Run big database with its memory interleaved on all CPUs.
 
-numactl --homenode=0 --membind=0,1 process
-Run process preferably on node 0 with memory allocated on node 0 and 1.
+numactl \-\-cpubind=0 \-\-membind=0,1 process
+Run process on node 0 with memory allocated on node 0 and 1.
 
-.SH SYSCTLS
+numactl \-\-preferred=1 numactl \-\-show
+Set preferred node 1 and show the resulting state.
 
-.I kernel.homenode_balance_threads
-Balance the homenode on fork and clone for all threads. Otherwise it is only
-balanced at 
-.I execve(2) 
-time.
+numactl --interleave=all --shmkeyfile /tmp/shmkey 
+Interleave all of the sysv shared memory regiion specified by 
+/tmp/shmkey over all nodes.
 
-.I vm.node_local_alloc
-Enable local node allocation policy for all processes. This disables the
-homenode and NUMA policy settings except CPU and memory binding.
+numactl --offset=1G --length=1G --membind=1 --file /hugetlbfs/A --touch
+Bind the second gigabyte in the hugetlbfs file /hugetlbfs/A to node 1.
 
+numactl --localalloc /shmfs/file
+Reset the policy for the shared memory file 
+.I file
+to the default localalloc policy.
 .SH NOTES
-Requires an NUMA aware kernel with the homenode scheduling / NUMA policy 
-patch applied.
+Requires an NUMA policy aware kernel.
 
 Command is not executed using a shell. If you want to use shell metacharacters
 in the child use sh -c as wrapper.
@@ -124,24 +203,22 @@ for the listing of active CPUs. See
 .I proc(5)
 for details.
 
-.I /proc/numa
+.I /sys/devices/system/node/node*/numastat
 for NUMA memory hit statistics.
-.SH BUGS
-
-Currently only works on architectures with Node equal CPU (in particular on
-AMD64)
 
 .SH SEE ALSO
-.I fork(2)
+.I set_mempolicy(2)
 ,
-.I execve(2) 
+.I get_mempolicy(2)
 ,
-.I clone(2)
-, 
+.I mbind(2)
+,
 .I sched_setaffinity(2)
 , 
 .I sched_getaffinity(2)
 ,
 .I proc(5)
-.SH AUTHOR
-numactl was written by Andi Kleen.
+, 
+.I ftok(3)
+,
+.I shmat(2)

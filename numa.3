@@ -1,4 +1,4 @@
-.TH NUMA 3 "May 2003" "SuSE Labs" "Linux Programmer's Manual"
+.TH NUMA 3 "May 2004" "SuSE Labs" "Linux Programmer's Manual"
 .SH NAME
 numa \- NUMA policy library
 .SH SYNOPSIS
@@ -10,13 +10,16 @@ numa \- NUMA policy library
 .sp
 .B int numa_max_node(void)
 .br
-.B int numa_homenode(void)
+.B int numa_preferred(void)
 .br
 .B long numa_node_size(int node, long *freep)
 .sp
 .B nodemask_t numa_all_nodes
 .br
 .B nodemask_t numa_no_nodes
+.br
+.B int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen)
+.br
 .sp
 .B void numa_set_interleave_mask(nodemask_t *nodemask)
 .br
@@ -24,7 +27,7 @@ numa \- NUMA policy library
 .br
 .B void numa_bind(nodemask_t *nodemask)
 .br
-.B void numa_set_homenode(int node)
+.B void numa_set_preferred(int node)
 .br
 .B void numa_set_localalloc(int flag)
 .br
@@ -47,16 +50,22 @@ numa \- NUMA policy library
 .B int numa_run_on_node_mask(nodemask_t *nodemask)
 .br
 .B int numa_run_on_node(int node)
+.br
+.B int numa_get_run_node_mask(void)
 .sp
 .B void numa_interleave_memory(void *start, size_t size, nodemask_t *nodemask)
 .br
 .B void numa_tonode_memory(void *start, size_t size, int node)
+.br
+.B void numa_tonodemask_memory(void *start, size_t size, nodemask_t *nodemask)
 .br
 .B void numa_setlocal_memory(void *start, size_t size)
 .br
 .B void numa_police_memory(void *start, size_t size)
 .br
 .B void numa_set_bind_policy(int strict) 
+.br
+.B void numa_set_strict(int strict) 
 .br
 .B void numa_error(char *where)
 .br
@@ -67,7 +76,7 @@ offers a simple programming interface to the
 .I NUMA policy supported by the 
 Linux kernel. On a NUMA (Non Uniform Memory Access) architecture some
 memory areas have different latency or bandwidth than others.
-Available policies are page interleaving, home node allocation, local allocation,
+Available policies are page interleaving, preferred node allocation, local allocation,
 allocation only on specific nodes.
 It also allows to bind threads to specific nodes. All policy exists per thread, but is
 inherited to children. For setting global policy per process it is easiest
@@ -152,8 +161,8 @@ is the empty set.
 .B nodeset_equal 
 returns non zero when the two nodesets are equal.
 
-.B numa_homenode
-returns the homenode of the current thread. It is the node the kernel preferably
+.B numa_preferred
+returns the preferd node of the current thread. It is the node the kernel preferably
 allocates memory on, unless some other policy overwrites this.
 
 .B numa_set_interleave_mask
@@ -186,20 +195,18 @@ and
 .I numa_set_membind
 with the same argument.
 
-.B numa_set_homenode
-sets the homenode for the current thread to
+.B numa_set_preferred
+sets the preferred node for the current thread to
 .I node.
-Homenode is the node memory is 
-preferably allocated from. The homenode stays locked for the current
-thread and its children until it is reset using 
-.I numa_set_homenode(-1).
+Preferred node is the node memory is 
+preferably allocated from before falling back to other nodes. 
+The default is to use the current node the process runs on
+(local policy). Passing an -1 argument is equivalent to
+.I numa_set_localalloc.
 
 .B numa_set_localalloc
-sets a local memory allocation policy for the current thread. When
-.I flag
-is not null memory is preferably allocated from the current node. 
-Otherwise it is allocated from the homenode. These are normally identical,
-but can differ in some special situations.
+sets a local memory allocation policy for the current thread.
+Memory is preferably allocated from the current node. 
 
 .B numa_set_membind
 sets the memory allocation mask.
@@ -289,6 +296,9 @@ Passing
 allows to schedule on all nodes again.
 Returns an negative value and error in errno, or 0 on success.
 
+.B numa_get_run_node_mask
+returns the mask of nodes that the current thread is allowed to run on.
+
 .B numa_interleave_memory
 pages interleaves 
 .I size 
@@ -307,11 +317,20 @@ Normally
 should be used for private memory instead, but this function is useful to 
 handle shared memory areas. To be useful the memory area should be 
 significantly larger than a page.
+When the
+.I numa_set_strict
+flag is true then the operation will cause an numa_error if there were already
+pages in the mapping that do not follow the policy.
 
 .B numa_tonode_memory
-locates memory on a specific node. The constraints described for 
+put memory on a specific node. The constraints described for 
 .I numa_interleave_memory
 apply here too.
+
+.B numa_tonodemask_memory
+put memory on a specific set of nodes. The constraints described for 
+.I numa_interleave_memory
+apply here too. 
 
 .B numa_setlocal_memory
 locates memory on the current node. The constraints described for 
@@ -323,14 +342,29 @@ locates memory with the current NUMA policy. The constraints described for
 .I numa_interleave_memory
 apply here too.
 
+.B numa_node_to_cpus
+converts a node number to a bitmask of cpus. The user must pass a long enough
+buffer. When the buffer is not long enough 
+.I errno
+will be set to
+.I ERANGE
+and -1 returned. On success 0 is returned.
+
 .B numa_set_bind_policy
 specifies whether calls that bind memory to a specific node should 
-use the prefered policy or a strict policy. Prefered allows 
+use the preferred policy or a strict policy. Preferred allows 
 to allocate memory on other nodes when there isn't enough free
 on the target node. strict will fail the allocation in that case.
-Setting the argument to specifies strict, 0 prefered.
+Setting the argument to specifies strict, 0 preferred.
 Note that specifying more than one node non strict may only use
 the first node in some kernel versions.
+
+.B numa_set_strict
+sets a flag that says whether the functions allocating on specific
+nodes should use use a strict policy. Strict means the allocation 
+will fail if the memory cannot be allocated on the target node.
+Default operation is to fall back to other nodes.
+This doesn't apply to interleave and default.
 
 .B numa_error
 is an weak internal libnuma function that can be overwritten by the
@@ -373,6 +407,3 @@ architecture.
 .I mmap(2)
 .I shmat(2)
 .I numactl(8)
-
-.SH AUTHOR
-libnuma and the manpage were written by Andi Kleen.

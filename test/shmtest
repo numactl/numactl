@@ -1,0 +1,97 @@
+#!/bin/sh
+# basic shared memory policy test
+
+
+# hugetlbfs and tmpfs must be mounted on these mount points
+TMPFS=/dev/shm
+HUGE=/huge
+
+set -e 
+
+export PATH=$PATH:`pwd`/..
+export LD_LIBRARY_PATH=`pwd`/..
+
+failure() { 
+	numastat > after
+	set +e
+	diff -u before after
+	echo
+	echo TEST FAILED
+	exit 1
+}
+
+success() {
+	echo test succeeded
+}	
+
+checkpoint() {
+	numastat > before 
+}	
+
+trap failure EXIT
+
+basictest() { 
+echo initial
+checkpoint
+numactl --length=20m $1 --dump
+echo interleave
+checkpoint
+numactl --offset=2m --length=2m $1 --strict --interleave=0,1 --verify --dump
+echo interleave verify
+checkpoint
+numactl $1 --dump
+echo membind setup
+checkpoint
+numactl --offset 4m --length=2m $1 --strict --membind=1 --verify --dump
+echo membind verify
+checkpoint
+numactl $1 --dump
+echo preferred setup
+checkpoint
+numactl --offset 6m --length 2m $1 --strict --preferred=1 --verify --dump
+echo preferred verify
+checkpoint
+numactl $1 --dump
+
+# check overlaps here
+} 
+
+cleanupshm() { 
+    if [ -f $1 ] ; then
+	ipcrm -M `./ftok $1` || true
+	rm $1
+    fi
+}
+
+
+banner() { 
+echo 
+echo ++++++++++++ $1 +++++++++++++++
+echo
+}
+ 
+banner shm
+cleanupshm A
+basictest --shm=A
+cleanupshm A
+
+banner hugeshm
+cleanupshm B
+basictest "--huge --shm=B"
+cleanupshm B
+
+banner tmpfs 
+basictest "--file $TMPFS/B"
+rm $TMPFS/B
+
+# first need a way to create holey hugetlbfs files.
+
+#banner hugetlbfs
+#basictest "--file $HUGE/B"
+#rm /hugetlbfs/B
+
+rm before
+
+trap success EXIT
+
+

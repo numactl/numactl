@@ -239,4 +239,5 @@ long stream_init(void *mem)
 	b = (double *)mem +   (N+OFFSET);
 	c = (double *)mem + 2*(N+OFFSET);
 	stream_check();
+	return 0;
 } 

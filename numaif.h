@@ -1,8 +1,7 @@
 #ifndef NUMAIF_H
 #define NUMAIF_H 1
 
-/* Kernel interface for NUMA library */
-#include <sys/types.h>
+/* Kernel interface for NUMA API */
 
 /* System calls */
 extern long get_mempolicy(int *policy, 
@@ -14,14 +13,17 @@ extern long set_mempolicy(int mode, unsigned long *nmask, unsigned long maxnode)
 
 /* Policies */
 #define MPOL_DEFAULT     0
-#define MPOL_PREFERED    1
+#define MPOL_PREFERRED    1
 #define MPOL_BIND        2
 #define MPOL_INTERLEAVE  3
 
 #define MPOL_MAX MPOL_INTERLEAVE
 
 /* Flags for get_mem_policy */
-#define MPOL_F_ILNODE   (1<<0)  /* return next IL mode instead of node mask */
+#define MPOL_F_NODE    (1<<0)   /* return next il node or node of address */
 #define MPOL_F_ADDR     (1<<1)  /* look up vma using address */
+
+/* Flags for mbind */
+#define MPOL_MF_STRICT  (1<<0)  /* Verify existing pages in the mapping */
 
 #endif

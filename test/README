@@ -1,0 +1,13 @@
+
+Various simple test scripts to verify some parts of the NUMA API.
+
+You should have at least two nodes for the test suite. For x86-64
+there is a patch in numa-emu-2 that allows to simulate multiple nodes
+on a non NUMA machine.
+
+The tests in regress assume that there is enough memory free on nodes 0/1.
+They consider PREFERRED/INTERLEAVE not hitting the first choice node an 
+error. 
+
+TBD: more detailed unit tests for mbind / shm / {get,set}_mempolicy
+Currently everything is tested using numactl only.

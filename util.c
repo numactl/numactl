@@ -6,13 +6,15 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <errno.h>
 
 void printmask(char *name, nodemask_t *mask)
 { 
 	int i;
 	int max = numa_max_node();
-	int full = 1;
 	printf("%s: ", name); 
+#if 0
+	int full = 1;
 	for (i = 0; i <= max; i++) { 
 		if (nodemask_isset(&numa_all_nodes, i) && !nodemask_isset(mask, i)) {
 			full = 0;
@@ -23,6 +25,7 @@ void printmask(char *name, nodemask_t *mask)
 		printf("all nodes\n"); 
 		return;
 	}	
+#endif
 	for (i = 0; i <= max; i++) 
 		if (nodemask_isset(mask, i))
 			printf("%d ", i); 
@@ -52,7 +55,7 @@ nodemask_t nodemask(char *s)
 		}
 		arg = strtoul(s, &end, 0); 
 		if (end == s)
-			complain("missing node argument %s\n", s);
+			complain("unparseable node description `%s'\n", s);
 		if (arg > max)
 			complain("node argument %d is out of range\n", arg);
 		nodemask_set(&mask, arg);
@@ -91,9 +94,25 @@ void complain(char *fmt, ...)
 	va_start(ap, fmt); 
 	fprintf(stderr, "numactl: ");
 	vfprintf(stderr,fmt,ap); 
+	putchar('\n');
 	va_end(ap); 
 	exit(1); 
 }
+
+void nerror(char *fmt, ...) 
+{ 
+	int err = errno;
+	va_list ap;
+	va_start(ap,fmt); 
+	fprintf(stderr, "numactl: ");
+	vfprintf(stderr, fmt, ap); 
+	va_end(ap);
+	if (err) 
+		fprintf(stderr,": %s\n", strerror(err));
+	else
+		fputc('\n', stderr);
+	exit(1);
+} 
 
 long memsize(char *s) 
 { 
@@ -115,15 +134,27 @@ static struct policy {
 } policies[] = { 
 	{ "interleave", MPOL_INTERLEAVE, }, 
 	{ "membind",    MPOL_BIND, }, 
-	{ "prefered",   MPOL_PREFERED, }, 
+	{ "preferred",   MPOL_PREFERRED, }, 
 	{ "default",    MPOL_DEFAULT, 1 }, 
 	{ NULL },
 };
 
+char *policy_names[] = { "default", "preferred", "bind", "interleave" }; 
+
+char *policy_name(int policy)
+{
+	static char buf[32];
+	if (policy >= array_len(policy_names)) {
+		sprintf(buf, "[%d]", policy); 
+		return buf;
+	}
+	return policy_names[policy];
+}
+
 int parse_policy(char *name, char *arg) 
 { 
 	int k;
-	struct policy *p; 
+	struct policy *p = NULL; 
 	if (!name) 
 		return MPOL_DEFAULT;
 	for (k = 0; policies[k].name; k++) { 
@@ -131,9 +162,9 @@ int parse_policy(char *name, char *arg)
 		if (!strcmp(p->name, name))
 			break; 
 	}
-	if (!p->name || (!arg && !p->noarg)) 
+	if (!p || !p->name || (!arg && !p->noarg)) 
 		usage(); 
-        return p->policy;
+    return p->policy;
 } 
 
 void print_policies(void)

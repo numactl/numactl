@@ -43,8 +43,18 @@ int msrfd[MAXCPU];
 int delay;
 int absolute;
 char *cfilter; 
+int verbose;
 
 void usage(void);
+
+void Vprintf(char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap,fmt);
+	if (verbose)
+		vfprintf(stderr,fmt,ap);
+	va_end(ap);
+}
 
 unsigned long long rdmsr(int cpu, unsigned long msr) 
 { 
@@ -94,24 +104,25 @@ void checkcounter(int cpu, int clear)
 	for (i = 1; i < 4; i++) { 
 		int clear_this = clear;
 		unsigned long long evtsel = rdmsr(cpu, PERFEVTSEL0 + i); 
-		printf("%d: %x %Lx\n", cpu, PERFEVTSEL0 + i, evtsel);
+		Vprintf("%d: %x %Lx\n", cpu, PERFEVTSEL0 + i, evtsel);
 		if (!(evtsel & PERFEVTSEL_EN)) { 
-			printf("reinit %d\n", cpu);  
+			Vprintf("reinit %d\n", cpu);  
 			wrmsr(cpu, PERFEVTSEL0 + i, BASE | masks[i - 1]); 
 			clear_this = 1;
 		} else if (evtsel == (BASE | (masks[i-1] << 8))) { 
 			/* everything fine */ 
 		} else if (force) { 
-			printf("reinit force %d\n", cpu); 
+			Vprintf("reinit force %d\n", cpu); 
 			wrmsr(cpu, PERFEVTSEL0 + i, BASE | (masks[i - 1] << 8)); 
 			clear_this = 1;
 		} else {
 			fprintf(stderr, "perfctr %d cpu %d already used with %Lx\n",
 				i, cpu, evtsel); 
+			fprintf(stderr, "Consider using -f if you know what you're doing.\n");
 			exit(1);
 		}
 		if (clear_this) { 
-			printf("clearing %d\n", cpu);
+			Vprintf("clearing %d\n", cpu);
 			wrmsr(cpu, PERFCTR0 + i, 0); 
 		}
 	} 
@@ -148,7 +159,7 @@ void setup(int clear)
 	} 
 	closedir(dir);		
 	if (numcpus == 0) {
-		fprintf(stderr, "No CPU found.\n"); 
+		fprintf(stderr, "No CPU found using MSR driver.\n"); 
 		exit(1);
 	}
 } 
@@ -209,7 +220,7 @@ void dumpall(void)
 	} 		
 } 
 
-void checkhammer(void)
+void checkk8(void)
 { 
 	char *line = NULL;
 	size_t size = 0;
@@ -232,7 +243,7 @@ void checkhammer(void)
 		} 
 	} 
 	if (bad) {
-		printf("not a hammer cpu\n"); 
+		printf("not a opteron cpu\n"); 
 		exit(1);
 	}
 	free(line);
@@ -249,14 +260,15 @@ void usage(void)
 	fprintf(stderr, "       -c clear counters and exit\n"); 	
 	fprintf(stderr, "       -m Print memory traffic (default)\n"); 	
 	fprintf(stderr, "       -C cpu{,cpu} only print for cpus\n"); 
+	fprintf(stderr, "       -v Be verbose\n");
 	exit(1);
 } 
 
 int main(int ac, char **av) 
 { 
 	int opt;
-	checkhammer(); 
-	while ((opt = getopt(ac,av,"ifscmaC:")) != -1) { 
+	checkk8(); 
+	while ((opt = getopt(ac,av,"ifscmaC:v")) != -1) { 
 		switch (opt) { 
 		case 'f': 
 			force = 1; 
@@ -278,6 +290,9 @@ int main(int ac, char **av)
 			break;
 		case 'C':
 			cfilter = optarg;
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		default: 
 			usage();

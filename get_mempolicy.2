@@ -22,15 +22,16 @@ is the maximum bit number plus one that can be stored into
 .I nodemask.
 The bit number is always rounded to an multiple of unsigned long.
 
-The other valid flag is 
-.I MPOL_F_ILNODE.
-It is only valid when the policy is 
-.I MPOL_INTERLEAVE.
-In this case not the interleave mask, but an unsigned long with the next
-node that would be used for interleaving is returned in 
-.I nodemask.
+.\" FIXME
+.\" The other valid flag is 
+.\" .I MPOL_F_NODE.
+.\" It is only valid when the policy is 
+.\" .I MPOL_INTERLEAVE.
+.\" In this case not the interleave mask, but an unsigned long with the next
+.\" node that would be used for interleaving is returned in 
+.\" .I nodemask.
 
-Other flag values are reserved.
+.\" Other flag values are reserved.
 
 For an overview of the possible policies see the
 .I set_mempolicy(2)

@@ -7,9 +7,9 @@
 #include <string.h>
 
 #if defined(__x86_64__) || defined(__i386__) 
-#define NUMA_NUM_NODES 	64
+#define NUMA_NUM_NODES 	128
 #else
-#define NUMA_NUM_NODES	(5*sizeof(unsigned long)*8)
+#define NUMA_NUM_NODES	2048
 #endif
 
 typedef struct { 
@@ -34,6 +34,8 @@ static inline void nodemask_clr(nodemask_t *mask, int node)
 }
 static inline int nodemask_isset(nodemask_t *mask, int node)
 {
+	if ((unsigned)node >= NUMA_NUM_NODES)
+		return 0;
 	if (mask->n[node / (8*sizeof(unsigned long))] & 
 		(1UL<<(node%(8*sizeof(unsigned long)))))
 		return 1;
@@ -56,8 +58,8 @@ int numa_available(void);
 
 /* Get max available node */
 int numa_max_node(void);
-/* Get current homenode of thread. */
-int numa_homenode(void);
+/* Return preferred node */
+int numa_preferred(void);
 /* Return node size and free memory */
 long numa_node_size(int node, long *freep);
 
@@ -75,10 +77,10 @@ void numa_bind(nodemask_t *nodes);
 void numa_set_interleave_mask(nodemask_t *nodemask); 
 /* Return the current interleaving mask */
 nodemask_t numa_get_interleave_mask(void);
-/* Some homenode (node to preferably allocate memory from) for thread. */
-void numa_set_homenode(int node);
+/* Some node to preferably allocate memory from for thread. */
+void numa_set_preferred(int node);
 /* Set local memory allocation policy for thread */
-void numa_set_localalloc(int flag);
+void numa_set_localalloc(void);
 /* Only allocate memory from the nodes set in mask. 0 to turn off */
 void numa_set_membind(nodemask_t *nodemask); 
 /* Return current membind */ 
@@ -111,6 +113,9 @@ void numa_interleave_memory(void *mem, size_t size, nodemask_t *mask);
 /* Allocate a memory area on a specific node. */
 void numa_tonode_memory(void *start, size_t size, int node);
 
+/* Allocate memory on a mask of nodes. */
+void numa_tonodemask_memory(void *mem, size_t size, nodemask_t *mask);
+
 /* Allocate a memory area on the current node. */
 void numa_setlocal_memory(void *start, size_t size);
 
@@ -121,8 +126,17 @@ void numa_police_memory(void *start, size_t size);
 int numa_run_on_node_mask(nodemask_t *mask);
 /* Run current thread only on node */
 int numa_run_on_node(int node);
+/* Return current mask of nodes the thread can run on */
+nodemask_t numa_get_run_node_mask(void);
 
+/* When strict fail allocation when memory cannot be allocated in target node(s). */
 void numa_set_bind_policy(int strict);  
+
+/* Fail when existing memory has incompatible policy */
+void numa_set_strict(int flag);
+
+/* Convert node to CPU mask. -1/errno on failure, otherwise 0. */
+int numa_node_to_cpus(int node, unsigned long *buffer, int buffer_len);
 
 /* Error handling. */
 /* This is an internal function in libnuma that can be overwritten by an user

@@ -1,7 +1,9 @@
 
-fix for new sysfs nodemask format, check 
+test shared interleaving (fork + touch)
 
-numademo numbers seem to be unstable.
+need to fix hugetlbfs to allow holey files (for numactl)
+
+numademo numbers seem to be unstable. investigate.
 
 get_mempolicy man page is unfinished
 

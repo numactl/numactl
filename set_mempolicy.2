@@ -23,7 +23,7 @@ Available policies are
 .B MPOL_DEFAULT,
 .B MPOL_BIND,
 .B MPOL_INTERLEAVE,
-.B MPOL_PREFERED.
+.B MPOL_PREFERRED.
 All policies except 
 .I MPOL_DEFAULT
 require to specify the nodes they apply to in the
@@ -59,11 +59,12 @@ interleaves allocations to the nodes specified in
 This optimizes for bandwidth instead of latency.
 To be effective the memory area should be fairly large, at least 1MB or bigger.
 
-.I MPOL_PREFERED
-sets the prefered node for allocation. The kernel will try to allocate in this
-node first and fall back to other nodes when the prefered nodes is low on free 
-memory.  Only one node can be set in 
-.I nodemask.
+.I MPOL_PREFERRED
+sets the preferred node for allocation. The kernel will try to allocate in this
+node first and fall back to other nodes when the preferred nodes is low on free 
+memory.  Only the first node in the 
+.I nodemask 
+is used. When no node is set in the mask the current node is used for allocation.
 
 There are no
 .B flags

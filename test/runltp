@@ -1,0 +1,19 @@
+#!/bin/sh
+# run ltp with various numactl settings. will run for a few hours.
+# must run as root
+
+LTP=/src/ltp
+LEN=2h
+LTPOPT="-q -p -t $LEN"
+export LD_LIBRARY_PATH=`pwd`/..
+export PATH=$PATH:`pwd`/..
+
+cd $LTP
+for i in 1 2 3 ; do 
+	numactl --interleave=all ./runalltests.sh $LTPOPT n.interleave.all.$i
+	numactl --interleave=0,1 ./runalltests.sh $LTPOPT n.interleave.01.$i
+	numactl --preferred=0 --cpubind=1 ./runalltests.sh $LTPOPT n.preferred.$i
+# the VM test that allocates all memory may fail	
+	numactl --membind=1 --cpubind=0 ./runalltests.sh $LTPOPT n.membind1.$i
+	numactl --membind=0,1 ./runalltests.sh $LTPOPT n.membind01.$i
+done 

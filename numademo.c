@@ -2,20 +2,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "numa.h"
 #include "util.h"
+#include "rdtsc.h"
 
 unsigned long msize; 
-
-#if !defined(__x86_64__) && !defined(__i386__)
-#error implement rdtsc for your architecture
-#endif
-
-#define rdtsc(val) do { \
-	unsigned low, high; 				\
-	asm volatile("rdtsc" : "=a" (low), "=d" (high)); \
-	val = (((unsigned long long)high)<<32) | low;	\
-} while(0)
 
 enum test { 
 	MEMSET = 0,
@@ -23,6 +15,9 @@ enum test {
 	FORWARD,
 	BACKWARD,
 } thistest;
+
+char *delim = " ";
+int force;
 
 char *testname[] = { 
 	"memset",
@@ -32,6 +27,8 @@ char *testname[] = {
 //	"stream",
 	NULL,
 }; 
+
+#define LOOPS 10
 
 void memtest(char *name, unsigned char *mem)
 { 
@@ -43,7 +40,7 @@ void memtest(char *name, unsigned char *mem)
 	max = 0; 
 	min = ~0UL; 
 	sum = 0;
-	for (i = 0; i < 10; i++) { 
+	for (i = 0; i < LOOPS; i++) { 
 		switch (thistest) { 
 		case MEMSET:
 			rdtsc(start);  
@@ -79,13 +76,21 @@ void memtest(char *name, unsigned char *mem)
 		if ((end-start) < min) min = end-start;
 		sum += (end-start); 
 	} 
-	sprintf(title, "%s %s", name, testname[thistest]); 
-	sprintf(result, "avg:%lu/min:%lu/max:%lu cycles/KB",
-	       (sum / 3) / (msize/1024), 
-	       min / (msize/1024), 
-	       max / (msize/1024));
-
-	printf("%-40s%35s\n", title, result); 
+	sprintf(title, "%s%s%s", name, delim, testname[thistest]); 
+	sprintf(result, "avg%s%lu%smin%s%lu%smax%s%lu%scycles/KB",
+		delim,
+		(sum / LOOPS) / (msize/1024), 
+		delim,
+		delim,
+		min / (msize/1024), 
+		delim,
+		delim,
+		max / (msize/1024),
+		delim);
+	if (!isspace(delim[0]))
+		printf("%s%s%s\n", title,delim, result); 
+	else
+		printf("%-40s%35s\n", title, result); 
 
 	numa_free(mem, msize); 
 } 
@@ -142,8 +147,8 @@ void test(enum test type)
 	}
 
 	for (i = 0; i <= max_node; i++) { 
-		printf("setting homenode to %d\n", i);
-		numa_set_homenode(i); 
+		printf("setting preferred node to %d\n", i);
+		numa_set_preferred(i); 
 		memtest("memory without policy", numa_alloc(msize)); 
 	} 
 
@@ -162,10 +167,10 @@ void test(enum test type)
 	numa_set_interleave_mask(&numa_no_nodes); 
 
 	for (i = 0; i <= max_node; i++) { 
-		int oldhn = numa_homenode();
+		int oldhn = numa_preferred();
 
 		numa_run_on_node(i); 
-		printf("running on node %d, homenode %d\n",i, oldhn);
+		printf("running on node %d, preferred node %d\n",i, oldhn);
 
 		memtest("local memory", numa_alloc_local(msize));
 
@@ -191,15 +196,14 @@ void test(enum test type)
 			numa_set_membind(&numa_all_nodes);
 		}
 		
-		numa_set_localalloc(1); 
+		numa_set_localalloc(); 
 		memtest("local allocation", numa_alloc(msize)); 
-		numa_set_localalloc(0); 
 
-		numa_set_homenode((i+1) % max_node); 
-		memtest("setting wrong homenode", numa_alloc(msize)); 
-		numa_set_homenode(i); 
-		memtest("setting correct homenode", numa_alloc(msize)); 
-		numa_set_homenode(oldhn); 
+		numa_set_preferred((i+1) % (1+max_node)); 
+		memtest("setting wrong preferred node", numa_alloc(msize)); 
+		numa_set_preferred(i); 
+		memtest("setting correct preferred node", numa_alloc(msize)); 
+		numa_set_preferred(-1); 
 		printf("\n\n\n"); 
 	} 
 
@@ -209,7 +213,8 @@ void test(enum test type)
 void usage(void)
 {
 	int i;
-	printf("usage: numademo msize[kmg] {tests}\nNo tests means run all.\n"); 
+	printf("usage: numademo [-f] [-c] msize[kmg] {tests}\nNo tests means run all.\n"); 
+	printf("-c output CSV data. -f run even without NUMA API.\n");  
 	printf("valid tests:"); 
 	for (i = 0; testname[i]; i++) 
 		printf(" %s", testname[i]); 
@@ -219,20 +224,29 @@ void usage(void)
 
 int main(int ac, char **av)
 {
-	if (numa_available() < 0) { 
-		printf("your system does not support the numa API.\n");
-		exit(1);
-	}
-
-#if 0
-	if (!strcmp(av[1], "-c")) { 
-		av--;
-		csv = 1;
+	while (av[1] && av[1][0] == '-') { 
+		switch (av[1][1]) { 
+		case 'c': 
+			delim = ","; 
+			break;
+		case 'f': 
+			force = 1;
+			break;
+		default:
+			usage(); 
+			break; 
+		} 
+		++av; 
 	} 
-#endif
 
 	if (!av[1]) 
 		usage(); 
+
+	if (numa_available() < 0) { 
+		printf("your system does not support the numa API.\n");
+		if (!force)
+			exit(1);
+	}
 
 	max_node = numa_max_node(); 
 	printf("%d nodes available\n", max_node+1); 

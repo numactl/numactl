@@ -2,10 +2,7 @@
 
    All calls are undefined when numa_available returns an error.
 
-   It is strongly recommended to only link this as shared library because
-   the kernel API is subject to change.
-
-   Copyright 2003 Andi Kleen, SuSE Labs.   */
+   Copyright 2003,2004 Andi Kleen, SuSE Labs.   */
 #define _GNU_SOURCE 1
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,7 +19,6 @@
 
 #include "numaif.h"
 #include "numa.h"
-#include "cpumask.h"
 #include "numaint.h"
 
 #define WEAK __attribute__((weak))
@@ -30,22 +26,41 @@
 nodemask_t numa_no_nodes;
 nodemask_t numa_all_nodes;
 
-static int bind_policy = MPOL_BIND; 
+#if __GNUC__ < 3 || (__GNUC__ == 3 && __GNUC_MINOR__ < 3)
+#warning "not threadsafe"
+#define __thread
+#endif
+
+static __thread int bind_policy = MPOL_BIND; 
+static __thread int mbind_flags = 0;
 
 int numa_exit_on_error = 0;
 
-/* Can be overwritten by the application for different error handling */
+enum numa_warn { 
+	W_nosysfs,
+	W_noproc,
+	W_badmeminfo,
+	W_nosysfs2,
+	W_cpumap,
+	W_numcpus,
+	W_noderunmask,
+}; 
+
+/* Next two can be overwritten by the application for different error handling */
 WEAK void numa_error(char *where) 
 { 
+	int olde = errno;
 	perror(where); 
 	if (numa_exit_on_error)
 		exit(1); 
+	errno = olde;
 } 
 
 WEAK void numa_warn(int num, char *fmt, ...) 
 { 
 	static unsigned warned;
 	va_list ap;
+	int olde = errno;
 	
 	/* Give each warning only once */
 	if ((1<<num) & warned)
@@ -57,6 +72,8 @@ WEAK void numa_warn(int num, char *fmt, ...)
 	vfprintf(stderr, fmt, ap);
 	fputc('\n', stderr);
 	va_end(ap);
+
+	errno = olde;
 } 
 
 static void setpol(int policy, nodemask_t mask) 
@@ -73,11 +90,13 @@ static void getpol(int *oldpolicy, nodemask_t *oldmask)
 
 static void dombind(void *mem, size_t size, int pol, nodemask_t *nodes)
 { 
-	if (mbind(mem, size, pol, nodes->n, nodes ? NUMA_NUM_NODES+1 : 0, 0) < 0) 
+	if (mbind(mem, size, pol, nodes->n, nodes ? NUMA_NUM_NODES+1 : 0, mbind_flags) 
+	    < 0) 
 		numa_error("mbind"); 
 } 
 
 /* (undocumented) */
+/* gives the wrong answer for hugetlbfs mappings. */
 int numa_pagesize(void)
 { 
 	static int pagesize;
@@ -88,8 +107,9 @@ int numa_pagesize(void)
 } 
 
 static int maxnode = -1; 
+static int maxcpus = -1; 
 
-static int fallback_max_node(void)
+static int number_of_cpus(void)
 { 
 	char *line = NULL;
 	size_t len = 0;
@@ -97,27 +117,50 @@ static int fallback_max_node(void)
 	FILE *f;
 	int cpu;
 	
-	numa_warn(1, "/sys not mounted. Assuming one node per CPU: %s",
-		  strerror(errno));
+	if (maxcpus >= 0) 
+		return maxcpus;
 
 	f = fopen("/proc/cpuinfo","r"); 
 	if (!f) {
-		numa_warn(2, "/proc not mounted. Assuming zero nodes: %s", 
+		int n;
+		unsigned long buffer[CPU_WORDS(8192)];
+		memset(buffer, 0, sizeof(buffer));
+		n = numa_sched_getaffinity(getpid(), sizeof(buffer), buffer);
+		if (n >= 0) { 
+			int i, k;
+			for (i = 0; i < n / sizeof(long); i++) {
+				if (!buffer[i])
+					continue;
+				for (k = 0; k< 8; k++) 
+					if (buffer[i] & (1<<k))
+						maxcpus = i+k;
+			}
+			return maxcpus;
+		}
+		numa_warn(W_noproc, "/proc not mounted. Assuming zero nodes: %s", 
 			  strerror(errno)); 
 		return 0;
 	}
-	maxnode = 0;
+	maxcpus = 0;
 	while (getdelim(&line, &len, '\n', f) > 0) { 
 		if (strncmp(line,"processor",9))
 			continue;
 		s = line + strcspn(line, "0123456789"); 
-		if (sscanf(s, "%d", &cpu) == 1 && cpu > maxnode) 
-			maxnode = cpu;
+		if (sscanf(s, "%d", &cpu) == 1 && cpu > maxcpus) 
+			maxcpus = cpu;
 	} 
 	free(line);
 	fclose(f); 
-	return maxnode;
+	return maxcpus;
 } 
+
+static int fallback_max_node(void)
+{
+	numa_warn(W_nosysfs, "/sys not mounted. Assuming one node per CPU: %s",
+		  strerror(errno));
+	maxnode = number_of_cpus();	
+	return maxnode;
+}
 
 int numa_max_node(void)
 {
@@ -130,7 +173,7 @@ int numa_max_node(void)
 		return maxnode;
 	d = opendir("/sys/devices/system/node"); 
 	if (!d)
-		return fallback_max_node(); 
+		return fallback_max_node();
 	found = 0;
 	while ((de = readdir(d)) != NULL) { 
 		int nd;
@@ -147,7 +190,6 @@ int numa_max_node(void)
 	return maxnode;
 } 
 
-/* (undocumented). FIXME */
 /* (cache the result?) */
 long numa_node_size(int node, long *freep)
 { 
@@ -157,33 +199,43 @@ long numa_node_size(int node, long *freep)
 	FILE *f; 
 	char fn[64];
 	int ok = 0;
+	int required = freep ? 2 : 1; 
 
 	if (freep) 
 		*freep = -1; 
-	sprintf(fn,"/sys/devices/system/node/node%d", node); 
+	sprintf(fn,"/sys/devices/system/node/node%d/meminfo", node); 
 	f = fopen(fn, "r");
 	if (!f)
 		return -1; 
 	while (getdelim(&line, &len, '\n', f) > 0) { 
-		char *s = line + strcspn(line, "0123456789");
-		if (*s == '\0')
-			continue;
-		if (!strstr(line, "kB") && !strstr(line, "KB"))
-			continue;
+		char *end;
+		char *s = strcasestr(line, "kB"); 
+		if (!s) 
+			continue; 
+		--s; 
+		while (s > line && isspace(*s))
+			--s;
+		while (s > line && isdigit(*s))
+			--s; 
 		if (strstr(line, "MemTotal")) { 
-			ok++;
-			size = strtoul(s,NULL,0) << 10; 
+			size = strtoul(s,&end,0) << 10; 
+			if (end == s) 
+				size = -1;
+			else
+				ok++; 
 		}
-		if (strstr(line, "MemFree")) { 
-			ok++;
-			if (freep) 
-				*freep = strtoul(s,NULL,0) << 10; 
+		if (freep && strstr(line, "MemFree")) { 
+			*freep = strtoul(s,&end,0) << 10; 
+			if (end == s) 
+				*freep = -1;
+			else
+				ok++; 
 		}
 	} 
 	fclose(f); 
 	free(line);
-	if (ok != 2)
-		numa_warn(3,"Cannot parse sysfs meminfo");
+	if (ok != required)
+		numa_warn(W_badmeminfo, "Cannot parse sysfs meminfo (%d)", ok);
 	return size;
 }
 
@@ -211,17 +263,22 @@ void numa_tonode_memory(void *mem, size_t size, int node)
 	dombind(mem, size,  bind_policy, &nodes); 
 }
 
+void numa_tonodemask_memory(void *mem, size_t size, nodemask_t *mask)
+{
+	dombind(mem, size,  bind_policy, mask); 
+}
+
 void numa_setlocal_memory(void *mem, size_t size)
 {
-	dombind(mem, size, MPOL_DEFAULT, NULL);
+	dombind(mem, size, MPOL_PREFERRED, NULL);
 }
 
 void numa_police_memory(void *mem, size_t size)
 {
-	int pagesize = numa_pagesize(); 
+	int pagesize = numa_pagesize();
 	unsigned long i; 
 	for (i = 0; i < size; i += pagesize)
-		((unsigned char *)mem)[i] = 0;
+		asm volatile("" :: "r" (((volatile unsigned char *)mem)[i]));
 }
 
 void *numa_alloc(size_t size)
@@ -274,7 +331,7 @@ nodemask_t numa_get_interleave_mask(void)
 int numa_get_interleave_node(void)
 { 
 	int nd;
-	if (get_mempolicy(&nd, NULL, 0, 0, MPOL_F_ILNODE) == 0)
+	if (get_mempolicy(&nd, NULL, 0, 0, MPOL_F_NODE) == 0)
 		return nd;
 	return 0;	
 } 
@@ -304,13 +361,12 @@ void *numa_alloc_local(size_t size)
 	return mem; 	
 } 
 
-/* ??? not threadsafe. Do that per thread? */ 
 void numa_set_bind_policy(int strict) 
 { 
 	if (strict) 
 		bind_policy = MPOL_BIND; 
 	else
-		bind_policy = MPOL_PREFERED;
+		bind_policy = MPOL_PREFERRED;
 } 
 
 void numa_set_membind(nodemask_t *mask) 
@@ -333,8 +389,12 @@ void numa_free(void *mem, size_t size)
 	munmap(mem, size); 
 } 
 
-/* Ugliest function due to braindead kernel output format for cpumaps */
-static cpumask_t *node_to_cpu(int node) 
+static unsigned long *cpusmask; 
+static unsigned long *node_cpu_mask[NUMA_NUM_NODES];  
+
+/* This would be better with some locking, but I don't want to make libnuma
+   dependent on pthreads right now. The races are relatively harmless. */
+int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen) 
 {
 	char fn[64];
 	FILE *f; 
@@ -342,19 +402,44 @@ static cpumask_t *node_to_cpu(int node)
 	size_t len = 0; 
 	char *s;
 	int n;
-	static cpumask_t cpus[NUMA_NUM_NODES];  
-	if (!cpumask_empty(&cpus[node]))
-		return &cpus[node];
-	/* Thread races are harmless */
+	int buflen_needed;
+	unsigned long *mask;
+	int ncpus = number_of_cpus();
+	if (!cpusmask) { 
+		/* should have a lock here, but a race can just cause a one time
+		   loss of memory */
+		cpusmask = malloc(ncpus / 8); 
+		if (!cpusmask) { 
+			errno = ENOMEM; 
+			return -1;
+		}
+		memset(cpusmask, 0,  ncpus/8);
+	} 		
+	buflen_needed = CPU_BYTES(ncpus);
+	memset(buffer, 0, bufferlen); 
+	if ((unsigned)node > maxnode || bufferlen < buflen_needed) { 
+		errno = ERANGE;
+		return -1;
+	}
+
+	if (node_cpu_mask[node]) { 
+		memcpy(buffer, node_cpu_mask[node], buflen_needed);
+		return 0;
+	}
+
+	mask = cpusmask + node;
 	sprintf(fn, "/sys/devices/system/node/node%d/cpumap", node); 
 	f = fopen(fn, "r"); 
 	if (!f || getdelim(&line, &len, '\n', f) < 1) { 
-		numa_warn(4,"/sys not mounted or invalid. Assuming nodes equal CPU: %s",
+		numa_warn(W_nosysfs2,
+		   "/sys not mounted or invalid. Assuming nodes equal CPU: %s",
 			  strerror(errno)); 
-		goto fallback;
+		set_bit(node, mask);
+		goto out;
 	} 
 	n = 0;
-	s = line; 	
+	s = line;
+	memset(mask, 0, buflen_needed);
 	while (*s) {
  		unsigned short num; 
 		int i;
@@ -363,87 +448,151 @@ static cpumask_t *node_to_cpu(int node)
 			static const char hexdigits[] = "0123456789abcdef";
 			char *w = strchr(hexdigits, tolower(s[i]));
 			if (!w) { 
-				numa_warn(5, "Unknown character in sysfs cpumap");
-				goto fallback; 
+				if (isspace(s[i]))
+					break;
+				numa_warn(W_cpumap, 
+                       "Unexpected character `%c' in sysfs cpumap", s[i]);
+				set_bit(node, mask);
+				goto out;
 			}
 			num = (num*16) + (w - hexdigits); 
-		}		
-		if (n > sizeof(cpumask_t)/sizeof(short)) { 
-			if (num) { 
-				numa_warn(6, "Too many CPUs in cpumap. Recompile libnuma."); 
-				goto fallback;
-			}
 		}
-		((unsigned short *)(cpus[node].m))[n] = num;
+		if (i == 0) 
+			break; 		
+		if (n >= array_len(mask)) { 
+			if (num) { 
+				numa_warn(W_numcpus, 
+                       "Too many CPUs in cpumap. Recompile libnuma."); 
+				break;
+			}
+			break;
+		}
+		mask[n] = num;
 		n++;
 		s += i;
-	} 		
+	} 	
+ out:
+	node_cpu_mask[node] = mask;
 	free(line);
 	fclose(f);
-	return &cpus[node]; 
-
- fallback:
-	cpumask_set(&cpus[node], node);
-	return &cpus[node];		
+	memcpy(buffer, node_cpu_mask[node], buflen_needed);
+	return 0; 
 } 
 
 int numa_run_on_node_mask(nodemask_t *mask)
 { 	
-	int i;
-	cpumask_t cpus;
-	cpumask_zero(&cpus); 
+	int ncpus = number_of_cpus();
+	int i, k;
+	unsigned long cpus[CPU_WORDS(ncpus)], nodecpus[CPU_WORDS(ncpus)];
+	memset(cpus, 0, CPU_BYTES(ncpus));
 	for (i = 0; i < NUMA_NUM_NODES; i++) { 
-		if (nodemask_isset(mask, i))
-			cpumask_or(&cpus, &cpus, node_to_cpu(i)); 
+		if (mask->n[i / BITS_PER_LONG] == 0)
+			continue;
+		if (nodemask_isset(mask, i)) { 
+			if (numa_node_to_cpus(i, nodecpus, CPU_BYTES(ncpus)) < 0) { 
+				numa_warn(W_noderunmask, 
+					  "Cannot read node cpumask from sysfs");
+				continue;
+			}
+			for (k = 0; k < CPU_WORDS(ncpus); k++)
+				cpus[k] |= nodecpus[k];
+		}	
 	}
-	return numa_sched_setaffinity(getpid(), sizeof(cpumask_t), cpus.m);
+	return numa_sched_setaffinity(getpid(), CPU_BYTES(ncpus), cpus);
+} 
+
+nodemask_t numa_get_run_node_mask(void)
+{ 
+	int ncpus = number_of_cpus();
+	nodemask_t mask;
+	int i, k;
+	unsigned long cpus[CPU_WORDS(ncpus)], nodecpus[CPU_WORDS(ncpus)];
+
+	memset(cpus, 0, CPU_BYTES(ncpus));
+	nodemask_zero(&mask);
+	if (numa_sched_getaffinity(getpid(), CPU_BYTES(ncpus), cpus) < 0) 
+		return numa_no_nodes; 
+	/* somewhat dumb algorithm */
+	for (i = 0; i < NUMA_NUM_NODES; i++) {
+		if (numa_node_to_cpus(i, nodecpus, CPU_BYTES(ncpus)) < 0) {
+			numa_warn(W_noderunmask, "Cannot read node cpumask from sysfs");
+			continue;
+		}
+		for (k = 0; k < NUMA_NUM_NODES/BITS_PER_LONG; k++) {
+			if (nodecpus[k] & cpus[k])
+				nodemask_set(&mask, i); 
+		}
+	}		
+	return mask;
 } 
 
 int numa_run_on_node(int node)
 { 
-	cpumask_t cpus; 
-	if (node == -1) 
-		cpumask_fill(&cpus); 
+	int ncpus = number_of_cpus();
+	unsigned long cpus[CPU_WORDS(ncpus)];
+
+	if (node == -1)
+		memset(cpus, 0xff, CPU_BYTES(ncpus));
 	else if (node < NUMA_NUM_NODES) {
-		cpumask_zero(&cpus);
-		cpumask_or(&cpus, &cpus, node_to_cpu(node)); 
-	} else
-		return -EINVAL; 
-	return numa_sched_setaffinity(getpid(), sizeof(cpumask_t), cpus.m);
+		if (numa_node_to_cpus(node, cpus, CPU_BYTES(ncpus)) < 0) {
+			numa_warn(W_noderunmask, "Cannot read node cpumask from sysfs");
+			return -1; 
+		} 		
+	} else { 
+		errno = EINVAL;
+		return -1; 
+	}
+	return numa_sched_setaffinity(getpid(), CPU_BYTES(ncpus), cpus);
 } 
 
-int numa_homenode(void)
+int numa_preferred(void)
 { 
 	int policy;
 	nodemask_t nodes;
 	getpol(&policy, &nodes);
-	if (policy == MPOL_PREFERED || policy == MPOL_BIND) { 
+	if (policy == MPOL_PREFERRED || policy == MPOL_BIND) { 
 		int i;
 		int max = NUMA_NUM_NODES;
 		for (i = 0; i < max ; i++) 
 			if (nodemask_isset(&nodes, i))
 				return i; 
 	}
+	/* could read the current CPU from /proc/self/status. Probably 
+	   not worth it. */
 	return 0; /* or random one? */
 }
 
-void numa_set_homenode(int node)
+void numa_set_preferred(int node)
 { 
 	nodemask_t n;
+	if (node == -1) {
+		nodemask_t empty;
+		nodemask_zero(&empty);
+		setpol(MPOL_DEFAULT, empty);
+		return;
+	}
 	nodemask_zero(&n);
 	nodemask_set(&n, node); 
-	setpol(MPOL_PREFERED, n);
+	setpol(MPOL_PREFERRED, n);
 } 
 
-void numa_set_localalloc(int flag) 
-{
+void numa_set_localalloc(void) 
+{	
 	nodemask_t empty;
 	nodemask_zero(&empty);
-	setpol(MPOL_DEFAULT, empty);
+	setpol(MPOL_PREFERRED, empty);
 } 
 
 void numa_bind(nodemask_t *nodemask)
 {
 	numa_run_on_node_mask(nodemask); 
 	numa_set_membind(nodemask);
+}
+
+void numa_set_strict(int flag)
+{
+	if (flag)
+		mbind_flags |= MPOL_MF_STRICT;
+	else
+		mbind_flags &= ~MPOL_MF_STRICT;
 }
