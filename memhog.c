@@ -1,3 +1,20 @@
+/* Copyright (C) 2003,2004 Andi Kleen, SuSE Labs.
+   Allocate memory with policy for testing.
+
+   numactl is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public
+   License as published by the Free Software Foundation; version
+   2.
+
+   numactl is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should find a copy of v2 of the GNU General Public License somewhere
+   on your Linux system; if not, write to the Free Software Foundation, 
+   Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/mman.h>
@@ -14,9 +31,12 @@ enum {
 }; 
 
 
+int repeat = 1;
+
 void usage(void)
 { 
-	printf("memhog size[kmg] [policy [nodeset]]\n");
+	printf("memhog [-rNUM] size[kmg] [policy [nodeset]]\n");
+	printf("-rNUM repeat memset NUM times\n");
 	print_policies(); 
 	exit(1); 
 } 
@@ -44,8 +64,20 @@ int main(int ac, char **av)
 	int policy, gpolicy;
 	int ret = 0;
 	int loose = 0; 
+	int i;
 
 	nodemask_zero(&nodes); 
+
+	while (av[1] && av[1][0] == '-') { 
+		switch (av[1][1]) { 
+		case 'r':
+			repeat = atoi(av[1] + 2); 
+			break;
+		default:	
+			usage();
+		}
+		av++;		
+	} 
 	
 	if (!av[1]) usage();
 
@@ -80,6 +112,7 @@ int main(int ac, char **av)
 		ret = 1;
 	}
 
-	hog(map); 
+	for (i = 0; i < repeat; i++)
+		hog(map); 
 	exit(ret);
 }

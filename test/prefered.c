@@ -1,5 +1,5 @@
 /* Test prefer policy */
-#include <numaif.h>
+#include "numaif.h"
 #include <sys/mman.h>
 #include <stdio.h>
 #include <assert.h>

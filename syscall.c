@@ -22,8 +22,8 @@
 
 #define WEAK __attribute__((weak))
 
-/* Define stub for dummy calls (e.g. for compile testing) */
-#ifndef STUB 
+#if !defined(__NR_mbind) || !defined(__NR_set_mempolicy) || \
+    !defined(__NR_get_mempolicy)
 
 #if defined(__x86_64__)
 
@@ -36,7 +36,7 @@
 #define __NR_set_mempolicy 238
 #define __NR_get_mempolicy 239
 
-#elif defined __ia64__
+#elif defined(__ia64__)
 #define __NR_sched_setaffinity    1231
 #define __NR_sched_getaffinity    1232
 
@@ -46,7 +46,7 @@
 #define __NR_get_mempolicy 1260
 #define __NR_set_mempolicy 1261
 
-#elif defined __i386__
+#elif defined(__i386__)
 
 /* semi-official allocation (in -mm) */
 
@@ -54,13 +54,19 @@
 #define __NR_get_mempolicy 275
 #define __NR_set_mempolicy 276
 
+#elif defined(__ppc64__) || defined(__ppc__)
+
+#define __NR_mbind 259
+#define __NR_get_mempolicy 260
+#define __NR_set_mempolicy 261
+
 #else
-#error "Add syscalls for your architecture"
+#error "Add syscalls for your architecture or update kernel headers"
 #endif
 
 #endif
 
-#ifdef __x86_64__
+#if defined(__x86_64__)
 /* 6 argument calls on x86-64 are often buggy in both glibc and
    asm/unistd.h. Add a working version here. */
 long syscall6(long call, long a, long b, long c, long d, long e, long f)
@@ -77,35 +83,64 @@ long syscall6(long call, long a, long b, long c, long d, long e, long f)
        } 
        return res;
 } 
+#elif defined(__i386__)
+
+/* i386 has buggy syscall6 in glibc too. This is tricky to do 
+   in inline assembly because it clobbers so many registers. Do it 
+   out of line. */
+asm(
+"__syscall6:\n"
+"	pushl %ebp\n"
+"	pushl %edi\n"
+"	pushl %esi\n"
+"	pushl %ebx\n"
+"	movl  (0+5)*4(%esp),%eax\n"
+"	movl  (1+5)*4(%esp),%ebx\n"
+"	movl  (2+5)*4(%esp),%ecx\n"
+"	movl  (3+5)*4(%esp),%edx\n"
+"	movl  (4+5)*4(%esp),%esi\n"
+"	movl  (5+5)*4(%esp),%edi\n"
+"	movl  (6+5)*4(%esp),%ebp\n"
+"	int $0x80\n"
+"	popl %ebx\n"
+"	popl %esi\n"
+"	popl %edi\n"
+"	popl %ebp\n"
+"	ret"
+);
+extern long __syscall6(long n, long a, long b, long c, long d, long e, long f);
+
+long syscall6(long call, long a, long b, long c, long d, long e, long f)
+{ 
+       long res = __syscall6(call,a,b,c,d,e,f);
+       if (res < 0) { 
+	       errno = -res; 
+	       res = -1; 
+       } 
+       return res;
+} 
+
 #else
 #define syscall6 syscall
-#endif
-
-#ifdef STUB 
-#define syscall_or_stub(x...) (errno = ENOSYS, -1) 
-#define syscall6_or_stub(x...) (errno = ENOSYS, -1)
-#else
-#define syscall_or_stub(x...) syscall(x)
-#define syscall6_or_stub(x...) syscall6(x) 
 #endif
 
 long WEAK get_mempolicy(int *policy, 
 		   unsigned long *nmask, unsigned long maxnode,
 		   void *addr, int flags)          
 {
-	return syscall_or_stub(__NR_get_mempolicy, policy, nmask, maxnode, addr, flags);
+	return syscall(__NR_get_mempolicy, policy, nmask, maxnode, addr, flags);
 }
 
 long WEAK mbind(void *start, unsigned long len, int mode, 
 	   unsigned long *nmask, unsigned long maxnode, unsigned flags) 
 {
-	return syscall6_or_stub(__NR_mbind, (long)start, len, mode, (long)nmask, maxnode, flags); 
+	return syscall6(__NR_mbind, (long)start, len, mode, (long)nmask, maxnode, flags); 
 }
 
 long WEAK set_mempolicy(int mode, unsigned long *nmask, 
                                    unsigned long maxnode)
 {
-	return syscall_or_stub(__NR_set_mempolicy,mode,nmask,maxnode);
+	return syscall(__NR_set_mempolicy,mode,nmask,maxnode);
 }
 
 /* SLES8 glibc doesn't define those */
@@ -120,3 +155,9 @@ int numa_sched_getaffinity(pid_t pid, unsigned len, unsigned long *mask)
 	return syscall(__NR_sched_getaffinity,pid,len,mask);
 
 }
+
+make_internal_alias(numa_sched_getaffinity);
+make_internal_alias(numa_sched_setaffinity);
+make_internal_alias(get_mempolicy);
+make_internal_alias(set_mempolicy);
+make_internal_alias(mbind);

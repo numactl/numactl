@@ -31,6 +31,8 @@ numa \- NUMA policy library
 .B int numa_preferred(void)
 .br
 .B long numa_node_size(int node, long *freep)
+.br
+.B long long numa_node_size64(int node, long long *freep)
 .sp
 .B nodemask_t numa_all_nodes
 .br
@@ -131,6 +133,11 @@ function returns the memory size of a node. When the argument
 .I freep
 is not NULL the free memory of the node is written to it.
 On error it returns -1.
+.B numa_node_size64
+works the same as 
+.I numa_node_size
+except that it returns values as long long instead of long.
+This is useful on 32bit architectures with large nodes.
 
 Some of these functions accept or return a 
 .I nodemask.

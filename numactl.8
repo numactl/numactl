@@ -222,6 +222,10 @@ Shared memory segments larger than numactl's address space cannot
 be completely policied. This could be a problem on 32bit architectures.
 Changing it piece by piece may work.
 
+.I --cpubind
+accepts node numbers, not cpu numbers. Individual cpus inside
+nodes cannot be selected right now.
+
 .SH FILES
 .I /proc/cpuinfo
 for the listing of active CPUs. See 

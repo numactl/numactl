@@ -119,11 +119,15 @@ was specified and an existing page was already on an wrong node.
 
 .SH NOTES
 For a higher level interface it is recommended to use the functions in
-.I numa(3). 
+.I numa(3)
+from the numactl package.
 
 Until glibc supports these system calls you can link with 
 .I -lnuma
-to get system call definitions.
+to get system call definitions. libnuma is available in the numactl
+package. It also has the 
+.I numaif.h
+header.
 
 .I MPOL_MF_STRICT
 is ignored on huge page mappings right now. For preferred and interleave 
@@ -133,6 +137,14 @@ For
 .I MPOL_INTERLEAVE
 mode the interleaving is changed at fault time. The final layout of 
 the pages depends on the order they were faulted in first.
+
+.SH VERSIONS
+The
+.I mbind
+syscall was added to the Linux kernel with version
+.I 2.6.7rc1. 
+It is only available on kernels compiled with 
+.I CONFIG_NUMA.
 
 .SH SEE ALSO
 .I numa(3), 

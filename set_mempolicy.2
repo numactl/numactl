@@ -18,8 +18,10 @@
 .\" the source, must acknowledge the copyright and authors of this work.
 .TH SET_MEMPOLICY "Nov 2003" "SuSE Labs" "Linux Programmer's Manual"
 .SH NAME
-.\" need an include for the prototype
-.B "#include <linux/mempolicy.h>" 
+set_mempolicy - Set default NUMA memory policy for a process and its children.
+
+.SH SYNOPSIS
+.B "#include <numaif.h>" 
 .sp
 .B int set_mempolicy(int policy, unsigned long *nodemask, unsigned long maxnode) 
 .sp				  
@@ -96,7 +98,9 @@ Process policy is not remembered when the page is swapped out.
 Applications should consider using the higher level functions
 in 
 .I numa(3)
-instead.
+instead. This library is available in the 
+.I numactl
+package.
 
 .SH RETURN VALUE
 .I set_mempolicy
@@ -104,6 +108,21 @@ returns -1 when an error occurred, otherwise 0.
 
 .\" .SH ERRORS
 .\" writeme
+
+.SH VERSIONS
+The
+.I set_mempolicy
+syscall was added to the Linux kernel with version
+.I 2.6.7rc1.
+It is only available on kernels compiled with
+.I CONFIG_NUMA.
+
+Until glibc supports these system calls you can link with 
+.I -lnuma
+to get system call definitions. libnuma is available in the numactl
+package. It also has the
+.I numaif.h
+header.
 
 .SH SEE ALSO
 .I mbind(2),

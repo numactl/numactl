@@ -21,3 +21,24 @@ if the cpumask is longer than 99 characters.
 
 - Add Coppyright headers
 
+0.6.5
+
+- Reduce unneeded DSO relocations (Arjan van de Ven) 
+- Add -r option to memhog (repeat walk) 
+- some manpage fixes
+- Use syscall numbers from asm/unistd.h if possible
+- Add numa_node_size64 to handle large nodes on 32bit architectures
+- Fix numactl to use it (report from Rajan Ravindran) 
+- Use ln -sf in make install (Rajan Ravindran)
+- Add syscall numbers for ppc/ppc64
+- Add private syscall6 for i386 since the glibc version is broken
+- Remove STUB
+- Change numactl --show to use cpubind instead of nodebind for CPU affinity.
+- Fix make install into examples directory
+- Work around broken sched_set_affinity API. This adds a 32768 CPUs limit.
+- Fix segfault with /sys not mounted.
+- Clean up Makefile
+- Make numactl --show more clever
+
+0.7-pre1
+

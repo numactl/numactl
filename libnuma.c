@@ -33,11 +33,19 @@
 #include "numaif.h"
 #include "numa.h"
 #include "numaint.h"
+#include "util.h"
 
 #define WEAK __attribute__((weak))
 
+#define CPU_BUFFER_SIZE 4096     /* This limits you to 32768 CPUs */
+
 nodemask_t numa_no_nodes;
 nodemask_t numa_all_nodes;
+
+
+make_internal_alias(numa_no_nodes);
+make_internal_alias(numa_all_nodes);
+
 
 #if __GNUC__ < 3 || (__GNUC__ == 3 && __GNUC_MINOR__ < 3)
 #warning "not threadsafe"
@@ -48,6 +56,8 @@ static __thread int bind_policy = MPOL_BIND;
 static __thread int mbind_flags = 0;
 
 int numa_exit_on_error = 0;
+
+make_internal_alias(numa_exit_on_error);
 
 enum numa_warn { 
 	W_nosysfs,
@@ -64,10 +74,12 @@ WEAK void numa_error(char *where)
 { 
 	int olde = errno;
 	perror(where); 
-	if (numa_exit_on_error)
+	if (numa_exit_on_error_int)
 		exit(1); 
 	errno = olde;
 } 
+
+make_internal_alias(numa_error);
 
 WEAK void numa_warn(int num, char *fmt, ...) 
 { 
@@ -89,23 +101,26 @@ WEAK void numa_warn(int num, char *fmt, ...)
 	errno = olde;
 } 
 
+make_internal_alias(numa_warn);
+
+
 static void setpol(int policy, nodemask_t mask) 
 { 
-	if (set_mempolicy(policy, &mask.n[0], NUMA_NUM_NODES+1) < 0) 
-		numa_error("set_mempolicy");
+	if (set_mempolicy_int(policy, &mask.n[0], NUMA_NUM_NODES+1) < 0) 
+		numa_error_int("set_mempolicy");
 } 
 
 static void getpol(int *oldpolicy, nodemask_t *oldmask)
 { 
-	if (get_mempolicy(oldpolicy, oldmask->n, NUMA_NUM_NODES+1, 0, 0) < 0) 
-		numa_error("get_mempolicy");
+	if (get_mempolicy_int(oldpolicy, oldmask->n, NUMA_NUM_NODES+1, 0, 0) < 0) 
+		numa_error_int("get_mempolicy");
 } 
 
 static void dombind(void *mem, size_t size, int pol, nodemask_t *nodes)
 { 
-	if (mbind(mem, size, pol, nodes->n, nodes ? NUMA_NUM_NODES+1 : 0, mbind_flags) 
+	if (mbind_int(mem, size, pol, nodes->n, nodes ? NUMA_NUM_NODES+1 : 0, mbind_flags) 
 	    < 0) 
-		numa_error("mbind"); 
+		numa_error_int("mbind"); 
 } 
 
 /* (undocumented) */
@@ -118,6 +133,8 @@ int numa_pagesize(void)
 	pagesize = getpagesize();
 	return pagesize;
 } 
+
+make_internal_alias(numa_pagesize);
 
 static int maxnode = -1; 
 static int maxcpus = -1; 
@@ -138,7 +155,7 @@ static int number_of_cpus(void)
 		int n;
 		unsigned long buffer[CPU_WORDS(8192)];
 		memset(buffer, 0, sizeof(buffer));
-		n = numa_sched_getaffinity(getpid(), sizeof(buffer), buffer);
+		n = numa_sched_getaffinity_int(getpid(), sizeof(buffer), buffer);
 		if (n >= 0) { 
 			int i, k;
 			for (i = 0; i < n / sizeof(long); i++) {
@@ -150,7 +167,7 @@ static int number_of_cpus(void)
 			}
 			return maxcpus;
 		}
-		numa_warn(W_noproc, "/proc not mounted. Assuming zero nodes: %s", 
+		numa_warn_int(W_noproc, "/proc not mounted. Assuming zero nodes: %s", 
 			  strerror(errno)); 
 		return 0;
 	}
@@ -169,7 +186,7 @@ static int number_of_cpus(void)
 
 static int fallback_max_node(void)
 {
-	numa_warn(W_nosysfs, "/sys not mounted. Assuming one node per CPU: %s",
+	numa_warn_int(W_nosysfs, "/sys not mounted or no numa system. Assuming one node per CPU: %s",
 		  strerror(errno));
 	maxnode = number_of_cpus();	
 	return maxnode;
@@ -203,12 +220,14 @@ int numa_max_node(void)
 	return maxnode;
 } 
 
+make_internal_alias(numa_max_node);
+
 /* (cache the result?) */
-long numa_node_size(int node, long *freep)
+long long numa_node_size64(int node, long long *freep)
 { 
 	size_t len = 0;
 	char *line = NULL;
-	long size = -1;
+	long long size = -1;
 	FILE *f; 
 	char fn[64];
 	int ok = 0;
@@ -231,14 +250,14 @@ long numa_node_size(int node, long *freep)
 		while (s > line && isdigit(*s))
 			--s; 
 		if (strstr(line, "MemTotal")) { 
-			size = strtoul(s,&end,0) << 10; 
+			size = strtoull(s,&end,0) << 10; 
 			if (end == s) 
 				size = -1;
 			else
 				ok++; 
 		}
 		if (freep && strstr(line, "MemFree")) { 
-			*freep = strtoul(s,&end,0) << 10; 
+			*freep = strtoull(s,&end,0) << 10; 
 			if (end == s) 
 				*freep = -1;
 			else
@@ -248,18 +267,29 @@ long numa_node_size(int node, long *freep)
 	fclose(f); 
 	free(line);
 	if (ok != required)
-		numa_warn(W_badmeminfo, "Cannot parse sysfs meminfo (%d)", ok);
+		numa_warn_int(W_badmeminfo, "Cannot parse sysfs meminfo (%d)", ok);
 	return size;
+}
+
+make_internal_alias(numa_node_size64);
+
+long numa_node_size(int node, long *freep)
+{	
+	long long f2;	
+	long sz = numa_node_size64_int(node, &f2);
+	if (freep) 
+		*freep = f2; 
+	return sz;	
 }
 
 int numa_available(void)
 {
 	int max,i;
-	if (get_mempolicy(NULL, NULL, 0, 0, 0) < 0 && errno == ENOSYS) 
+	if (get_mempolicy_int(NULL, NULL, 0, 0, 0) < 0 && errno == ENOSYS) 
 		return -1; 
-	max = numa_max_node();
+	max = numa_max_node_int();
 	for (i = 0; i <= max; i++) 
-		nodemask_set(&numa_all_nodes, i); 
+		nodemask_set(&numa_all_nodes_int, i); 
 	return 0;
 } 
 
@@ -288,11 +318,13 @@ void numa_setlocal_memory(void *mem, size_t size)
 
 void numa_police_memory(void *mem, size_t size)
 {
-	int pagesize = numa_pagesize();
+	int pagesize = numa_pagesize_int();
 	unsigned long i; 
 	for (i = 0; i < size; i += pagesize)
 		asm volatile("" :: "r" (((volatile unsigned char *)mem)[i]));
 }
+
+make_internal_alias(numa_police_memory);
 
 void *numa_alloc(size_t size)
 {
@@ -301,7 +333,7 @@ void *numa_alloc(size_t size)
 		   0, 0); 
 	if (mem == (char *)-1)
 		return NULL;
-	numa_police_memory(mem, size);
+	numa_police_memory_int(mem, size);
 	return mem;
 } 
 
@@ -317,14 +349,16 @@ void *numa_alloc_interleaved_subset(size_t size, nodemask_t *mask)
 	return mem;
 } 
 
+make_internal_alias(numa_alloc_interleaved_subset);
+
 void *numa_alloc_interleaved(size_t size)
 { 
-	return numa_alloc_interleaved_subset(size, &numa_all_nodes); 
+	return numa_alloc_interleaved_subset_int(size, &numa_all_nodes_int); 
 } 
 
 void numa_set_interleave_mask(nodemask_t *mask)
 { 
-	if (nodemask_equal(mask, &numa_no_nodes))
+	if (nodemask_equal(mask, &numa_no_nodes_int))
 		setpol(MPOL_DEFAULT, *mask); 
 	else
 		setpol(MPOL_INTERLEAVE, *mask);
@@ -337,14 +371,14 @@ nodemask_t numa_get_interleave_mask(void)
 	getpol(&oldpolicy, &mask); 
 	if (oldpolicy == MPOL_INTERLEAVE)
 		return mask;
-	return numa_no_nodes; 
+	return numa_no_nodes_int; 
 } 
 
 /* (undocumented) */
 int numa_get_interleave_node(void)
 { 
 	int nd;
-	if (get_mempolicy(&nd, NULL, 0, 0, MPOL_F_NODE) == 0)
+	if (get_mempolicy_int(&nd, NULL, 0, 0, MPOL_F_NODE) == 0)
 		return nd;
 	return 0;	
 } 
@@ -387,6 +421,8 @@ void numa_set_membind(nodemask_t *mask)
 	setpol(MPOL_BIND, *mask);
 } 
 
+make_internal_alias(numa_set_membind);
+
 nodemask_t numa_get_membind(void)
 {
 	int oldpolicy;
@@ -394,7 +430,7 @@ nodemask_t numa_get_membind(void)
 	getpol(&oldpolicy, &nodes);
 	if (oldpolicy == MPOL_BIND)
 		return nodes;
-	return numa_all_nodes;	
+	return numa_all_nodes_int;	
 } 
 
 void numa_free(void *mem, size_t size)
@@ -439,7 +475,7 @@ int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen)
 	sprintf(fn, "/sys/devices/system/node/node%d/cpumap", node); 
 	f = fopen(fn, "r"); 
 	if (!f || getdelim(&line, &len, '\n', f) < 1) { 
-		numa_warn(W_nosysfs2,
+		numa_warn_int(W_nosysfs2,
 		   "/sys not mounted or invalid. Assuming nodes equal CPU: %s",
 			  strerror(errno)); 
 		set_bit(node, (unsigned long *)mask);
@@ -458,7 +494,7 @@ int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen)
 			if (!w) { 
 				if (isspace(s[i]))
 					break;
-				numa_warn(W_cpumap, 
+				numa_warn_int(W_cpumap, 
 					  "Unexpected character `%c' in sysfs cpumap", s[i]);
 				set_bit(node, mask);
 				goto out;
@@ -478,8 +514,8 @@ int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen)
 		mask[0] = num; 
 	}
  out:
-	free(line);
-	fclose(f);
+	if (f) 
+		fclose(f);
 	memcpy(buffer, mask, buflen_needed);
 
 	/* slightly racy, see above */ 
@@ -492,18 +528,20 @@ int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen)
 	return 0; 
 } 
 
+make_internal_alias(numa_node_to_cpus);
+
 int numa_run_on_node_mask(nodemask_t *mask)
 { 	
 	int ncpus = number_of_cpus();
-	int i, k;
+	int i, k, err;
 	unsigned long cpus[CPU_WORDS(ncpus)], nodecpus[CPU_WORDS(ncpus)];
 	memset(cpus, 0, CPU_BYTES(ncpus));
 	for (i = 0; i < NUMA_NUM_NODES; i++) { 
 		if (mask->n[i / BITS_PER_LONG] == 0)
 			continue;
 		if (nodemask_isset(mask, i)) { 
-			if (numa_node_to_cpus(i, nodecpus, CPU_BYTES(ncpus)) < 0) { 
-				numa_warn(W_noderunmask, 
+			if (numa_node_to_cpus_int(i, nodecpus, CPU_BYTES(ncpus)) < 0) { 
+				numa_warn_int(W_noderunmask, 
 					  "Cannot read node cpumask from sysfs");
 				continue;
 			}
@@ -511,8 +549,41 @@ int numa_run_on_node_mask(nodemask_t *mask)
 				cpus[k] |= nodecpus[k];
 		}	
 	}
-	return numa_sched_setaffinity(getpid(), CPU_BYTES(ncpus), cpus);
+	err = numa_sched_setaffinity_int(getpid(), CPU_BYTES(ncpus), cpus);
+
+	/* The sched_setaffinity API is broken because it expects
+	   the user to guess the kernel cpuset size. Do this in a
+	   brute force way. */
+	if (err < 0 && errno == EINVAL) { 
+		int savederrno = errno;
+		int me = getpid();
+		char *bigbuf;
+		static int size = -1;
+		if (size == -1) 
+			size = CPU_BYTES(ncpus) * 2; 
+		bigbuf = malloc(CPU_BUFFER_SIZE);
+		if (!bigbuf) {
+			errno = ENOMEM; 
+			return -1;
+		}
+		errno = savederrno;
+		while (size <= CPU_BUFFER_SIZE) { 
+			memcpy(bigbuf, cpus, CPU_BYTES(ncpus)); 
+			memset(bigbuf + CPU_BYTES(ncpus), 0,
+			       CPU_BUFFER_SIZE - CPU_BYTES(ncpus));
+			err = numa_sched_setaffinity_int(me, size, (unsigned long *)bigbuf);
+			if (err == 0 || errno != EINVAL)
+				break;
+			size *= 2;
+		}
+		savederrno = errno;
+		free(bigbuf);
+		errno = savederrno;
+	} 
+	return err;
 } 
+
+make_internal_alias(numa_run_on_node_mask);
 
 nodemask_t numa_get_run_node_mask(void)
 { 
@@ -523,12 +594,12 @@ nodemask_t numa_get_run_node_mask(void)
 
 	memset(cpus, 0, CPU_BYTES(ncpus));
 	nodemask_zero(&mask);
-	if (numa_sched_getaffinity(getpid(), CPU_BYTES(ncpus), cpus) < 0) 
-		return numa_no_nodes; 
+	if (numa_sched_getaffinity_int(getpid(), CPU_BYTES(ncpus), cpus) < 0) 
+		return numa_no_nodes_int; 
 	/* somewhat dumb algorithm */
 	for (i = 0; i < NUMA_NUM_NODES; i++) {
-		if (numa_node_to_cpus(i, nodecpus, CPU_BYTES(ncpus)) < 0) {
-			numa_warn(W_noderunmask, "Cannot read node cpumask from sysfs");
+		if (numa_node_to_cpus_int(i, nodecpus, CPU_BYTES(ncpus)) < 0) {
+			numa_warn_int(W_noderunmask, "Cannot read node cpumask from sysfs");
 			continue;
 		}
 		for (k = 0; k < NUMA_NUM_NODES/BITS_PER_LONG; k++) {
@@ -547,15 +618,15 @@ int numa_run_on_node(int node)
 	if (node == -1)
 		memset(cpus, 0xff, CPU_BYTES(ncpus));
 	else if (node < NUMA_NUM_NODES) {
-		if (numa_node_to_cpus(node, cpus, CPU_BYTES(ncpus)) < 0) {
-			numa_warn(W_noderunmask, "Cannot read node cpumask from sysfs");
+		if (numa_node_to_cpus_int(node, cpus, CPU_BYTES(ncpus)) < 0) {
+			numa_warn_int(W_noderunmask, "Cannot read node cpumask from sysfs");
 			return -1; 
 		} 		
 	} else { 
 		errno = EINVAL;
 		return -1; 
 	}
-	return numa_sched_setaffinity(getpid(), CPU_BYTES(ncpus), cpus);
+	return numa_sched_setaffinity_int(getpid(), CPU_BYTES(ncpus), cpus);
 } 
 
 int numa_preferred(void)
@@ -598,8 +669,8 @@ void numa_set_localalloc(void)
 
 void numa_bind(nodemask_t *nodemask)
 {
-	numa_run_on_node_mask(nodemask); 
-	numa_set_membind(nodemask);
+	numa_run_on_node_mask_int(nodemask); 
+	numa_set_membind_int(nodemask);
 }
 
 void numa_set_strict(int flag)

@@ -2,7 +2,7 @@
 #include <sys/ipc.h>
 #include <sys/fcntl.h>
 #include <stdio.h>
-#include "numaif.h"
+#include <numaif.h>
 
 #define err(x) perror(x),exit(1)
 

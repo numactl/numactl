@@ -14,3 +14,5 @@ extern char *policy_name(int policy);
 
 #define err(x) perror("numactl: " x),exit(1)
 #define array_len(x) (sizeof(x)/sizeof(*(x)))
+
+#define round_up(x,y) (((x) + (y) - 1) & ~((y)-1))

@@ -1,6 +1,6 @@
 /* Randomly change policy */ 
 #include <stdio.h>
-#include <numaif.h>
+#include "numaif.h"
 #include <sys/mman.h>
 #include <sys/shm.h>
 #include <sys/ipc.h>

@@ -1,5 +1,5 @@
-#include "numa.h"
-#include "numaif.h"
+#include <numa.h>
+#include <numaif.h>
 #include <stdio.h>
 
 int main(void)

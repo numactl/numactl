@@ -1,6 +1,6 @@
 /* Somewhat silly multithreaded memcpy */
 #include <pthread.h>
-#include <numa.h>
+#include "numa.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

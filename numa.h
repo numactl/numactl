@@ -80,7 +80,9 @@ int numa_available(void);
 int numa_max_node(void);
 /* Return preferred node */
 int numa_preferred(void);
+
 /* Return node size and free memory */
+long long numa_node_size64(int node, long long *freep);
 long numa_node_size(int node, long *freep);
 
 int numa_pagesize(void); 
@@ -165,7 +167,7 @@ int numa_node_to_cpus(int node, unsigned long *buffer, int buffer_len);
 void numa_error(char *where); 
 /* When true exit the program when a NUMA system call (except numa_available) 
    fails */ 
-int numa_exit_on_error;
+extern int numa_exit_on_error;
 /* Warning function. Can also be overwritten. Default is to print on stderr
    once. */
 void numa_warn(int num, char *fmt, ...);

@@ -67,6 +67,7 @@ void usage(void)
 		"\n"
 		"memory policy is --interleave, --preferred, --membind, --localalloc\n"
 		"nodes is a comma delimited list of node numbers or none/all.\n"
+		"please note that --cpubind accepts node numbers, not cpu numbers\n"
 		"length can have g (GB), m (MB) or k (KB) suffixes\n");
 	exit(1);
 } 
@@ -108,19 +109,38 @@ void show(void)
 	 
 	printf("policy: %s\n", policy_name(policy));
 		
-	printf("preferred node: %ld\n", prefnode);
-	printmask("interleavemask", &interleave);
-	printf("interleavenode: %ld\n", cur); 
-	printmask("nodebind", &cpubind);
+	printf("preferred node: ");
+	switch (policy) { 
+	case MPOL_PREFERRED:
+		if (prefnode != -1) { 
+			printf("%ld\n", prefnode);
+			break;
+		}
+		/*FALL THROUGH*/
+	case MPOL_DEFAULT:
+		printf("current\n");
+		break;
+	case MPOL_INTERLEAVE:
+		printf("%ld (interleave next)\n",cur); 
+		break; 
+	case MPOL_BIND:
+		printf("%d\n", find_first_bit(&membind, NUMA_NUM_NODES)); 
+		break;
+	} 
+	if (policy == MPOL_INTERLEAVE) {
+		printmask("interleavemask", &interleave);
+		printf("interleavenode: %ld\n", cur); 
+	}
+	printmask("cpubind", &cpubind);
 	printmask("membind", &membind);
 }
 
-char *fmt_mem(unsigned long mem, char *buf) 
+char *fmt_mem(unsigned long long mem, char *buf) 
 { 
 	if (mem == -1L)
 		sprintf(buf, "<not available>"); 
 	else
-		sprintf(buf, "%lu MB", mem >> 20); 
+		sprintf(buf, "%Lu MB", mem >> 20); 
 	return buf;
 } 
 
@@ -131,8 +151,8 @@ void hardware(void)
 	printf("available: %d nodes (0-%d)\n", 1+maxnode, maxnode); 	
 	for (i = 0; i <= maxnode; i++) { 
 		char buf[64];
-		unsigned long fr;
-		unsigned long sz = numa_node_size(i, &fr); 
+		unsigned long long fr;
+		unsigned long long sz = numa_node_size64(i, &fr); 
 		printf("node %d size: %s\n", i, fmt_mem(sz, buf));
 		printf("node %d free: %s\n", i, fmt_mem(fr, buf));
 	}
