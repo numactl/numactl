@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/mman.h>
+#include <sys/fcntl.h>
 #include <string.h>
 #include "numa.h"
 #include "numaif.h" 
@@ -65,11 +66,17 @@ int main(int ac, char **av)
 	int ret = 0;
 	int loose = 0; 
 	int i;
+	int fd = -1; 
 
 	nodemask_zero(&nodes); 
 
 	while (av[1] && av[1][0] == '-') { 
 		switch (av[1][1]) { 
+		case 'f': 
+			fd = open(av[1]+2, O_RDWR);
+			if (fd < 0) 
+				perror(av[1]+2); 
+			break;	
 		case 'r':
 			repeat = atoi(av[1] + 2); 
 			break;
@@ -90,9 +97,13 @@ int main(int ac, char **av)
 	policy = parse_policy(av[2], av[3]);
 	if (policy != MPOL_DEFAULT)
 		nodes = nodemask(av[3]);
-
-	map = mmap(NULL, length, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,
-		   0, 0); 
+	
+	if (fd >= 0)
+		map = mmap(NULL,length,PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0); 
+	else	
+		map = mmap(NULL, length, PROT_READ|PROT_WRITE, 
+				   MAP_PRIVATE|MAP_ANONYMOUS,
+				   0, 0);
 	if (map == (char*)-1) 
 		err("mmap");
 	

@@ -4,7 +4,8 @@ CLEANFILES := libnuma.a numactl.o libnuma.o numactl numademo numademo.o \
 	      memhog libnuma.so libnuma.so.1 numamon numamon.o syscall.o bitops.o \
 	      memhog.o stream util.o stream_main.o stream_lib.o shm.o \
 	      test/pagesize test/tshared test/mynode.o test/tshared.o \
-	      test/tshm test/mynode test/ftok test/prefered test/randmap .depend .depend.X
+	      test/tshm test/mynode test/ftok test/prefered test/randmap \
+		  .depend .depend.X test/nodemap
 
 SOURCES := bitops.c libnuma.c memhog.c numactl.c numademo.c \
 	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c \
@@ -15,7 +16,8 @@ libdir := ${prefix}$(shell if [ -d /usr/lib64 ] ; then echo "/lib64" ; else echo
 docdir := ${prefix}/share/doc
 
 all: numactl libnuma.so numademo numamon memhog stream test/tshared \
-     test/mynode test/pagesize test/ftok test/prefered test/randmap
+     test/mynode test/pagesize test/ftok test/prefered test/randmap \
+	 test/nodemap
 
 numactl: numactl.o util.o shm.o bitops.o libnuma.so
 
@@ -58,6 +60,8 @@ test/prefered: test/prefered.c libnuma.so
 test/ftok: test/ftok.c libnuma.so
 
 test/randmap: test/randmap.c libnuma.so
+
+test/nodemap: test/nodemap.c libnuma.so
 
 .PHONY: install all clean html depend
 

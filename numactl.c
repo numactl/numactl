@@ -323,7 +323,6 @@ int main(int ac, char **av)
 			numa_set_strict(1);
 			break;
 		case 'I': /* --shmid */
-			noshm("--shmid");
 			shmid = strtoul(optarg, &end, 0);
 			if (end == optarg) 
 				usage();

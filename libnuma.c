@@ -42,11 +42,6 @@
 nodemask_t numa_no_nodes;
 nodemask_t numa_all_nodes;
 
-
-make_internal_alias(numa_no_nodes);
-make_internal_alias(numa_all_nodes);
-
-
 #if __GNUC__ < 3 || (__GNUC__ == 3 && __GNUC_MINOR__ < 3)
 #warning "not threadsafe"
 #define __thread
@@ -289,7 +284,7 @@ int numa_available(void)
 		return -1; 
 	max = numa_max_node_int();
 	for (i = 0; i <= max; i++) 
-		nodemask_set(&numa_all_nodes_int, i); 
+		nodemask_set(&numa_all_nodes, i); 
 	return 0;
 } 
 
@@ -353,12 +348,12 @@ make_internal_alias(numa_alloc_interleaved_subset);
 
 void *numa_alloc_interleaved(size_t size)
 { 
-	return numa_alloc_interleaved_subset_int(size, &numa_all_nodes_int); 
+	return numa_alloc_interleaved_subset_int(size, &numa_all_nodes); 
 } 
 
 void numa_set_interleave_mask(nodemask_t *mask)
 { 
-	if (nodemask_equal(mask, &numa_no_nodes_int))
+	if (nodemask_equal(mask, &numa_no_nodes))
 		setpol(MPOL_DEFAULT, *mask); 
 	else
 		setpol(MPOL_INTERLEAVE, *mask);
@@ -371,7 +366,7 @@ nodemask_t numa_get_interleave_mask(void)
 	getpol(&oldpolicy, &mask); 
 	if (oldpolicy == MPOL_INTERLEAVE)
 		return mask;
-	return numa_no_nodes_int; 
+	return numa_no_nodes; 
 } 
 
 /* (undocumented) */
@@ -430,7 +425,7 @@ nodemask_t numa_get_membind(void)
 	getpol(&oldpolicy, &nodes);
 	if (oldpolicy == MPOL_BIND)
 		return nodes;
-	return numa_all_nodes_int;	
+	return numa_all_nodes;	
 } 
 
 void numa_free(void *mem, size_t size)
@@ -595,7 +590,7 @@ nodemask_t numa_get_run_node_mask(void)
 	memset(cpus, 0, CPU_BYTES(ncpus));
 	nodemask_zero(&mask);
 	if (numa_sched_getaffinity_int(getpid(), CPU_BYTES(ncpus), cpus) < 0) 
-		return numa_no_nodes_int; 
+		return numa_no_nodes; 
 	/* somewhat dumb algorithm */
 	for (i = 0; i < NUMA_NUM_NODES; i++) {
 		if (numa_node_to_cpus_int(i, nodecpus, CPU_BYTES(ncpus)) < 0) {

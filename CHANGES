@@ -1,4 +1,5 @@
 
+- add -f option to memhog to map file
 - more bugfixes
 - replace forward backward with STREAM test in numademo
 

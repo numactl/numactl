@@ -23,9 +23,9 @@
 #include <string.h>
 
 #if defined(__x86_64__) || defined(__i386__) 
-#define NUMA_NUM_NODES 	128
+#define NUMA_NUM_NODES 	64
 #else
-#define NUMA_NUM_NODES	2048
+#define NUMA_NUM_NODES	1024
 #endif
 
 #ifdef __cplusplus
