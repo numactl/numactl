@@ -1,19 +1,22 @@
 #!/bin/sh
-# run ltp with various numactl settings. will run for a few hours.
+# run the Linux Test Project with various numactl settings. will run for a few hours.
 # must run as root
+# You can download LTP from http://ltp.sourceforge.net 
+# Change LTP below to the source directory of a compiled LTP distribution
 
 LTP=/src/ltp
 LEN=2h
+
 LTPOPT="-q -p -t $LEN"
 export LD_LIBRARY_PATH=`pwd`/..
 export PATH=`pwd`/..:$PATH
 
 cd $LTP
 for i in 1 2 3 ; do 
-	numactl --interleave=all ./runalltests.sh $LTPOPT n.interleave.all.$i
-	numactl --interleave=0,1 ./runalltests.sh $LTPOPT n.interleave.01.$i
-	numactl --preferred=0 --cpubind=1 ./runalltests.sh $LTPOPT n.preferred.$i
+	numactl --interleave=all ./runltp $LTPOPT -l n.interleave.all.$i
+	numactl --interleave=0,1 ./runltp $LTPOPT -l n.interleave.01.$i
+	numactl --preferred=0 --cpubind=1 ./runltp $LTPOPT -l n.preferred.$i
 # the VM test that allocates all memory may fail	
-	numactl --membind=1 --cpubind=0 ./runalltests.sh $LTPOPT n.membind1.$i
-	numactl --membind=0,1 ./runalltests.sh $LTPOPT n.membind01.$i
+	numactl --membind=1 --cpubind=0 ./runltp $LTPOPT -l n.membind1.$i
+	numactl --membind=0,1 ./runltp $LTPOPT -l n.membind01.$i
 done 

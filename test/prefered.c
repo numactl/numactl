@@ -5,11 +5,13 @@
 #include <assert.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <numa.h>
 
 #define err(x) perror(x),exit(1)
 
 int main(void)
 {
+	int max = numa_max_node();
 	unsigned long nodes, mask;
 	int sz = getpagesize();
 	char *mem = mmap(NULL, sz*2, PROT_READ|PROT_WRITE, 
@@ -22,7 +24,7 @@ int main(void)
 	if (mem == (char *)-1)
 		err("mmap");
 
-	for (i = 1; i >= 0; i--) { 
+	for (i = max; i >= 0; i--) { 
 		printf("%d\n", i); 
 
 		nodes = 1UL << i;
@@ -31,14 +33,19 @@ int main(void)
 		
 		mem[off] = 0;
 			
-		if (get_mempolicy(&pol, &mask, 2, mem+off, MPOL_F_ADDR) < 0) 
+		if (get_mempolicy(&pol, &mask, 64, mem+off, MPOL_F_ADDR) < 0) 
 			err("get_mempolicy");
 	
 		assert(pol == MPOL_PREFERRED);
 		assert(mask & (1UL << i)); 
 
+
+		node = 0x123;
+		
 		if (get_mempolicy(&node, NULL, 0, mem+off, MPOL_F_ADDR|MPOL_F_NODE) < 0)
 			err("get_mempolicy2"); 
+
+		printf("node %d\n", i);
 
 		assert(node == i);	
 

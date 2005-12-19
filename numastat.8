@@ -1,0 +1,75 @@
+.\" t
+.\" Copyright 2004 Andi Kleen, SuSE Labs.
+.\"
+.\" Permission is granted to make and distribute verbatim copies of this
+.\" manual provided the copyright notice and this permission notice are
+.\" preserved on all copies.
+.\"
+.\" Permission is granted to copy and distribute modified versions of this
+.\" manual under the conditions for verbatim copying, provided that the
+.\" entire resulting derived work is distributed under the terms of a
+.\" permission notice identical to this one.
+.\" 
+.\" Since the Linux kernel and libraries are constantly changing, this
+.\" manual page may be incorrect or out-of-date.  The author(s) assume no
+.\" responsibility for errors or omissions, or for damages resulting from
+.\" the use of the information contained herein.  
+.\" 
+.\" Formatted or processed versions of this manual, if unaccompanied by
+.\" the source, must acknowledge the copyright and authors of this work.
+.TH NUMACTL 8 "Nov 2004" "SuSE Labs" "Linux Administrator's Manual"
+.SH NAME
+numastat \- Print statistics about NUMA memory allocation
+.SH SYNOPSIS
+numastat
+.SH DESCRIPTION
+.B numastat 
+displays NUMA allocations statistics from the kernel memory allocator.
+Each process has NUMA policies that specifies on which node pages
+are allocated. See 
+.I set_mempolicy(2)
+or 
+.I numactl(8) 
+on details of the available policies. 
+The numastat counters keep track on what nodes memory is finally allocated.
+
+The counters are separated for each node. Each count event is the allocation
+of a page of memory. 
+
+.B numa_hit 
+is the number of allocations where an allocation was intended for 
+that node and succeeded there. 
+
+.B numa_miss
+shows how often an allocation was intended for this node, but ended up
+on another node due to low memory. 
+
+.B numa_foreign
+is the number of allocations that were intended for another node, 
+but ended up on this node.  Each 
+.I numa_foreign
+event has a 
+.I numa_miss
+on another node.
+
+.B interleave_hit
+is the number of interleave policy allocations that were intended for a 
+specific node and succeeded there. 
+
+.B local_node
+is incremented when a process running on the node allocated 
+memory on the same node. 
+
+.B other_node
+is incremented when a process running on another node allocated memory on that node.
+.SH SEE ALSO 
+.I numactl(8)
+.I set_mempolicy(2)
+.I numa(3) 
+.SH NOTES 
+numastat output is only available on NUMA systems.
+.SH FILES
+/sys/devices/system/node/node*/numastat
+.SH BUGS
+The output formatting on machines with a large number of nodes
+could be improved.

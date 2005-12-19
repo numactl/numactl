@@ -36,13 +36,12 @@
 
 int shmfd = -1;
 long shmid = 0;
-void *shmptr;
+char *shmptr;
 unsigned long long shmlen;
 mode_t shmmode = 0600;
 unsigned long long shmoffset;
 int shmflags; 
-int use_tmpfs;
-int shm_pagesize;
+static int shm_pagesize;
 
 long huge_page_size(void)
 { 
@@ -61,7 +60,7 @@ long huge_page_size(void)
 	return getpagesize();
 }
 
-void check_region(void)
+static void check_region(void)
 {
 	if (((unsigned long)shmptr % shm_pagesize) || (shmlen % shm_pagesize)) { 
 		fprintf(stderr, "numactl: policy region not page aligned\n");
@@ -69,7 +68,7 @@ void check_region(void)
 	} 
 }
 
-key_t sysvkey(char *name)
+static key_t sysvkey(char *name)
 {
 	int fd;
 	key_t key = ftok(name, shmid);
@@ -160,7 +159,7 @@ void attach_shared(char *name)
 
 } 
 
-void 
+static void 
 dumppol(unsigned long long start, unsigned long long end, int pol, nodemask_t mask)
 { 
 	if (pol == MPOL_DEFAULT)
@@ -199,8 +198,6 @@ void dump_shm(void)
 	} 
 	dumppol(start, c, prevpol, prevnodes);
 } 
-
-extern int exitcode;
 
 static void vwarn(char *ptr, char *fmt, ...) 
 { 

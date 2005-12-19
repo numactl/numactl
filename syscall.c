@@ -48,8 +48,6 @@
 
 #elif defined(__i386__)
 
-/* semi-official allocation (in -mm) */
-
 #define __NR_mbind 274
 #define __NR_get_mempolicy 275
 #define __NR_set_mempolicy 276
@@ -125,19 +123,19 @@ long syscall6(long call, long a, long b, long c, long d, long e, long f)
 #endif
 
 long WEAK get_mempolicy(int *policy, 
-		   unsigned long *nmask, unsigned long maxnode,
+		   const unsigned long *nmask, unsigned long maxnode,
 		   void *addr, int flags)          
 {
 	return syscall(__NR_get_mempolicy, policy, nmask, maxnode, addr, flags);
 }
 
 long WEAK mbind(void *start, unsigned long len, int mode, 
-	   unsigned long *nmask, unsigned long maxnode, unsigned flags) 
+	   const unsigned long *nmask, unsigned long maxnode, unsigned flags) 
 {
 	return syscall6(__NR_mbind, (long)start, len, mode, (long)nmask, maxnode, flags); 
 }
 
-long WEAK set_mempolicy(int mode, unsigned long *nmask, 
+long WEAK set_mempolicy(int mode, const unsigned long *nmask, 
                                    unsigned long maxnode)
 {
 	return syscall(__NR_set_mempolicy,mode,nmask,maxnode);
@@ -145,12 +143,12 @@ long WEAK set_mempolicy(int mode, unsigned long *nmask,
 
 /* SLES8 glibc doesn't define those */
 
-int numa_sched_setaffinity(pid_t pid, unsigned len, unsigned long *mask)
+int numa_sched_setaffinity(pid_t pid, unsigned len, const unsigned long *mask)
 {
 	return syscall(__NR_sched_setaffinity,pid,len,mask);
 }
 
-int numa_sched_getaffinity(pid_t pid, unsigned len, unsigned long *mask)
+int numa_sched_getaffinity(pid_t pid, unsigned len, const unsigned long *mask)
 {
 	return syscall(__NR_sched_getaffinity,pid,len,mask);
 

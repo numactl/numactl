@@ -1,4 +1,4 @@
-/* Copyright (C) 2003,2004 Andi Kleen, SuSE Labs.
+/* Copyright (C) 2003,2004,2005 Andi Kleen, SuSE Labs.
    Command line NUMA policy control.
 
    numactl is free software; you can redistribute it and/or
@@ -34,6 +34,8 @@ struct option opts[] = {
 	{"interleave", 1, 0, 'i' },
 	{"preferred", 1, 0, 'p' },
 	{"cpubind", 1, 0, 'c' }, 
+	{"cpunodebind", 1, 0, 'N' }, 
+	{"physcpubind", 1, 0, 'C' }, 
 	{"membind", 1, 0, 'm'},
 	{"show", 0, 0, 's' }, 
 	{"localalloc", 0,0, 'l'},
@@ -56,7 +58,8 @@ struct option opts[] = {
 void usage(void)
 {
 	fprintf(stderr,
-		"usage: numactl [--interleave=nodes] [--preferred=node] [--cpubind=nodes]\n" 
+		"usage: numactl [--interleave=nodes] [--preferred=node]\n"
+		"               [--physcpubind=cpus] [--cpunodebind=nodes]\n"
 		"               [--membind=nodes] [--localalloc] command args ...\n"
 		"       numactl [--show]\n"
 		"       numactl [--hardware]\n"
@@ -66,8 +69,11 @@ void usage(void)
 		"               memory policy\n"
 		"\n"
 		"memory policy is --interleave, --preferred, --membind, --localalloc\n"
-		"nodes is a comma delimited list of node numbers or none/all.\n"
-		"please note that --cpubind accepts node numbers, not cpu numbers\n"
+		"nodes is a comma delimited list of node numbers or A-B ranges or none/all.\n"
+		"cpus is a comma delimited list of cpu numbers or A-B ranges or all\n"
+		"all ranges can be inverted with !\n"
+		"the old --cpubind argument is deprecated.\n"
+		"use --cpunodebind or --physcpubind instead\n"
 		"length can have g (GB), m (MB) or k (KB) suffixes\n");
 	exit(1);
 } 
@@ -82,21 +88,41 @@ void usage_msg(char *msg, ...)
 	usage();
 } 
 
+static void show_physcpubind(void)
+{
+	int ncpus = 8192;
+	
+	for (;;) { 
+		int cpubufsize = round_up(ncpus, BITS_PER_LONG) / BYTES_PER_LONG;
+		unsigned  long cpubuf[cpubufsize / sizeof(long)];
+		
+		memset(cpubuf,0,cpubufsize);
+		if (numa_sched_getaffinity(0, cpubufsize, cpubuf) < 0) { 
+			if (errno == EINVAL && ncpus < 1024*1024) {
+				ncpus *= 2; 
+				continue;
+			}
+			err("sched_get_affinity");
+		}
+		printcpumask("physcpubind", cpubuf, cpubufsize);
+		break;
+	}
+}
+
 void show(void)
 {
 	unsigned long prefnode;
 	nodemask_t membind, interleave, cpubind;
 	unsigned long cur;
 	int policy;
-
-	nodemask_zero(&cpubind);
-	if (numa_sched_getaffinity(getpid(), sizeof(cpubind), 
-				   (unsigned long *)&cpubind) < 0) 
-		err("get_affinity");
+	
 	if (numa_available() < 0) { 
+		show_physcpubind();
 		printf("No NUMA support available on this system.\n");
 		exit(1);
 	}
+
+	cpubind = numa_get_run_node_mask();
 
 	prefnode = numa_preferred();
 	interleave = numa_get_interleave_mask();
@@ -131,7 +157,9 @@ void show(void)
 		printmask("interleavemask", &interleave);
 		printf("interleavenode: %ld\n", cur); 
 	}
-	printmask("cpubind", &cpubind);
+	show_physcpubind();
+	printmask("cpubind", &cpubind);  // for compatibility
+	printmask("nodebind", &cpubind);
 	printmask("membind", &membind);
 }
 
@@ -144,6 +172,27 @@ char *fmt_mem(unsigned long long mem, char *buf)
 	return buf;
 } 
 
+static void print_distances(int maxnode)
+{
+	int i,k;
+
+	if (numa_distance(maxnode,0) == 0) {
+		printf("No distance information available.\n");
+		return;
+	}
+	printf("node distances:\n"); 
+	printf("node ");
+	for (i = 0; i <= maxnode; i++) 
+		printf("% 3d ", i);
+	printf("\n");
+	for (i = 0; i <= maxnode; i++) {
+		printf("% 3d: ", i);
+		for (k = 0; k <= maxnode; k++) 
+			printf("% 3d ", numa_distance(i,k)); 
+		printf("\n");
+	}			
+}
+
 void hardware(void)
 { 
 	int i;
@@ -151,11 +200,12 @@ void hardware(void)
 	printf("available: %d nodes (0-%d)\n", 1+maxnode, maxnode); 	
 	for (i = 0; i <= maxnode; i++) { 
 		char buf[64];
-		unsigned long long fr;
+		long long fr;
 		unsigned long long sz = numa_node_size64(i, &fr); 
 		printf("node %d size: %s\n", i, fmt_mem(sz, buf));
 		printf("node %d free: %s\n", i, fmt_mem(fr, buf));
 	}
+	print_distances(maxnode);
 } 
 
 void checkerror(char *s)
@@ -243,6 +293,7 @@ int main(int ac, char **av)
 				numa_set_interleave_mask(&mask);
 			checkerror("setting interleave mask");
 			break;
+		case 'N': /* --cpunodebind */
 		case 'c': /* --cpubind */
 			mask = nodemask(optarg);
 			errno = 0;
@@ -251,6 +302,19 @@ int main(int ac, char **av)
 			numa_run_on_node_mask(&mask);
 			checkerror("sched_setaffinity");
 			break;
+		case 'C': /* --physcpubind */
+		{
+			int ncpus;
+			unsigned long *cpubuf;
+			cpubuf = cpumask(optarg, &ncpus);
+			errno = 0;
+			check_cpubind(do_shm);
+			did_cpubind = 1;
+			numa_sched_setaffinity(0, CPU_BYTES(ncpus), cpubuf);
+			checkerror("sched_setaffinity");
+			free(cpubuf);
+			break;
+		}
 		case 'm': /* --membind */
 			checknuma();
 			setpolicy(MPOL_BIND);
@@ -268,7 +332,9 @@ int main(int ac, char **av)
 		case 'p': /* --preferred */
 			checknuma();
 			setpolicy(MPOL_PREFERRED);
-			arg = strtoul(optarg,NULL,0); 
+			arg = strtoul(optarg,&end,0); 
+			if (*end || end == optarg) 
+				usage();
 			errno = 0;
 			numa_set_bind_policy(0);
 			nodemask_zero(&mask);
@@ -309,7 +375,7 @@ int main(int ac, char **av)
 		case 'M': /* --shmmode */
 			noshm("--shmmode");
 			shmmode = strtoul(optarg, &end, 8);
-			if (end == optarg) 
+			if (end == optarg || *end) 
 				usage();
 			break;
 		case 'd': /* --dump */
@@ -324,7 +390,7 @@ int main(int ac, char **av)
 			break;
 		case 'I': /* --shmid */
 			shmid = strtoul(optarg, &end, 0);
-			if (end == optarg) 
+			if (end == optarg || *end) 
 				usage();
 			break;
 

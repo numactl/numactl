@@ -1,0 +1,22 @@
+#!/bin/sh
+# More regression tests for libnuma/numa api
+
+export LD_LIBRARY_PATH=`pwd`/..
+
+T() {
+       echo "$@" 
+       if ! "$@" ;  then
+	  echo	$1 FAILED!!!!
+	  exit 1
+       fi
+       echo
+}
+
+# various tests
+
+# failure is harmless because prefered is only a hint
+#T ./prefered
+
+T ./distance
+T ./nodemap
+#T ./randmap

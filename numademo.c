@@ -292,6 +292,9 @@ int main(int ac, char **av)
 
 	msize = memsize(av[1]); 
 
+	if (!msize)
+		usage();
+
 	stream_setmem(msize);
 
 	if (av[2] == NULL) { 

@@ -1,4 +1,10 @@
-
+- Fix some warnings
+- Add const to global variables and prototypes
+- Document numa_warn
+- Add numa_distance() support to read topology
+- remove internal alias from numa_{warn,error} to allow overwriting
+  again
+- Various bug fixes
 - add -f option to memhog to map file
 - more bugfixes
 - replace forward backward with STREAM test in numademo
@@ -42,4 +48,29 @@ if the cpumask is longer than 99 characters.
 - Make numactl --show more clever
 
 0.7-pre1
+
+- add test/regress2 and some fixes to test programs
+- Fix DSO relocation patch for global variables
+- Change nodeset sizes back to be binary compatible with SLES9
+- Cosmetic changes to manpages (pointed out by Eric S. Raymond) 
+- Make numa_run_on_node etc. act on current thread only even on NPTL systems
+  (Dinakar Guniguntala)
+- Make numa_no_nodes / numa_all_nodes const (Werner Almesberger) 
+- Fix up the warnings caused by above change
+- Add numa_distance() on systems with ACPI
+- remove some obsolete code
+- add rdtsc for ppc64
+- fix unsigned/unsigned long confusion in cpumasks (Matt Dobson)
+- fix CPU_BYTES and rename CPU_WORDS to CPU_LONGS (Matt Dobson) 
+- Print node distances in numactl
+
+0.8
+- hardend numactl command line parsing against bad arguments in some cases
+- remove cpumask/nodemask confusion which has become a FAQ:
+  --cpubind deprecated, added --cpunodebind and --physcpubind= options
+  print both in --show, old cpumask kept for compatibility
+- Fix --show problems
+- various fixes for bugs noted by Mike Stroyan (thanks!)
+- install set_mempolicy manpage
+- various smaller fixes
 

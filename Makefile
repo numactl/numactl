@@ -1,13 +1,16 @@
-CFLAGS := -g -Wall -I. -O2
+# Note: if you want to overwrite CFLAGS on the make command line
+# overwrite OPT_CFLAGS, not CFLAGS itself. The -I. is needed.
+OPT_CFLAGS :=  -g -Wall -O0 
+CFLAGS := -I. ${OPT_CFLAGS}
 
-CLEANFILES := libnuma.a numactl.o libnuma.o numactl numademo numademo.o \
+CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o \
 	      memhog libnuma.so libnuma.so.1 numamon numamon.o syscall.o bitops.o \
 	      memhog.o stream util.o stream_main.o stream_lib.o shm.o \
 	      test/pagesize test/tshared test/mynode.o test/tshared.o \
-	      test/tshm test/mynode test/ftok test/prefered test/randmap \
-		  .depend .depend.X test/nodemap
+	      test/mynode test/ftok test/prefered test/randmap \
+		  .depend .depend.X test/nodemap test/distance
 
-SOURCES := bitops.c libnuma.c memhog.c numactl.c numademo.c \
+SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
 	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c \
 	test/*.c
 
@@ -17,7 +20,7 @@ docdir := ${prefix}/share/doc
 
 all: numactl libnuma.so numademo numamon memhog stream test/tshared \
      test/mynode test/pagesize test/ftok test/prefered test/randmap \
-	 test/nodemap
+	 test/nodemap test/distance
 
 numactl: numactl.o util.o shm.o bitops.o libnuma.so
 
@@ -39,13 +42,15 @@ numademo.o: numa.h numademo.c libnuma.so
 
 numamon: numamon.o
 
-libnuma.so.1: libnuma.o syscall.o
+libnuma.so.1: libnuma.o syscall.o distance.o
 	${CC} -shared -Wl,-soname=libnuma.so.1 -o libnuma.so.1 $^
 
 libnuma.so: libnuma.so.1
 	ln -sf libnuma.so.1 libnuma.so
 
 libnuma.o : CFLAGS += -fPIC
+
+distance.o : CFLAGS += -fPIC
 
 syscall.o : CFLAGS += -fPIC
 
@@ -63,6 +68,8 @@ test/randmap: test/randmap.c libnuma.so
 
 test/nodemap: test/nodemap.c libnuma.so
 
+test/distance: test/distance.c libnuma.so
+
 .PHONY: install all clean html depend
 
 MANLINKS := \
@@ -72,7 +79,7 @@ get_interleave_node get_membind get_run_node_mask interleave_memory max_node \
 no_nodes node_size node_to_cpus police_memory preferred run_on_node \
 run_on_node_mask set_bind_policy  set_interleave_mask set_localalloc \
 set_membind set_preferred set_strict setlocal_memory tonode_memory \
-tonodemask_memory 
+tonodemask_memory distance
 
 MANPAGES := numa.3 numactl.8 mbind.2 set_mempolicy.2 get_mempolicy.2	 
 
@@ -81,6 +88,7 @@ install: numactl numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numastat
 	cp numademo ${prefix}/bin
 	cp memhog ${prefix}/bin
 	cp set_mempolicy.2 ${prefix}/share/man/man2
+	cp get_mempolicy.2 ${prefix}/share/man/man2
 	cp mbind.2 ${prefix}/share/man/man2
 	cp numactl.8 ${prefix}/share/man/man8
 	cp numa.3 ${prefix}/share/man/man3

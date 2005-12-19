@@ -16,12 +16,14 @@
 #include "numa.h"
 #include "numaif.h"
 #include "util.h"
+#include "bitops.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
 #include <errno.h>
+#include <unistd.h>
 
 void printmask(char *name, nodemask_t *mask)
 { 
@@ -44,6 +46,82 @@ void printmask(char *name, nodemask_t *mask)
 	for (i = 0; i <= max; i++) 
 		if (nodemask_isset(mask, i))
 			printf("%d ", i); 
+	putchar('\n');
+} 
+
+int numcpus; 
+
+/* caller must free buffer */
+unsigned long *cpumask(char *s, int *ncpus) 
+{
+	int invert = 0;
+	char *end; 
+
+	if (!numcpus) 
+		numcpus = sysconf(_SC_NPROCESSORS_CONF); 
+
+	int cpubufsize = round_up(numcpus, BITS_PER_LONG) / BYTES_PER_LONG;
+	unsigned long *cpubuf = calloc(cpubufsize,1); 
+	if (!cpubuf) 
+		complain("Out of memory");
+
+	if (s[0] == 0) 
+		return cpubuf;
+	if (*s == '!') { 
+		invert = 1;
+		++s;
+	}
+	do {		
+		unsigned long arg;
+
+		if (!strcmp(s,"all")) { 
+			int i;
+			for (i = 0; i < numcpus; i++)
+				set_bit(i, cpubuf);
+			break;
+		}
+		arg = strtoul(s, &end, 0); 
+		if (end == s)
+			complain("unparseable node description `%s'\n", s);
+		if (arg > numcpus)
+			complain("cpu argument %d is out of range\n", arg);
+		set_bit(arg, cpubuf);
+		s = end; 
+		if (*s == '-') { 
+			char *end2;
+			unsigned long arg2 = strtoul(++s, &end2, 0); 
+			if (end2 == s)
+				complain("missing cpu argument %s\n", s);
+			if (arg > numcpus)
+				complain("cpu argument %d out of range\n", arg);
+			while (++arg <= arg2)
+				set_bit(arg, cpubuf);
+			s = end2;
+		}
+	} while (*s++ == ','); 
+	if (s[-1] != '\0')
+		usage();
+	if (invert) { 
+		int i;
+		for (i = 0; i <= numcpus; i++) {
+			if (test_bit(i, cpubuf))
+				clear_bit(i, cpubuf);
+			else
+				set_bit(i, cpubuf);
+		}
+	} 
+	*ncpus = cpubufsize;
+	return cpubuf;	
+}
+
+void printcpumask(char *name, unsigned long *mask, int size)
+{ 
+	int i;
+	printf("%s: ", name);
+	for (i = 0; i < size*8; i++) {
+		if (test_bit(i, mask))
+			printf("%d ", i);
+	}
 	putchar('\n');
 } 
 
@@ -134,9 +212,9 @@ long memsize(char *s)
 	char *end;
 	long length = strtoul(s,&end,0);
 	switch (toupper(*end)) { 
-	case 'G': length *= 1024; 
-	case 'M': length *= 1024; 
-	case 'K': length *= 1024; 
+	case 'G': length *= 1024;  /*FALL THROUGH*/
+	case 'M': length *= 1024;  /*FALL THROUGH*/
+	case 'K': length *= 1024; break;
 	}
 	return length; 
 } 
@@ -154,7 +232,7 @@ static struct policy {
 	{ NULL },
 };
 
-char *policy_names[] = { "default", "preferred", "bind", "interleave" }; 
+static char *policy_names[] = { "default", "preferred", "bind", "interleave" }; 
 
 char *policy_name(int policy)
 {
@@ -191,22 +269,3 @@ void print_policies(void)
 	printf("\n"); 
 }
 
-#if 0
-/* Not used currently, but can be useful in the future again */
-int read_sysctl(char *name) 
-{ 
-	int ret = -1;
-	char *line = NULL; 
-	size_t linesz = 0;
-	FILE *f = fopen(name, "r"); 
-	if (f) { 
-		getline(&line, &linesz, f); 
-		if (line) { 
-			ret = atoi(line); 
-			free(line);
-		}
-		fclose(f);
-	}
-	return ret;
-}
-#endif

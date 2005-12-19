@@ -29,7 +29,9 @@ numactl \- Control NUMA policy for processes or shared memory
 ] [
 .B \-\-membind nodes
 ] [ 
-.B \-\-cpubind nodes
+.B \-\-cpunodebind nodes
+] [
+.B \-\-physcpubind cpus
 ] [
 .B \-\-localalloc
 ] command {arguments ...}
@@ -82,9 +84,18 @@ to other nodes.
 Only allocate memory from nodes.  Allocation will fail when there
 is not enough memory available on these nodes.
 .TP
-.B \-\-cpubind=nodes, \-c nodes
+.B \-\-cpunodebind=nodes, \-N nodes
 Only execute process on the CPUs of
 .I nodes. 
+Note that nodes may consist of multiple CPUs.
+.TP
+.B \-\-physcpubind=cpus, \-C cpus
+Only execute process on 
+.I cpus.
+This accepts physical cpu numbers as shown in the 
+.I processor
+fields of 
+.I /proc/cpuinfo.
 .TP
 .B \-\-localalloc, \-l 
 Do always local allocation on the current node.
@@ -222,9 +233,14 @@ Shared memory segments larger than numactl's address space cannot
 be completely policied. This could be a problem on 32bit architectures.
 Changing it piece by piece may work.
 
+The old
 .I --cpubind
-accepts node numbers, not cpu numbers. Individual cpus inside
-nodes cannot be selected right now.
+which accepts node numbers, not cpu numbers, is deprecated
+and replaced with the new 
+.I --cpunodebind
+and 
+.I --physcpubind
+options.
 
 .SH FILES
 .I /proc/cpuinfo

@@ -83,11 +83,15 @@ numa \- NUMA policy library
 .br
 .B void numa_police_memory(void *start, size_t size)
 .br
+.B int numa_distance(int node1, int node2)
+.br
 .B void numa_set_bind_policy(int strict) 
 .br
 .B void numa_set_strict(int strict) 
 .br
 .B void numa_error(char *where)
+.br
+.B void numa_warn(int number, char *where, ...)
 .br
 .B extern int numa_exit_on_error
 .SH DESCRIPTION
@@ -391,15 +395,36 @@ will fail if the memory cannot be allocated on the target node.
 Default operation is to fall back to other nodes.
 This doesn't apply to interleave and default.
 
+.B numa_distance
+reports the distance in the machine topology between two nodes.
+The factors are a multiple of 10. It returns 0 when the distance
+cannot be determined. A node has distance 10 to itself.
+Reporting the distance requires a Linux
+kernel version of 
+.I 2.6.10 
+or newer.
+
 .B numa_error
 is an weak internal libnuma function that can be overwritten by the
 user program. It allows to specify a different error handling strategy
 when an NUMA system call fails. It does not affect
 .I numa_available.
+
 The default action is to print an error to stderr and exit
 the program when
 .B numa_exit_on_error
 is set to a non zero value. Default is zero.
+
+.B numa_warn
+is a weak internal libnuma function that can be also overwritten
+by the user program.  It is called when a non fatal error
+occurs to warn the user. The default implementation
+prints a warning to stdout.
+
+The first argument is an unique
+number identifying each warning. After that there is a 
+.I printf(3)
+style format string and a variable number of arguments.
 
 .SH THREAD SAFETY
 .I numa_set_bind_policy
