@@ -88,7 +88,7 @@ void usage_msg(char *msg, ...)
 	usage();
 } 
 
-static void show_physcpubind(void)
+void show_physcpubind(void)
 {
 	int ncpus = 8192;
 	

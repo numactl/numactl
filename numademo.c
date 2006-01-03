@@ -1,5 +1,8 @@
 /* Copyright (C) 2003,2004 Andi Kleen, SuSE Labs.
-   Test/demo program for libnuma.
+   Test/demo program for libnuma. This is also a more or less useful benchmark
+   of the NUMA characteristics of your machine. It benchmarks most possible 
+   NUMA policy memory configurations with various benchmarks.
+   Compile standalone with cc -O2 numademo.c -o numademo -lnuma -lm
 
    numactl is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public
@@ -14,16 +17,26 @@
    You should find a copy of v2 of the GNU General Public License somewhere
    on your Linux system; if not, write to the Free Software Foundation, 
    Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
+#define _GNU_SOURCE 1
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <sys/time.h>
 #include "numa.h"
-#include "util.h"
-#include "rdtsc.h"
-#include "stream_int.h"
+#ifdef HAVE_STREAM_LIB
+#include "stream_lib.h"
+#endif
+#ifdef HAVE_MT
+#include "mt.h"
+#endif
 
 unsigned long msize; 
+
+/* Should get this from cpuinfo, but on !x86 it's not there */
+enum { 
+	CACHELINESIZE = 64,
+}; 
 
 enum test { 
 	MEMSET = 0,
@@ -31,6 +44,7 @@ enum test {
 	FORWARD,
 	BACKWARD,
 	STREAM,
+	RANDOM,
 } thistest;
 
 char *delim = " ";
@@ -41,38 +55,67 @@ char *testname[] = {
 	"memcpy",
 	"forward",
 	"backward",
+#ifdef HAVE_STREAM_LIB
 	"stream",
+#endif
+#ifdef HAVE_MT
+	"random",
+#endif
 	NULL,
 }; 
 
+void output(char *title, char *result)
+{
+	if (!isspace(delim[0]))
+		printf("%s%s%s\n", title,delim, result); 
+	else
+		printf("%-42s%s\n", title, result); 
+}
+
+
+#ifdef HAVE_STREAM_LIB
 void do_stream(char *name, unsigned char *mem)
 {
 	int i;
-	char title[100];
+	char title[100], buf[100];
 	double res[STREAM_NRESULTS];
 	stream_verbose = 0;
 	stream_init(mem); 
 	stream_test(res);
 	sprintf(title, "%s%s%s", name, delim, "STREAM");
-	printf("%-30s", title);
-	for (i = 0; i < STREAM_NRESULTS; i++) 
-		printf("%s%s%s%.2f", delim, stream_names[i], delim, res[i]); 
-	printf("%sMB/s\n", delim);
+	buf[0] = '\0';
+	for (i = 0; i < STREAM_NRESULTS; i++) { 
+		if (buf[0])
+			strcat(buf,delim);
+		sprintf(buf+strlen(buf), "%s%s%.2f%sMB/s", 
+			stream_names[i], delim, res[i], delim);
+	}
+	output(title, buf);
+}
+#endif
+
+
+static inline unsigned long long timerfold(struct timeval *tv)
+{
+	return tv->tv_sec * 1000000ULL + tv->tv_usec;
 }
 
 #define LOOPS 10
 
 void memtest(char *name, unsigned char *mem)
 { 
-	long k;
-	unsigned long start, end, max, min, sum; 
+	long k, w;
+	struct timeval start, end, res;
+	unsigned long long max, min, sum, r; 
 	int i;
 	char title[128], result[128];
 
+#ifdef HAVE_STREAM_LIB
 	if (thistest == STREAM) { 
 		do_stream(name, mem);
 		goto out;
 	}
+#endif
 	
 	max = 0; 
 	min = ~0UL; 
@@ -80,56 +123,71 @@ void memtest(char *name, unsigned char *mem)
 	for (i = 0; i < LOOPS; i++) { 
 		switch (thistest) { 
 		case MEMSET:
-			rdtsc(start);  
+			gettimeofday(&start,NULL);
 			memset(mem, 0xff, msize); 
-			rdtsc(end); 
+			gettimeofday(&end,NULL);
 		case MEMCPY: 
-			rdtsc(start);  
+			gettimeofday(&start,NULL);
 			memcpy(mem, mem + msize/2, msize/2); 
-			rdtsc(end); 
+			gettimeofday(&end,NULL);
 			break;
 
 		case FORWARD: 
 			/* simple kernel to just fetch cachelines and write them back. 
 			   will trigger hardware prefetch */ 
-			rdtsc(start);  
-			for (k = 0; k < msize; k+=64) 
+			gettimeofday(&start,NULL);
+			for (k = 0; k < msize; k+=CACHELINESIZE) 
 				mem[k]++;
-			rdtsc(end); 
+			gettimeofday(&end,NULL);
 			break;
 
 		case BACKWARD: 
-			/* simple kernel to avoid hardware prefetch */ 
-			rdtsc(start);  
-			for (k = msize-5; k > 0; k-=64) 
+			gettimeofday(&start,NULL);
+			for (k = msize-5; k > 0; k-=CACHELINESIZE) 
 				mem[k]--;
-			rdtsc(end);
+			gettimeofday(&end,NULL);
 			break;
+
+#ifdef HAVE_MT
+		case RANDOM: 
+			mt_init(); 
+			/* only use power of two msize to avoid division */
+			for (w = 1; w < msize; w <<= 1)
+				;
+			if (w > msize) 
+				w >>= 1;
+			w--;
+			gettimeofday(&start,NULL);
+			for (k = msize; k > 0; k -= 8) 
+				mem[mt_random() & w]++;
+			gettimeofday(&end,NULL);
+			break;
+#endif
 
 		default:
-			start = end = 0; /* just to quiten gcc */
 			break;
 		} 
-		if ((end-start) > max) max = end-start;
-		if ((end-start) < min) min = end-start;
-		sum += (end-start); 
+
+		timersub(&end, &start, &res);
+		r = timerfold(&res); 
+		if (r > max) max = r;
+		if (r < min) min = r;
+		sum += r; 
 	} 
 	sprintf(title, "%s%s%s", name, delim, testname[thistest]); 
-	sprintf(result, "avg%s%lu%smin%s%lu%smax%s%lu%scycles/KB",
+#define H(t) (((double)msize) / ((double)t))
+#define D3 delim,delim,delim
+	sprintf(result, "Avg%s%.2f%sMB/s%sMin%s%.2f%sMB/s%sMax%s%.2f%sMB/s",
 		delim,
-		(sum / LOOPS) / (msize/1024), 
-		delim,
-		delim,
-		min / (msize/1024), 
-		delim,
-		delim,
-		max / (msize/1024),
+		H(sum/LOOPS), 
+		D3,
+		H(min), 
+		D3,
+		H(max),
 		delim);
-	if (!isspace(delim[0]))
-		printf("%s%s%s\n", title,delim, result); 
-	else
-		printf("%-30s%35s\n", title, result); 
-
+#undef H
+#undef D3
+	output(title,result);
  out:
 	numa_free(mem, msize); 
 } 
@@ -243,7 +301,8 @@ void test(enum test type)
 		numa_set_preferred(i); 
 		memtest("setting correct preferred node", numa_alloc(msize)); 
 		numa_set_preferred(-1); 
-		printf("\n\n\n"); 
+		if (!delim[0])
+			printf("\n\n\n"); 
 	} 
 
 	/* numa_run_on_node_mask is not tested */
@@ -252,8 +311,9 @@ void test(enum test type)
 void usage(void)
 {
 	int i;
-	printf("usage: numademo [-f] [-c] msize[kmg] {tests}\nNo tests means run all.\n"); 
-	printf("-c output CSV data. -f run even without NUMA API.\n");  
+	printf("usage: numademo [-S] [-f] [-c] msize[kmg] {tests}\nNo tests means run all.\n"); 
+	printf("-c output CSV data. -f run even without NUMA API. -S run stupid tests\n");  
+	printf("power of two msizes prefered\n"); 
 	printf("valid tests:"); 
 	for (i = 0; testname[i]; i++) 
 		printf(" %s", testname[i]); 
@@ -261,8 +321,23 @@ void usage(void)
 	exit(1);
 }
 
+/* duplicated to make numademo standalone */
+long memsize(char *s) 
+{ 
+	char *end;
+	long length = strtoul(s,&end,0);
+	switch (toupper(*end)) { 
+	case 'G': length *= 1024;  /*FALL THROUGH*/
+	case 'M': length *= 1024;  /*FALL THROUGH*/
+	case 'K': length *= 1024; break;
+	}
+	return length; 
+} 
+
 int main(int ac, char **av)
 {
+	int simple_tests = 0;
+	
 	while (av[1] && av[1][0] == '-') { 
 		switch (av[1][1]) { 
 		case 'c': 
@@ -270,6 +345,9 @@ int main(int ac, char **av)
 			break;
 		case 'f': 
 			force = 1;
+			break;
+		case 'S':
+			simple_tests = 1;
 			break;
 		default:
 			usage(); 
@@ -295,16 +373,23 @@ int main(int ac, char **av)
 	if (!msize)
 		usage();
 
+#ifdef HAVE_STREAM_LIB
 	stream_setmem(msize);
+#endif
 
 	if (av[2] == NULL) { 
 		test(MEMSET); 
 		test(MEMCPY);
-#if 0
-		test(FORWARD);
-		test(BACKWARD);
+		if (simple_tests) { 
+			test(FORWARD);
+			test(BACKWARD);
+		}
+#ifdef HAVE_MT
+		test(RANDOM);
 #endif
+#ifdef HAVE_STREAM_LIB
 		test(STREAM); 
+#endif
 	} else {
 		int k;
 		for (k = 2; k < ac; k++) { 

@@ -28,6 +28,9 @@ by John D. McCalpin and Joe R. Zagar for one sub benchmark. See stream_lib.c
 for the license. In particular when you publish numademo output
 you might need to pay attention there or filter out the STREAM results.
 
+It also uses a public domain Mersenne Twister implementation from
+Michael Brundage.
+
 Author:
 
 Andi Kleen, SUSE Labs

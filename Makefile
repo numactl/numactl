@@ -1,46 +1,58 @@
-# Note: if you want to overwrite CFLAGS on the make command line
-# overwrite OPT_CFLAGS, not CFLAGS itself. The -I. is needed.
-OPT_CFLAGS :=  -g -Wall -O0 
-CFLAGS := -I. ${OPT_CFLAGS}
+# these can (and should) be overridden on the make command line for production
+# use
+CFLAGS :=  -g -Wall -O0
+# these are used for the benchmarks in addition to the normal CFLAGS. 
+# Normally no need to overwrite unless you find a new magic flag to make
+# STREAM run faster.
+BENCH_CFLAGS := -O2 -ffast-math -funroll-loops
+# for compatibility with old releases
+CFLAGS += ${OPT_CFLAGS}
+override CFLAGS += -I.
 
-CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o \
+CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      memhog libnuma.so libnuma.so.1 numamon numamon.o syscall.o bitops.o \
-	      memhog.o stream util.o stream_main.o stream_lib.o shm.o \
-	      test/pagesize test/tshared test/mynode.o test/tshared.o \
+	      memhog.o util.o stream_main.o stream_lib.o shm.o stream \
+	      test/pagesize test/tshared test/mynode.o test/tshared.o mt.o \
 	      test/mynode test/ftok test/prefered test/randmap \
-		  .depend .depend.X test/nodemap test/distance
+	      .depend .depend.X test/nodemap test/distance \
+		test/after test/before
 
 SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
-	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c \
+	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c mt.c \
 	test/*.c
 
 prefix := /usr
 libdir := ${prefix}$(shell if [ -d /usr/lib64 ] ; then echo "/lib64" ; else echo "/lib"  ; fi)
 docdir := ${prefix}/share/doc
 
-all: numactl libnuma.so numademo numamon memhog stream test/tshared \
+all: numactl libnuma.so numademo numamon memhog test/tshared stream \
      test/mynode test/pagesize test/ftok test/prefered test/randmap \
 	 test/nodemap test/distance
 
 numactl: numactl.o util.o shm.o bitops.o libnuma.so
 
-util.o: util.c util.h numa.h
-
-shm.o: shm.h util.h bitops.h
+util.o: util.c
 
 memhog: util.o memhog.o libnuma.so
 
-stream: util.o stream_lib.o stream_main.o libnuma.so
-
-numactl.o: numactl.c numa.h numaif.h util.h
+numactl.o: numactl.c
 
 numademo: LDFLAGS += -lm
+# GNU make 3.80 appends BENCH_CFLAGS twice. Bug? It's harmless though.
+numademo: CFLAGS += -DHAVE_STREAM_LIB -DHAVE_MT ${BENCH_CFLAGS} 
+stream_lib.o: CFLAGS += ${BENCH_CFLAGS}
+mt.o: CFLAGS += ${BENCH_CFLAGS} 
+mt.o: mt.c
+numademo: numademo.o stream_lib.o mt.o libnuma.so
 
-numademo: numademo.o util.o stream_lib.o libnuma.so
-
-numademo.o: numa.h numademo.c libnuma.so	
+numademo.o: numademo.c libnuma.so	
 
 numamon: numamon.o
+
+stream: stream_lib.o stream_main.o  libnuma.so util.o
+	${CC} -o stream ${CFLAGS} stream_lib.o stream_main.o util.o -L. -lnuma -lm
+
+stream_main.o: stream_main.c
 
 libnuma.so.1: libnuma.o syscall.o distance.o
 	${CC} -shared -Wl,-soname=libnuma.so.1 -o libnuma.so.1 $^
@@ -81,7 +93,8 @@ run_on_node_mask set_bind_policy  set_interleave_mask set_localalloc \
 set_membind set_preferred set_strict setlocal_memory tonode_memory \
 tonodemask_memory distance
 
-MANPAGES := numa.3 numactl.8 mbind.2 set_mempolicy.2 get_mempolicy.2	 
+MANPAGES := numa.3 numactl.8 mbind.2 set_mempolicy.2 get_mempolicy.2 \
+	    numastat.8
 
 install: numactl numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numastat ${MANPAGES}
 	cp numactl ${prefix}/bin
@@ -108,6 +121,10 @@ clean:
 	rm -f ${CLEANFILES}
 	@rm -rf html
 
+distclean: clean
+	rm -f .[^.]* */.[^.]*
+	rm -f *~ */*~
+
 html: ${HTML} 
 
 html/numactl.html: numactl.8
@@ -133,7 +150,7 @@ html/set_mempolicy.html: set_mempolicy.2
 depend: .depend
 
 .depend:
-	${CC} -MM -I. ${SOURCES} > .depend.X && mv .depend.X .depend
+	${CC} -MM -DDEPS_RUN -I. ${SOURCES} > .depend.X && mv .depend.X .depend
 
 include .depend
 

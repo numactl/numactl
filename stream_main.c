@@ -4,7 +4,7 @@
 #include "numa.h"
 #include "numaif.h"
 #include "util.h"
-#include "stream_int.h"
+#include "stream_lib.h"
 
 void usage(void)
 {

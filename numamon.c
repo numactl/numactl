@@ -15,7 +15,8 @@
    Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA 
 
    Display some numa statistics collected by the CPU.
-   Opteron specific. Also not completely reliable. */
+   Opteron specific. Also not reliable because the counters
+   are not quite correct in hardware. */
 #define _LARGE_FILE_SOURCE 1
 #define _GNU_SOURCE 1
 #include <string.h>

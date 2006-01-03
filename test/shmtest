@@ -6,10 +6,18 @@
 TMPFS=/dev/shm
 HUGE=/huge
 
+#valgrind 3.0.1 doesn't implement mbind() yet on x86-64
+#VALGRIND="valgrind --tool=memcheck"
+VALGRIND=
+
 set -e 
 
 export PATH=`pwd`/..:$PATH
 export LD_LIBRARY_PATH=`pwd`/..
+
+numactl() { 
+	$VALGRIND ../numactl "$@"
+}
 
 failure() { 
 	numastat > after

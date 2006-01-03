@@ -23,7 +23,6 @@
 #include "numa.h"
 #include "numaif.h" 
 #include "util.h"
-#include "stream_int.h"
 
 #define terr(x) perror(x)
 

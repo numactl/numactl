@@ -64,6 +64,8 @@ if the cpumask is longer than 99 characters.
 - fix CPU_BYTES and rename CPU_WORDS to CPU_LONGS (Matt Dobson) 
 - Print node distances in numactl
 
+[0.7 skipped]
+
 0.8
 - hardend numactl command line parsing against bad arguments in some cases
 - remove cpumask/nodemask confusion which has become a FAQ:
@@ -73,4 +75,28 @@ if the cpumask is longer than 99 characters.
 - various fixes for bugs noted by Mike Stroyan (thanks!)
 - install set_mempolicy manpage
 - various smaller fixes
+
+0.9
+- Get rid of bogus distance.o that broke compilation on !x86-64 (sorry)
+- Handle CFLAGS overriding without OPT_CFLAGS (Ian Wienand)
+- Fix up section of get/set_mempolicy (Ian Wienand)
+- When no NUMA available fall back to one global node instead of one node
+per CPU (Samuel Thibault)
+- Don't rely on architecture symbols for dependency generation
+- Use __powerpc__ to detect PPC/PPC64
+- numastat: 
+  * wrap display properly with many nodes
+  * display nodes in forward order
+  * install manpage in `make install'.
+- remove bogus numamemcpy.c
+- numademo: 
+  * allow standalone compile, make streamlib optional
+  * clean up output
+  * change output unit to standard MB/s
+  * compile with more optimization
+  * add random pass to fool any prefetching (slow)
+- make numademo compileable outside source tree
+- use gettimeofday instead of time stamp counters in benchmarks
+- support valgrind in testsuite
+- other minor changes
 

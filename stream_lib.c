@@ -4,7 +4,7 @@
 #include <limits.h>
 #include <sys/time.h>
 #include <stdlib.h>
-#include "stream_int.h"
+#include "stream_lib.h"
 
 static inline double mysecond()
 {

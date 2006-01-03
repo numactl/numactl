@@ -6,6 +6,12 @@
 MB=$[1024*1024]
 SIZE=$[30 * $MB]
 DEMOSIZE=$[10 * $MB]
+#VALGRIND="valgrind --tool=memcheck"
+VALGRIND=""
+
+numactl() { 
+	$VALGRIND ../numactl "$@"
+}
 
 BASE=`pwd`/..
 export LD_LIBRARY_PATH=$BASE
@@ -36,7 +42,7 @@ failed() {
 nstat() { 
     declare -a fields
     numastat | grep $1 | while read -a fields ; do	
-	echo ${fields[$(expr $numnodes - $2)]}
+	echo ${fields[$[1 + $2]]}
     done
 }
 

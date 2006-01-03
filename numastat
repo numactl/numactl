@@ -15,6 +15,29 @@
 # You should find a copy of v2 of the GNU General Public License somewhere
 # on your Linux system; if not, write to the Free Software Foundation, 
 # Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
+#
+# Example: NUMASTAT_WIDTH=80 watch -n1 numastat
+#
+
+# output width
+$WIDTH=80;
+if (defined($ENV{'NUMASTAT_WIDTH'})) {
+	$WIDTH=$ENV{'NUMASTAT_WIDTH'};
+} else { 
+	use POSIX; 
+	if (POSIX::isatty(fileno(STDOUT))) { 
+		if (open(R, "resize |")) { 
+			while (<R>) { 
+				$WIDTH=$1 if /COLUMNS=(\d+)/;
+			}	
+			close R;
+		}
+	} else { 
+		# don't split it up for easier parsing
+		$WIDTH=10000000;
+	} 
+} 
+$WIDTH = 32 if $WIDTH < 32; 
 
 if (! -d "/sys/devices/system/node" ) { 
 	print STDERR "sysfs not mounted or system not NUMA aware\n";
@@ -22,25 +45,29 @@ if (! -d "/sys/devices/system/node" ) {
 } 
 
 %stat = (); 
-$title = "\t\t"; 
+$title = ""; 
 opendir(NODES, "/sys/devices/system/node") || exit 1;
 foreach $nd (readdir(NODES)) { 
 	next unless $nd =~ /node(\d+)/; 
 	open(STAT, "/sys/devices/system/node/$nd/numastat") || 
 			die "cannot open $nd: $!\n"; 
-	$title .= sprintf("%14s",$nd);
+	$title = sprintf("%16s",$nd) . $title;
 	@fields = ();
 	while (<STAT>) { 
 		($name, $val) = split;
-		$stat{$name} .= sprintf("%14u", $val);
+		$stat{$name} = sprintf("%16u", $val) . $stat{$name};
 		push(@fields, $name); 
 	} 
 	close STAT; 
 } 
 closedir NODES;
 
-print "$title\n";
-foreach (@fields) { 
-	print "$_\t$stat{$_}\n"; 
-} 
-
+$numfields = int(($WIDTH - 16) / 16);
+$l = 16 * $numfields;
+for ($i = 0; $i < length($title); $i += $l) { 
+	print "\n" if $i > 0; 
+	printf "%16s%s\n","",substr($title,$i,$l); 
+	foreach (@fields) { 
+		printf "%-16s%s\n",$_,substr($stat{$_},$i,$l);
+	}
+}

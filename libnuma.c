@@ -175,9 +175,9 @@ static int number_of_cpus(void)
 
 static int fallback_max_node(void)
 {
-	numa_warn(W_nosysfs, "/sys not mounted or no numa system. Assuming one node per CPU: %s",
+	numa_warn(W_nosysfs, "/sys not mounted or no numa system. Assuming one node: %s",
 		  strerror(errno));
-	maxnode = number_of_cpus();	
+	maxnode = 0;
 	return maxnode;
 }
 
@@ -465,9 +465,10 @@ int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen)
 	f = fopen(fn, "r"); 
 	if (!f || getdelim(&line, &len, '\n', f) < 1) { 
 		numa_warn(W_nosysfs2,
-		   "/sys not mounted or invalid. Assuming nodes equal CPU: %s",
+		   "/sys not mounted or invalid. Assuming one node: %s",
 			  strerror(errno)); 
-		set_bit(node, (unsigned long *)mask);
+		for (n = 0; n < ncpus; n++)
+			set_bit(n, (unsigned long *)mask);
 		goto out;
 	} 
 	n = 0;

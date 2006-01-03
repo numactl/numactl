@@ -52,13 +52,13 @@
 #define __NR_get_mempolicy 275
 #define __NR_set_mempolicy 276
 
-#elif defined(__ppc64__) || defined(__ppc__)
+#elif defined(__powerpc__)
 
 #define __NR_mbind 259
 #define __NR_get_mempolicy 260
 #define __NR_set_mempolicy 261
 
-#else
+#elif !defined(DEPS_RUN)
 #error "Add syscalls for your architecture or update kernel headers"
 #endif
 

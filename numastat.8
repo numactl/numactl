@@ -68,6 +68,13 @@ is incremented when a process running on another node allocated memory on that n
 .I numa(3) 
 .SH NOTES 
 numastat output is only available on NUMA systems.
+
+numastat assumes the output terminal has a width of 80 characters
+and tries to format the output accordingly. 
+.SH EXAMPLES
+.I watch -n1 numastat
+.br
+.I watch -n1 --differences=accumulative numastat
 .SH FILES
 /sys/devices/system/node/node*/numastat
 .SH BUGS
