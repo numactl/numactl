@@ -100,3 +100,7 @@ per CPU (Samuel Thibault)
 - support valgrind in testsuite
 - other minor changes
 
+0.9.1
+- Make automatic selection of lib64 vs lib more robust. Now should work
+even on ppc32 with a lib64 directory. Architecture lists are hardcoded now
+unfortunately.

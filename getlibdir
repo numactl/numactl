@@ -1,0 +1,9 @@
+#!/bin/sh
+case `uname -m` in
+s390x|x86_64|ppc64) 
+	echo -n lib64
+	;;
+*)
+	echo -n lib
+	;;
+esac

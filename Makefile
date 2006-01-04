@@ -22,7 +22,7 @@ SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
 	test/*.c
 
 prefix := /usr
-libdir := ${prefix}$(shell if [ -d /usr/lib64 ] ; then echo "/lib64" ; else echo "/lib"  ; fi)
+libdir := ${prefix}/$(shell ./getlibdir)
 docdir := ${prefix}/share/doc
 
 all: numactl libnuma.so numademo numamon memhog test/tshared stream \
