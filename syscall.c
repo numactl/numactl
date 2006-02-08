@@ -23,7 +23,7 @@
 #define WEAK __attribute__((weak))
 
 #if !defined(__NR_mbind) || !defined(__NR_set_mempolicy) || \
-    !defined(__NR_get_mempolicy)
+    !defined(__NR_get_mempolicy) || !defined(NR_migratepages)
 
 #if defined(__x86_64__)
 
@@ -35,10 +35,12 @@
 #define __NR_mbind 237
 #define __NR_set_mempolicy 238
 #define __NR_get_mempolicy 239
+#define __NR_migrate_pages 256
 
 #elif defined(__ia64__)
 #define __NR_sched_setaffinity    1231
 #define __NR_sched_getaffinity    1232
+#define __NR_migrate_pages	1280
 
 /* Official allocation */
 
@@ -51,12 +53,14 @@
 #define __NR_mbind 274
 #define __NR_get_mempolicy 275
 #define __NR_set_mempolicy 276
+#define __NR_migrate_pages 294
 
 #elif defined(__powerpc__)
 
 #define __NR_mbind 259
 #define __NR_get_mempolicy 260
 #define __NR_set_mempolicy 261
+#define __NR_migrate_pages 280
 
 #elif !defined(DEPS_RUN)
 #error "Add syscalls for your architecture or update kernel headers"
@@ -141,6 +145,12 @@ long WEAK set_mempolicy(int mode, const unsigned long *nmask,
 	return syscall(__NR_set_mempolicy,mode,nmask,maxnode);
 }
 
+long WEAK migrate_pages(int pid, unsigned long maxnode,
+	const unsigned long *frommask, const unsigned long *tomask)
+{
+	return syscall(__NR_migrate_pages, pid, maxnode, frommask, tomask);
+}
+
 /* SLES8 glibc doesn't define those */
 
 int numa_sched_setaffinity(pid_t pid, unsigned len, const unsigned long *mask)
@@ -159,3 +169,5 @@ make_internal_alias(numa_sched_setaffinity);
 make_internal_alias(get_mempolicy);
 make_internal_alias(set_mempolicy);
 make_internal_alias(mbind);
+make_internal_alias(migrate_pages);
+

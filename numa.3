@@ -22,380 +22,434 @@ numa \- NUMA policy library
 .SH SYNOPSIS
 .B #include <numa.h>
 .sp
-.B cc ... -lnuma
+.B cc ... \-lnuma
 .sp
-.B int numa_available(void)
+.B int numa_available(void);
 .sp
-.B int numa_max_node(void)
+.B int numa_max_node(void);
 .br
-.B int numa_preferred(void)
+.B int numa_preferred(void);
 .br
-.B long numa_node_size(int node, long *freep)
+.BI "long numa_node_size(int " node ", long *" freep );
 .br
-.B long long numa_node_size64(int node, long long *freep)
+.BI "long long numa_node_size64(int " node ", long long *" freep );
 .sp
-.B nodemask_t numa_all_nodes
+.BI "nodemask_t " numa_all_nodes ;
 .br
-.B nodemask_t numa_no_nodes
+.BI "nodemask_t " numa_no_nodes ;
 .br
-.B int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen)
-.br
+.BI "int numa_node_to_cpus(int " node ", unsigned long *" buffer ", int " bufferlen );
 .sp
-.B void numa_set_interleave_mask(nodemask_t *nodemask)
 .br
-.B nodemask_t numa_get_interleave_mask(void)
+.BI "void nodemask_zero(nodemask_t *" mask );
 .br
-.B void numa_bind(nodemask_t *nodemask)
+.BI "void nodemask_set(nodemask_t *" mask ", int " node );
 .br
-.B void numa_set_preferred(int node)
+.BI "void nodemask_clr(nodemask_t *" mask ", int " node );
 .br
-.B void numa_set_localalloc(int flag)
+.BI "int nodemask_isset(const nodemask_t *" mask ", int " node );
 .br
-.B void numa_set_membind(nodemask_t *nodemask)
-.br
-.B nodemask_t numa_get_membind(void)
+.BI "int nodemask_equal(const nodemask_t *" a ", const nodemask_t " b );
 .sp
-.B void *numa_alloc_interleaved_subset(size_t size, nodemask_t *nodemask)
+.BI "void numa_set_interleave_mask(nodemask_t *" nodemask );
 .br
-.B void *numa_alloc_interleaved(size_t size)
+.B nodemask_t numa_get_interleave_mask(void);
 .br
-.B void *numa_alloc_onnode(size_t size, int node)
+.BI "void numa_bind(nodemask_t *" nodemask );
 .br
-.B void *numa_alloc_local(size_t size)
+.BI "void numa_set_preferred(int " node );
 .br
-.B void *numa_alloc(size_t size)
+.BI "void numa_set_localalloc(int " flag );
 .br
-.B void numa_free(void *start, size_t size)
+.BI "void numa_set_membind(nodemask_t *" nodemask );
+.br
+.B nodemask_t numa_get_membind(void);
 .sp
-.B int numa_run_on_node_mask(nodemask_t *nodemask)
+.BI "void *numa_alloc_interleaved_subset(size_t " size ", nodemask_t *" nodemask );
 .br
-.B int numa_run_on_node(int node)
+.BI "void *numa_alloc_interleaved(size_t " size );
 .br
-.B int numa_get_run_node_mask(void)
+.BI "void *numa_alloc_onnode(size_t " size ", int " node );
+.br
+.BI "void *numa_alloc_local(size_t " size );
+.br
+.BI "void *numa_alloc(size_t " size );
+.br
+.BI "void numa_free(void *" start ", size_t " size );
 .sp
-.B void numa_interleave_memory(void *start, size_t size, nodemask_t *nodemask)
+.BI "int numa_run_on_node_mask(nodemask_t *" nodemask );
 .br
-.B void numa_tonode_memory(void *start, size_t size, int node)
+.BI "int numa_run_on_node(int " node );
 .br
-.B void numa_tonodemask_memory(void *start, size_t size, nodemask_t *nodemask)
+.B int numa_get_run_node_mask(void);
+.sp
+.BI "void numa_interleave_memory(void *" start ", size_t " size ", nodemask_t *" nodemask );
 .br
-.B void numa_setlocal_memory(void *start, size_t size)
+.BI "void numa_tonode_memory(void *" start ", size_t " size ", int " node );
 .br
-.B void numa_police_memory(void *start, size_t size)
+.BI "void numa_tonodemask_memory(void *" start ", size_t " size ", nodemask_t *" nodemask );
 .br
-.B int numa_distance(int node1, int node2)
+.BI "void numa_setlocal_memory(void *" start ", size_t " size );
 .br
-.B void numa_set_bind_policy(int strict) 
+.BI "void numa_police_memory(void *" start ", size_t " size );
 .br
-.B void numa_set_strict(int strict) 
+.BI "int numa_distance(int " node1 ", int " node2 );
 .br
-.B void numa_error(char *where)
+.BI "void numa_set_bind_policy(int " strict );
 .br
-.B void numa_warn(int number, char *where, ...)
+.BI "void numa_set_strict(int " strict );
 .br
-.B extern int numa_exit_on_error
+.BI "void numa_error(char *" where );
+.br
+.BI "void numa_warn(int " number ", char *" where ", ...);"
+.br
+.BI "extern int " numa_exit_on_error ;
 .SH DESCRIPTION
-.B libnuma 
-offers a simple programming interface to the 
-.I NUMA policy supported by the 
-Linux kernel. On a NUMA (Non Uniform Memory Access) architecture some
+The
+.I libnuma 
+library offers a simple programming interface to the 
+NUMA (Non Uniform Memory Access)
+policy supported by the 
+Linux kernel. On a NUMA architecture some
 memory areas have different latency or bandwidth than others.
-Available policies are page interleaving, preferred node allocation, local allocation,
-allocation only on specific nodes.
-It also allows to bind threads to specific nodes. All policy exists per thread, but is
-inherited to children. For setting global policy per process it is easiest
-to run it using the 
-.B numactl(8)
+
+Available policies are 
+page interleaving (i.e., allocate in a round-robin fashion from all, 
+or a subset, of the nodes on the system), 
+preferred node allocation (i.e., preferably allocate on a particular node), 
+local allocation (i.e., allocate on the node on which 
+the thread is currently executing),
+or allocation only on specific nodes (i.e., allocate on
+some subset of the available nodes).
+It is also possible to bind threads to specific nodes. 
+
+Numa memory allocation policy is a per-thread attribute, but is
+inherited by children. 
+
+For setting a specific policy globally for all memory allocations
+in a process and its children it is easiest
+to start it with the 
+.BR numactl (8)
 utility. For more finegrained policy inside an application this library
 can be used.
 
 All numa memory allocation policy only takes effect when a page is actually
 faulted into the address space of a process by accessing it. The 
-.I numa_alloc_*
+.B numa_alloc_*
 functions take care of this automatically.
 
-A node is defined as an area where all memory has the same speed as seen from 
-a particular CPU. Caches are ignored for this definition. 
+A 
+.I node 
+is defined as an area where all memory has the same speed as seen from 
+a particular CPU. A node can contain multiple CPUs. Caches are ignored for this definition. 
 
-The mapping of nodes to cpus depends on the architecture. On the 
-.I AMD64 
-architecture each CPU is an own node. This library is only concerned about nodes.
+This library is only concerned about nodes and their memory and does not deal 
+with individual CPUs inside these nodes
+(except for 
+.I numa_node_to_cpus
+)
 
 Before any other calls in this library can be used
-.B numa_available
-must be called. When it returns an negative value all other functions in this
+.BR numa_available ()
+must be called. If it returns -1, all other functions in this
 library are undefined.
 
-.B numa_max_node
-returns the highest node number available on the current system. When a node
+.BR numa_max_node ()
+returns the highest node number available on the current system. If a node
 number or a node mask with a bit set above the value returned by this function
 is passed to a 
 .I libnuma
-the result is undefined. The
-.B numa_node_size
-function returns the memory size of a node. When the argument
+function, the result is undefined. 
+    
+.BR numa_node_size ()
+returns the memory size of a node. If the argument
 .I freep
-is not NULL the free memory of the node is written to it.
-On error it returns -1.
-.B numa_node_size64
+is not NULL, it used to return the amount of free memory on the node.
+On error it returns \-1.
+.BR numa_node_size64 ()
 works the same as 
-.I numa_node_size
-except that it returns values as long long instead of long.
-This is useful on 32bit architectures with large nodes.
+.BR numa_node_size ()
+except that it returns values as 
+.I long long 
+instead of 
+.IR long .
+This is useful on 32-bit architectures with large nodes.
 
 Some of these functions accept or return a 
-.I nodemask.
+.IR nodemask .
 A nodemask has type 
-.B nodemask_t 
-which is an abstract bitmap type containing a bit set of nodes. 
+.IR nodemask_t .
+It is an abstract bitmap type containing a bit set of nodes. 
 The maximum node number depends 
-on the architecture, but is not bigger than
-.B NUMA_MAX_NODE.
-When happens in 
+on the architecture, but is not larger than
+.BR numa_max_node ().
+What happens in 
 .I libnuma
 calls when bits above 
-.I numa_max_node
+.BR numa_max_node ()
 are passed is undefined.
-An 
+A 
 .I nodemask_t 
-should be only manipulated with the
-.I nodemask_zero,
-.I nodemask_clr,
-.I nodemask_isset,
-.I nodemask_set
+should only be manipulated with the
+.BR nodemask_zero (),
+.BR nodemask_clr (),
+.BR nodemask_isset (),
+and
+.BR nodemask_set ()
 functions.  
-.B nodemask_zero
-clears an 
-.I nodemask_t,
-.B nodemask_isset
-returns true when 
+.BR nodemask_zero ()
+clears a 
+.IR nodemask_t .
+.BR nodemask_isset ()
+returns true if 
 .I node
 is set in the passed
-.I nodemask,
-.B nodemask_clr
+.IR nodemask .
+.BR nodemask_clr ()
 clears 
 .I node
 in 
-.I nodemask,
-.B nodemask_set
+.IR nodemask .
+.BR nodemask_set ()
 sets 
 .I node
 in 
-.I nodemask.
+.IR nodemask .
 The predefined variable 
-.B numa_all_nodes
-has all available nodes set, 
-.B numa_no_nodes
+.I numa_all_nodes
+has all available nodes set;
+.I numa_no_nodes
 is the empty set.
-.B nodeset_equal 
-returns non zero when the two nodesets are equal.
+.BR nodemask_equal ()
+returns non-zero if its two nodeset arguments are equal.
 
-.B numa_preferred
-returns the preferd node of the current thread. It is the node the kernel preferably
-allocates memory on, unless some other policy overwrites this.
+.BR numa_preferred ()
+returns the preferred node of the current thread. 
+This is the node on which the kernel preferably
+allocates memory, unless some other policy overrides this.
 
-.B numa_set_interleave_mask
-Set an memory interleave mask for the current thread to 
-.I nodemask.
+.BR numa_set_interleave_mask ()
+sets the memory interleave mask for the current thread to 
+.IR nodemask .
 All new memory allocations
 are page interleaved over all nodes in the interleave mask. Interleaving
-can be turned off again by passing a zero mask.
+can be turned off again by passing an empty mask
+.RI ( numa_no_nodes ).
 The page interleaving only occurs on the actual page fault that puts a new
-page into the current address space. It is also only a hint, the kernel
+page into the current address space. It is also only a hint: the kernel
 will fall back to other nodes if no memory is available on the interleave
 target. This is a low level
 function, it may be more convenient to use the higher level functions like
-.I numa_alloc_interleaved
+.BR numa_alloc_interleaved ()
 or
-.I numa_alloc_interleaved_subset.
+.BR numa_alloc_interleaved_subset ().
 
-.B numa_get_interleave_mask
+.BR numa_get_interleave_mask ()
 returns the current interleave mask. 
 
-.B numa_bind
+.BR numa_bind ()
 binds the current thread and its children to the nodes 
 specified in 
-.I nodemask.
-They will only run on the CPUs of the specified nodes and only able to allocate
+.IR nodemask .
+They will only run on the CPUs of the specified nodes and only be able to allocate
 memory from them.
 This function is equivalent to calling
-.I numa_run_on_node_mask
-and 
-.I numa_set_membind
-with the same argument.
+.\" FIXME checkme
+.I numa_run_on_node_mask(nodemask)
+followed by
+.IR numa_set_membind(nodemask) .
+If threads should be bound to individual CPUs inside nodes
+consider using
+.I numa_node_to_cpus
+and the
+.I sched_setaffinity(2)
+syscall.
 
-.B numa_set_preferred
+
+.BR numa_set_preferred ()
 sets the preferred node for the current thread to
-.I node.
-Preferred node is the node memory is 
-preferably allocated from before falling back to other nodes. 
-The default is to use the current node the process runs on
-(local policy). Passing an -1 argument is equivalent to
-.I numa_set_localalloc.
+.IR node .
+The preferred node is the node on which memory is 
+preferably allocated before falling back to other nodes. 
+The default is to use the node on which the process is currently running
+(local policy). Passing a \-1 argument is equivalent to
+.BR numa_set_localalloc ().
 
-.B numa_set_localalloc
-sets a local memory allocation policy for the current thread.
-Memory is preferably allocated from the current node. 
+.BR numa_set_localalloc ()
+sets a local memory allocation policy for the calling thread.
+Memory is preferably allocated on the node on which the thread is 
+currently running.
 
-.B numa_set_membind
+.BR numa_set_membind ()
 sets the memory allocation mask.
 The thread will only allocate memory from the nodes set in 
-.I nodemask.
+.IR nodemask .
 Passing an argument of
 .I numa_no_nodes
 or
 .I numa_all_nodes
 turns off memory binding to specific nodes. 
 
-.B numa_get_membind
-returns the current node mask from which memory can be allocated.
+.BR numa_get_membind ()
+returns the mask of nodes from which memory can currently be allocated.
+If the returned mask is equal to 
 .I numa_no_nodes
 or
-.I numa_all_nodes
-means all nodes are available for memory allocation.
+.IR numa_all_nodes ,
+then all nodes are available for memory allocation.
 
-.B numa_alloc_interleaved
+.BR numa_alloc_interleaved ()
 allocates 
 .I size
 bytes of memory page interleaved on all nodes. This function is relatively slow
 and should only be used for large areas consisting of multiple pages. The 
-interleaving works on page level and will only show an effect when the 
-area is large. It must be freed with
-.I numa_free.
-On errors NULL is returned. 
+interleaving works at page level and will only show an effect when the 
+area is large. 
+The allocated memory must be freed with
+.BR numa_free ().
+On error, NULL is returned. 
 
-.B numa_alloc_interleaved_subset
+.BR numa_alloc_interleaved_subset ()
 is like
-.I numa_alloc_interleaved
+.BR numa_alloc_interleaved ()
 except that it also accepts a mask of the nodes to interleave on.
-On errors NULL is returned. 
+On error, NULL is returned. 
 
-.B numa_alloc_onnode
+.BR numa_alloc_onnode ()
 allocates memory on a specific node. This function is relatively slow
-and allocations are rounded to pagesize. The memory must be freed
+and allocations are rounded up to the system page size. 
+The memory must be freed
 with
-.I numa_free
+.BR numa_free ().
 On errors NULL is returned. 
 
-.B numa_alloc_local
+.BR numa_alloc_local ()
 allocates
 .I size
 bytes of memory on the local node. This function is relatively slow
-and allocations are rounded to pagesize. The memory must be freed
+and allocations are rounded up to the system page size. 
+The memory must be freed
 with 
-.I numa_free.
+.BR numa_free ().
 On errors NULL is returned. 
 
-.B numa_alloc
+.BR numa_alloc ()
 allocates
 .I size 
 bytes of memory with the current NUMA policy.  This function is relatively slow
-and allocations are rounded to pagesize. The memory must be freed
+and allocations are rounded up to the system page size. 
+The memory must be freed
 with 
-.I numa_free.
+.BR numa_free ().
 On errors NULL is returned. 
 
-.B numa_free
+.BR numa_free ()
 frees 
 .I size
 bytes of memory starting at 
-.I start,
+.IR start ,
 allocated by the 
-.I numa_alloc_* 
+.B numa_alloc_* 
 functions above.
 
-.B numa_run_on_node
+.BR numa_run_on_node ()
 runs the current thread and its children 
 on a specific node. They will not migrate to CPUs of
 other nodes until the node affinity is reset with a new call to
-.I numa_run_on_node_mask.
-Passing
-.I -1
-allows to schedule on all nodes again.
-Returns an negative value and error in errno, or 0 on success.
+.BR numa_run_on_node_mask ().
+Passing \-1
+permits the kernel to schedule on all nodes again.
+On success, 0 is returned; on error -1 is returned, and
+.I errno
+is set to indicate the error.
 
-.B numa_run_on_node_mask
+.BR numa_run_on_node_mask ()
 runs the current thread and its children only on nodes specified in 
-.I nodemask.
+.IR nodemask .
 They will not migrate to CPUs of
 other nodes until the node affinity is reset with a new call to
-.I numa_run_on_node_mask.
+.BR numa_run_on_node_mask ().
 Passing 
 .I numa_all_nodes
-allows to schedule on all nodes again.
-Returns an negative value and error in errno, or 0 on success.
+permits the kernel to schedule on all nodes again.
+On success, 0 is returned; on error -1 is returned, and
+.I errno
+is set to indicate the error.
 
-.B numa_get_run_node_mask
+.BR numa_get_run_node_mask ()
 returns the mask of nodes that the current thread is allowed to run on.
 
-.B numa_interleave_memory
-pages interleaves 
+.BR numa_interleave_memory ()
+interleaves
 .I size 
-bytes memory from start on nodes
-.I nodemask.
+bytes of memory page by page from 
+.I start 
+on nodes
+.IR nodemask .
 This is a lower level function to interleave not yet faulted in but  allocated 
 memory. Not yet faulted in means the memory is allocated using 
-.I mmap(2)
+.BR mmap (2)
 or
-.I shmat(2),
+.BR shmat (2),
 but has not been accessed by the current process yet. The memory is page
 interleaved to all nodes specified in 
-.I nodemask. 
+.IR nodemask . 
 Normally 
-.I numa_alloc_interleaved
+.BR numa_alloc_interleaved ()
 should be used for private memory instead, but this function is useful to 
 handle shared memory areas. To be useful the memory area should be 
-significantly larger than a page.
-When the
-.I numa_set_strict
-flag is true then the operation will cause an numa_error if there were already
+several megabytes at least (or tens of megabytes of hugetlbfs mappings)
+If the
+.BR numa_set_strict ()
+flag is true then the operation will cause a numa_error if there were already
 pages in the mapping that do not follow the policy.
 
-.B numa_tonode_memory
+.BR numa_tonode_memory ()
 put memory on a specific node. The constraints described for 
-.I numa_interleave_memory
+.BR numa_interleave_memory ()
 apply here too.
 
-.B numa_tonodemask_memory
+.BR numa_tonodemask_memory ()
 put memory on a specific set of nodes. The constraints described for 
-.I numa_interleave_memory
+.BR numa_interleave_memory ()
 apply here too. 
 
-.B numa_setlocal_memory
+.BR numa_setlocal_memory ()
 locates memory on the current node. The constraints described for 
-.I numa_interleave_memory
+.BR numa_interleave_memory ()
 apply here too.
 
-.B numa_police_memory
+.BR numa_police_memory ()
 locates memory with the current NUMA policy. The constraints described for 
-.I numa_interleave_memory
+.BR numa_interleave_memory ()
 apply here too.
 
-.B numa_node_to_cpus
-converts a node number to a bitmask of cpus. The user must pass a long enough
-buffer. When the buffer is not long enough 
+.BR numa_node_to_cpus ()
+converts a node number to a bitmask of CPUs. The user must pass a long enough
+buffer. If the buffer is not long enough 
 .I errno
 will be set to
 .I ERANGE
-and -1 returned. On success 0 is returned.
+and \-1 returned. On success 0 is returned.
 
-.B numa_set_bind_policy
+.BR numa_set_bind_policy ()
 specifies whether calls that bind memory to a specific node should 
-use the preferred policy or a strict policy. Preferred allows 
+use the preferred policy or a strict policy. 
+The preferred policy allows the kernel
 to allocate memory on other nodes when there isn't enough free
 on the target node. strict will fail the allocation in that case.
 Setting the argument to specifies strict, 0 preferred.
 Note that specifying more than one node non strict may only use
 the first node in some kernel versions.
 
-.B numa_set_strict
+.BR numa_set_strict ()
 sets a flag that says whether the functions allocating on specific
 nodes should use use a strict policy. Strict means the allocation 
 will fail if the memory cannot be allocated on the target node.
 Default operation is to fall back to other nodes.
 This doesn't apply to interleave and default.
 
-.B numa_distance
+.BR numa_distance ()
 reports the distance in the machine topology between two nodes.
 The factors are a multiple of 10. It returns 0 when the distance
 cannot be determined. A node has distance 10 to itself.
@@ -404,43 +458,77 @@ kernel version of
 .I 2.6.10 
 or newer.
 
-.B numa_error
-is an weak internal libnuma function that can be overwritten by the
-user program. It allows to specify a different error handling strategy
-when an NUMA system call fails. It does not affect
-.I numa_available.
+.BR numa_error ()
+is a weak internal 
+.I libnuma 
+function that can be overridden by the
+user program. 
+This function is called with a
+.I char *
+argument when a
+.I libnuma
+function fails.
+Overriding the weak library definition
+makes it possible to specify a different error handling strategy
+when a 
+.I libnuma
+function fails. It does not affect
+.BR numa_available ().
 
-The default action is to print an error to stderr and exit
-the program when
-.B numa_exit_on_error
-is set to a non zero value. Default is zero.
+The
+.BR num_error ()
+function defined in
+.I libnuma
+prints an error on
+.I stderr 
+and terminates
+the program if
+.I numa_exit_on_error
+is set to a non-zero value. 
+The default value of
+.I numa_exit_on_error
+is zero.
 
-.B numa_warn
-is a weak internal libnuma function that can be also overwritten
-by the user program.  It is called when a non fatal error
-occurs to warn the user. The default implementation
-prints a warning to stdout.
+.BR numa_warn ()
+is a weak internal 
+.I libnuma 
+function that can be also overridden
+by the user program.  
+It is called to warn the user when a 
+.I libnuma
+function encounters a non-fatal error.
+The default implementation
+prints a warning to 
+.IR stderr .
 
-The first argument is an unique
+The first argument is a unique
 number identifying each warning. After that there is a 
-.I printf(3)
-style format string and a variable number of arguments.
+.BR printf (3)-style 
+format string and a variable number of arguments.
 
 .SH THREAD SAFETY
 .I numa_set_bind_policy
 and
 .I numa_exit_on_error
-are process global. The other calls are thread safe. Memory policy for 
-an specific memory when
-changed affects the whole process and possible other processes mapping
-the same memory.
+are process global. The other calls are thread safe. 
+.\" FIXME The following sentence is not grammatical, and
+.\" I don't know how to fix it because I am unsure of the
+.\" intended meaning.
+Changing memory policy for 
+an specific memory area affects the whole process
+and possible other processes mapping the same memory.
 
 .SH COPYRIGHT
-Copyright 2002,2004 Andi Kleen, SuSE Labs.
-libnuma is under the GNU Lesser General Public License, v2.1.
+Copyright 2002, 2004, Andi Kleen, SuSE Labs.
+.I libnuma 
+is under the GNU Lesser General Public License, v2.1.
 
 .SH SEE ALSO
-.I getpagesize(2)
-.I mmap(2)
-.I shmat(2)
-.I numactl(8)
+.BR get_mempolicy (2),
+.BR getpagesize (2),
+.BR mbind (2),
+.BR mmap (2),
+.BR set_mempolicy (2),
+.BR shmat (2),
+.BR numactl (8),
+.BR sched_setaffinity (2)

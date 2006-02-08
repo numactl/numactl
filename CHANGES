@@ -1,3 +1,7 @@
+[Note: newer entries are at the bottom]
+
+Early prehistory:
+
 - Fix some warnings
 - Add const to global variables and prototypes
 - Document numa_warn
@@ -104,3 +108,12 @@ per CPU (Samuel Thibault)
 - Make automatic selection of lib64 vs lib more robust. Now should work
 even on ppc32 with a lib64 directory. Architecture lists are hardcoded now
 unfortunately.
+
+0.9.2
+- Fix compilation on architectures with gcc 3.3+ but without TLS
+(MIPS, Alpha, Sparc) 
+- Add warning against using of MPOL_F_NODE
+- numa.3 improvements from Michael Kerrisk
+- Support page migratation (migratepages, manpages) from Christoph
+Lameter. Requires 2.6.16+ kernels
+

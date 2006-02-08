@@ -67,6 +67,30 @@ parameter
 will be returned when the existing pages in the mapping don't follow
 the policy.
 
+When
+.B MPOL_MF_MOVE
+is passed in the 
+.B flags
+then attempts will be made to move all the pages in the mapping
+so that they follow the policy. Pages that are shared with other
+processes are not moved. If
+.B MPOL_MF_STRICT
+is also specified then
+.I EIO
+will be returned if some pages could not be moved.
+
+When
+.B MPOL_MF_MOVE_ALL
+is passed in the 
+.B flags
+then all pages in the mapping will be moved regardless of whether
+other processes use the pages. The process specifying this flag must
+have administrative priviledges. If
+.B MPOL_MF_STRICT
+is also specified then
+.I EIO
+will be returned if some pages could not be moved.
+
 The 
 .I MPOL_DEFAULT
 policy is the default and means to use the underlying process policy
@@ -132,6 +156,9 @@ header.
 .I MPOL_MF_STRICT
 is ignored on huge page mappings right now. For preferred and interleave 
 mappings it will only accept the first choice node.
+
+.I MPOL_MF_MOVE_*
+is only available on Linux 2.6.16 and later.
 
 For 
 .I MPOL_INTERLEAVE

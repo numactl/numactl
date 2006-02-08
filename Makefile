@@ -9,13 +9,18 @@ BENCH_CFLAGS := -O2 -ffast-math -funroll-loops
 CFLAGS += ${OPT_CFLAGS}
 override CFLAGS += -I.
 
+# find out if compiler supports __thread
+override CFLAGS += $(shell if $(CC) $(CFLAGS) threadtest.c -o threadtest \
+			>/dev/null 2>/dev/null ; then true ; else \
+			echo "-D__thread=\"\"" ; fi)
+
 CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      memhog libnuma.so libnuma.so.1 numamon numamon.o syscall.o bitops.o \
 	      memhog.o util.o stream_main.o stream_lib.o shm.o stream \
 	      test/pagesize test/tshared test/mynode.o test/tshared.o mt.o \
 	      test/mynode test/ftok test/prefered test/randmap \
 	      .depend .depend.X test/nodemap test/distance \
-		test/after test/before
+		test/after test/before threadtest migratepages
 
 SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
 	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c mt.c \
@@ -25,11 +30,13 @@ prefix := /usr
 libdir := ${prefix}/$(shell ./getlibdir)
 docdir := ${prefix}/share/doc
 
-all: numactl libnuma.so numademo numamon memhog test/tshared stream \
+all: numactl migratepages libnuma.so numademo numamon memhog test/tshared stream \
      test/mynode test/pagesize test/ftok test/prefered test/randmap \
 	 test/nodemap test/distance
 
 numactl: numactl.o util.o shm.o bitops.o libnuma.so
+
+migratepages: migratepages.c util.o bitops.o libnuma.so
 
 util.o: util.c
 
@@ -94,10 +101,11 @@ set_membind set_preferred set_strict setlocal_memory tonode_memory \
 tonodemask_memory distance
 
 MANPAGES := numa.3 numactl.8 mbind.2 set_mempolicy.2 get_mempolicy.2 \
-	    numastat.8
+	    numastat.8 migratepages.8
 
-install: numactl numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numastat ${MANPAGES}
+install: numactl migratepages numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numastat ${MANPAGES}
 	cp numactl ${prefix}/bin
+	cp migratepages ${prefix}/bin
 	cp numademo ${prefix}/bin
 	cp memhog ${prefix}/bin
 	cp set_mempolicy.2 ${prefix}/share/man/man2

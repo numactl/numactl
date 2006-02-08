@@ -42,9 +42,8 @@
 const nodemask_t numa_no_nodes;
 const nodemask_t numa_all_nodes;
 
-#if __GNUC__ < 3 || (__GNUC__ == 3 && __GNUC_MINOR__ < 3)
+#ifdef __thread
 #warning "not threadsafe"
-#define __thread
 #endif
 
 static __thread int bind_policy = MPOL_BIND; 
@@ -599,6 +598,19 @@ nodemask_t numa_get_run_node_mask(void)
 	}		
 	return mask;
 } 
+
+int numa_migrate_pages(int pid, const nodemask_t *fromnodes, const nodemask_t *tonodes)
+{
+	int err;
+
+	err = migrate_pages(pid, NUMA_NUM_NODES + 1, &fromnodes->n[0], &tonodes->n[0]);
+
+	if (err < 0) {
+		errno = -err;
+		return -1;
+	}
+	return err;
+}
 
 int numa_run_on_node(int node)
 { 

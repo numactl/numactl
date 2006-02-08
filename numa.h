@@ -176,6 +176,8 @@ extern int numa_exit_on_error;
    once. */
 void numa_warn(int num, char *fmt, ...);
 
+int numa_migrate_pages(int pid, const nodemask_t *from, const nodemask_t *to);
+
 #ifdef __cplusplus
 }
 #endif
