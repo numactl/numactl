@@ -10,9 +10,11 @@ CFLAGS += ${OPT_CFLAGS}
 override CFLAGS += -I.
 
 # find out if compiler supports __thread
-override CFLAGS += $(shell if $(CC) $(CFLAGS) threadtest.c -o threadtest \
-			>/dev/null 2>/dev/null ; then true ; else \
-			echo "-D__thread=\"\"" ; fi)
+THREAD_SUPPORT := $(shell if $(CC) $(CFLAGS) threadtest.c -o threadtest \
+			>/dev/null 2>/dev/null ; then echo "yes" ; else echo "no"; fi)
+ifeq ($(THREAD_SUPPORT),no)
+	override CFLAGS += -D__thread=""
+endif
 
 CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      memhog libnuma.so libnuma.so.1 numamon numamon.o syscall.o bitops.o \
@@ -112,6 +114,7 @@ install: numactl migratepages numademo.c numamon memhog libnuma.so.1 numa.h numa
 	cp get_mempolicy.2 ${prefix}/share/man/man2
 	cp mbind.2 ${prefix}/share/man/man2
 	cp numactl.8 ${prefix}/share/man/man8
+	cp migratepages.8 ${prefix}/share/man/man8
 	cp numa.3 ${prefix}/share/man/man3
 	( cd ${prefix}/share/man/man3 ; for i in ${MANLINKS} ; do ln -sf numa.3 numa_$$i.3 ; done )
 	cp libnuma.so.1 ${libdir}

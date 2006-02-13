@@ -114,6 +114,12 @@ unfortunately.
 (MIPS, Alpha, Sparc) 
 - Add warning against using of MPOL_F_NODE
 - numa.3 improvements from Michael Kerrisk
-- Support page migratation (migratepages, manpages) from Christoph
+- Support page migration (migratepages, manpages) from Christoph
 Lameter. Requires 2.6.16+ kernels
+
+0.9.3
+- Some more manpage fixes
+- install migratepages manpage in make install
+- Build fix for Debian make from Ian Wienand
+
 
