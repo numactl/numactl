@@ -1,0 +1,84 @@
+.\" Copyright (c) 2005 Silicon Graphics Incorporated.
+.\" Christoph Lameter, <clameter@sgi.com>.
+.\"
+.TH NUMA_MAPS 5 "06 March 2006" "Linux 2.6" "Linux Programmer's Manual"
+.SH NAME
+numa_maps \- information about numa memory
+.SH DESCRIPTION
+The file
+.B /proc/<pid>/numa_maps
+contrains information about each memory area used by a given process
+allowing--among other information--the determination of which nodes were used for the pages.
+
+.B numa_maps
+is only read by programs or by shell commands, and not written to.
+A read operation on the file will make the kernel scan the memory area
+of a process to determine how memory is used. One line is displayed for each
+memory area of the process.
+.P
+The
+.B numa_maps
+format is very simple. The
+.I first field
+shown on each line is the starting address that allows a correlation with output from
+.B /proc/<pid/maps.
+The
+.I second field
+shows the memory policy currently in effect for this particular memory area.
+.P
+The rest of the line contains series of informationi items about the pages in the
+memory area.
+.DT
+.SS Possible information items
+.TP 1.5i
+.I N<node>=<pages>
+The number of pages used on a node. The number of pages includes only pages
+mapped by this process. If this is a shared mapping then other processes may
+have mapped different pages in a memory area. Note also that page migration
+may have temporarily unmapped pages. These may only show up again after the
+process has attempted to reference these pages.
+.TP 1.5i
+.I file=<filename>
+The file backing the memory area. If COW (Copy-On-Write) pages were generated
+then the memory area may contain additional anonymous pages.
+.TP 1.5i
+.I heap
+Memory area is used for the heap.
+.TP 1.5i
+.I stack
+Memory area is used for the stack.
+.TP 1.5i
+.I huge
+Huge memory area. The page counts shown are huge pages and not regular sized pages.
+.TP 1.5i
+.I anon=<pages>
+The number of anonymous page in the range.
+.TP 1.5i
+.I dirty=<pages>
+Number of dirty pages
+.TP 1.5i
+.I mapped=<pages>
+Number of mapped pages for file backed files. Only shown if different from the count of anonymous and dirty pages.
+.TP 1.5i
+.I mapmax=<count>
+Maximum mapcount (number of processes mapping a single page) encountered during scan.
+This may be used as an indicator as to the sharing occuring in a given memory area.
+.TP 1.5i
+.I swapcache=<count>
+Number of pages that have an associated entry on the swap device.
+.TP 1.5i
+.I active=<pages>
+The number of pages on the active list (only shown if different from the number
+of pages in this area). If this item is shown then some inactive pages exist in that particular
+memory area that may be removed from memory by the swapper soon.
+.TP 1.5i
+.I writeback=<pages>
+Number of pages that are currently being written out to disk.
+.SH FILES
+.I /proc/<pid>/numa_maps
+.SH "SEE ALSO"
+.BR migratepages (8),
+.BR numactl (8),
+.BR cpuset (8),
+.BR numactl (5)
+

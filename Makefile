@@ -102,21 +102,18 @@ run_on_node_mask set_bind_policy  set_interleave_mask set_localalloc \
 set_membind set_preferred set_strict setlocal_memory tonode_memory \
 tonodemask_memory distance
 
-MANPAGES := numa.3 numactl.8 mbind.2 set_mempolicy.2 get_mempolicy.2 \
-	    numastat.8 migratepages.8
+MANPAGES := numa.3 numactl.8 numastat.8 migratepages.8
 
 install: numactl migratepages numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numastat ${MANPAGES}
 	cp numactl ${prefix}/bin
 	cp migratepages ${prefix}/bin
 	cp numademo ${prefix}/bin
 	cp memhog ${prefix}/bin
-	cp set_mempolicy.2 ${prefix}/share/man/man2
-	cp get_mempolicy.2 ${prefix}/share/man/man2
-	cp mbind.2 ${prefix}/share/man/man2
 	cp numactl.8 ${prefix}/share/man/man8
 	cp migratepages.8 ${prefix}/share/man/man8
 	cp numa.3 ${prefix}/share/man/man3
 	( cd ${prefix}/share/man/man3 ; for i in ${MANLINKS} ; do ln -sf numa.3 numa_$$i.3 ; done )
+	cp numa_maps.5 ${prefix}/share/man/man5
 	cp libnuma.so.1 ${libdir}
 	cd ${libdir} ; ln -sf libnuma.so.1 libnuma.so
 	cp numa.h numaif.h ${prefix}/include

@@ -441,6 +441,9 @@ int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen)
 	int buflen_needed;
 	unsigned long *mask, prev;
 	int ncpus = number_of_cpus();
+	int i;
+	int mask_words;
+	int bits_in_mask_0;
 
 	buflen_needed = CPU_BYTES(ncpus);
 	if ((unsigned)node > maxnode || bufferlen < buflen_needed) { 
@@ -470,37 +473,36 @@ int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen)
 			set_bit(n, (unsigned long *)mask);
 		goto out;
 	} 
+        mask_words = 0;
+	bits_in_mask_0 = 0;
 	n = 0;
 	s = line;
 	prev = 0; 
-	while (*s) {
- 		unsigned long num; 
-		int i;
-		num = 0;
-		for (i = 0; s[i] && s[i] != ','; i++) { 
-			static const char hexdigits[] = "0123456789abcdef";
-			char *w = strchr(hexdigits, tolower(s[i]));
-			if (!w) { 
-				if (isspace(s[i]))
-					break;
-				numa_warn(W_cpumap, 
-					  "Unexpected character `%c' in sysfs cpumap", s[i]);
-				set_bit(node, mask);
-				goto out;
-			}
-			num = (num*16) + (w - hexdigits); 
+        for (i = 0; s[i]; i++) {
+                static const char hexdigits[] = "0123456789abcdef";
+                char *w = strchr(hexdigits, tolower(s[i]));
+                if (!w) {
+                        if (isspace(s[i]) || s[i] == ',')
+                                continue;
+                        numa_warn(W_cpumap,
+                                  "Unexpected character `%c' in sysfs cpumap", 
+					s[i]);
+                        set_bit(node, mask);
+                        goto out;
 		}
-		if (i == 0) 
-			break; 
-		s += i;
-		if (*s == ',')
-			s++;
-		/* skip leading zeros */
-		if (num == 0 && prev == 0) 
-			continue;
-		prev |= num; 
-		memmove(mask + 1, mask, buflen_needed - sizeof(unsigned long)); 
-		mask[0] = num; 
+
+		/* if mask[0] is full shift left before adding another */
+		if (bits_in_mask_0 >= sizeof(mask[0])*8) {
+			/* shift over any previously loaded masks */
+			mask_words++;
+			for (n = mask_words; n > 0; n--)
+				memmove(mask+n, mask+n-1, sizeof(mask[0]));
+			bits_in_mask_0 = 0;
+			mask[0] = 0;
+		}
+ 
+		mask[0] = (mask[0]*16) + (w - hexdigits);
+	      	bits_in_mask_0 += 4; /* 4 bits per hex char */
 	}
  out:
  	free(line);
@@ -601,15 +603,7 @@ nodemask_t numa_get_run_node_mask(void)
 
 int numa_migrate_pages(int pid, const nodemask_t *fromnodes, const nodemask_t *tonodes)
 {
-	int err;
-
-	err = migrate_pages(pid, NUMA_NUM_NODES + 1, &fromnodes->n[0], &tonodes->n[0]);
-
-	if (err < 0) {
-		errno = -err;
-		return -1;
-	}
-	return err;
+	return migrate_pages(pid, NUMA_NUM_NODES + 1, &fromnodes->n[0], &tonodes->n[0]);
 }
 
 int numa_run_on_node(int node)

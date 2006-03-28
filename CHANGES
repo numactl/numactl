@@ -122,4 +122,12 @@ Lameter. Requires 2.6.16+ kernels
 - install migratepages manpage in make install
 - Build fix for Debian make from Ian Wienand
 
+0.9.4:
+- Remove syscall manpages. They're in main man-pages now.
+- More migrate fixes from C.Lameter
 
+0.9.5:
+- Fix parsing of cpumap in sysfs from Doug Chapman
+
+0.9.6:
+- Fix make install again
