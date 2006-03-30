@@ -105,17 +105,20 @@ tonodemask_memory distance
 MANPAGES := numa.3 numactl.8 numastat.8 migratepages.8
 
 install: numactl migratepages numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numastat ${MANPAGES}
+	mkdir -p ${prefix}/bin
 	cp numactl ${prefix}/bin
 	cp migratepages ${prefix}/bin
 	cp numademo ${prefix}/bin
 	cp memhog ${prefix}/bin
+	mkdir -p ${prefix}/share/man/man2 ${prefix}/share/man/man8 ${prefix}/share/man/man3
 	cp numactl.8 ${prefix}/share/man/man8
-	cp migratepages.8 ${prefix}/share/man/man8
 	cp numa.3 ${prefix}/share/man/man3
 	( cd ${prefix}/share/man/man3 ; for i in ${MANLINKS} ; do ln -sf numa.3 numa_$$i.3 ; done )
 	cp numa_maps.5 ${prefix}/share/man/man5
+	mkdir -p ${libdir}
 	cp libnuma.so.1 ${libdir}
 	cd ${libdir} ; ln -sf libnuma.so.1 libnuma.so
+	mkdir -p ${prefix}/include
 	cp numa.h numaif.h ${prefix}/include
 	cp numastat ${prefix}/bin
 	if [ -d ${docdir} ] ; then \
@@ -123,7 +126,7 @@ install: numactl migratepages numademo.c numamon memhog libnuma.so.1 numa.h numa
 		cp numademo.c ${docdir}/numactl/examples ; \
 	fi	
 
-HTML := html/numactl.html html/numa.html html/mbind.html html/get_mempolicy.html html/set_mempolicy.html
+HTML := html/numactl.html html/numa.html
 
 clean: 
 	rm -f ${CLEANFILES}
@@ -131,7 +134,7 @@ clean:
 
 distclean: clean
 	rm -f .[^.]* */.[^.]*
-	rm -f *~ */*~
+	rm -f *~ */*~ *.orig */*.orig */*.rej *.rej 
 
 html: ${HTML} 
 
@@ -139,21 +142,9 @@ html/numactl.html: numactl.8
 	if [ ! -d html ] ; then mkdir html ; fi
 	groff -Thtml -man numactl.8 > html/numactl.html
 
-html/mbind.html: mbind.2
-	if [ ! -d html ] ; then mkdir html ; fi
-	groff -Thtml -man mbind.2 > html/mbind.html
-
 html/numa.html: numa.3
 	if [ ! -d html ] ; then mkdir html ; fi
 	groff -Thtml -man numa.3 > html/numa.html
-
-html/get_mempolicy.html: get_mempolicy.2
-	if [ ! -d html ] ; then mkdir html ; fi
-	groff -Thtml -man get_mempolicy.2 > html/get_mempolicy.html
-
-html/set_mempolicy.html: set_mempolicy.2
-	if [ ! -d html ] ; then mkdir html ; fi
-	groff -Thtml -man set_mempolicy.2 > html/set_mempolicy.html
 
 depend: .depend
 

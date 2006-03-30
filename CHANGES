@@ -131,3 +131,9 @@ Lameter. Requires 2.6.16+ kernels
 
 0.9.6:
 - Fix make install again
+
+0.9.7
+- Fix cpumap parsing fix to not corrupt memory (Doug Chapman) 
+- Small optimization to cpumap parsing
+- Create target directories for Debian (Ian Wienand)
+

@@ -491,12 +491,17 @@ int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen)
                         goto out;
 		}
 
+		/* skip any leading zeros */
+		if (!prev && !(w - hexdigits))
+		    continue;
+		prev = 1;
+
 		/* if mask[0] is full shift left before adding another */
 		if (bits_in_mask_0 >= sizeof(mask[0])*8) {
 			/* shift over any previously loaded masks */
+			memmove(mask+mask_words+1, mask+mask_words,
+				sizeof(mask[0]) * mask_words);
 			mask_words++;
-			for (n = mask_words; n > 0; n--)
-				memmove(mask+n, mask+n-1, sizeof(mask[0]));
 			bits_in_mask_0 = 0;
 			mask[0] = 0;
 		}
