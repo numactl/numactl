@@ -137,3 +137,6 @@ Lameter. Requires 2.6.16+ kernels
 - Small optimization to cpumap parsing
 - Create target directories for Debian (Ian Wienand)
 
+0.9.8
+- Fix cpumap parsing again (Doug Chapman)
+
