@@ -21,7 +21,7 @@ CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      memhog.o util.o stream_main.o stream_lib.o shm.o stream \
 	      test/pagesize test/tshared test/mynode.o test/tshared.o mt.o \
 	      test/mynode test/ftok test/prefered test/randmap \
-	      .depend .depend.X test/nodemap test/distance \
+	      .depend .depend.X test/nodemap test/distance test/tbitmap \
 		test/after test/before threadtest migratepages
 
 SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
@@ -34,7 +34,7 @@ docdir := ${prefix}/share/doc
 
 all: numactl migratepages libnuma.so numademo numamon memhog test/tshared stream \
      test/mynode test/pagesize test/ftok test/prefered test/randmap \
-	 test/nodemap test/distance
+	 test/nodemap test/distance test/tbitmap
 
 numactl: numactl.o util.o shm.o bitops.o libnuma.so
 
@@ -90,6 +90,8 @@ test/randmap: test/randmap.c libnuma.so
 test/nodemap: test/nodemap.c libnuma.so
 
 test/distance: test/distance.c libnuma.so
+
+test/tbitmap: test/tbitmap.c libnuma.so
 
 .PHONY: install all clean html depend
 
@@ -154,3 +156,13 @@ depend: .depend
 include .depend
 
 Makefile: .depend
+
+.PHONY: test regress1 regress2
+
+regress1: 
+	cd test ; ./regress
+
+regress2:
+	cd test ; ./regress2
+
+test: all regress1 regress2

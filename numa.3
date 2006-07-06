@@ -59,7 +59,7 @@ numa \- NUMA policy library
 .br
 .BI "void numa_set_preferred(int " node );
 .br
-.BI "void numa_set_localalloc(int " flag );
+.BI "void numa_set_localalloc(void);
 .br
 .BI "void numa_set_membind(nodemask_t *" nodemask );
 .br
@@ -81,7 +81,7 @@ numa \- NUMA policy library
 .br
 .BI "int numa_run_on_node(int " node );
 .br
-.B int numa_get_run_node_mask(void);
+.B nodemask_t numa_get_run_node_mask(void);
 .sp
 .BI "void numa_interleave_memory(void *" start ", size_t " size ", nodemask_t *" nodemask );
 .br

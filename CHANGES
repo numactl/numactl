@@ -140,3 +140,23 @@ Lameter. Requires 2.6.16+ kernels
 0.9.8
 - Fix cpumap parsing again (Doug Chapman)
 
+0.9.9 (aka "Will 1.0 ever happen?") 
+- Fix sizing of cpu buffers for affinity syscalls
+- Don't corrupt errno in numa_run_on_node_mask. This fixes
+numactl cpubind issues on some systems.
+- Print cpus belonging to nodes in numactl --hardware
+- Rewrite cpumap parser to be simpler and hopefully finally work
+in all cases
+- add testcases for cpu affinity and topology discovery
+- Add make test target to run regression test easier and fix up
+test/README
+
+Lots of fixes thanks to thorough testing from Noriyuki Taniuchi:
+- Better command line parsing in numactl and fix various documentation bugs
+- Wrong arguments to --prefered don't crash numactl anymore
+- Fix --cpunodebind=all
+- Auto collect short option list in numactl - a couple were missing.
+- Fix documentation of numa_set_localalloc. It doesn't have a flag. 
+- Fix numa_run_on_node(-1)
+- numa_get_run_node_mask(): Fix documentation, don't warn
+

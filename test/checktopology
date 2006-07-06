@@ -1,0 +1,41 @@
+#!/bin/bash
+# check numactl --hardware output
+# this checks most of the topology discovery in libnuma
+
+BASE=`pwd`/..
+export LD_LIBRARY_PATH=$BASE
+export PATH=$BASE:$PATH
+
+numcpus=$(grep -c processor /proc/cpuinfo)
+numnodes=$(ls /sys/devices/system/node | wc -l)
+
+nccpus=$(numactl --hardware | grep cpus | sed 's/node.*cpus: //' | wc -w ) 
+ncnodes=$(numactl --hardware | grep -c 'node.*size' ) 
+
+if [ $numnodes != $ncnodes ] ; then
+    echo "numactl --hardware doesnt report all nodes"
+    exit 1
+fi
+
+if [ $numcpus != $nccpus -a \( $[$nccpus / $numnodes] != $numcpus \) ] ; then
+    echo "numactl --hardware cpus look bogus"
+    exit 1
+fi
+
+numactl --hardware | grep cpus | while read n ; do 
+    node=${n/ cpus*/} 
+    node=${node/ /}
+    cpus=${n/*: /}
+    k=0
+    for i in $cpus ; do 
+	if [ ! -h "/sys/devices/system/node/$node/cpu$i" ] ; then
+	    echo "$node doesn't have cpu $i"
+	    exit 1
+	fi
+	k=$[$k+1]
+    done
+    if [ $k != $(echo $cpus | wc -w) ] ; then
+	echo "$node missing cpu"
+	exit 1	
+    fi
+done

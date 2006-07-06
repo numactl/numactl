@@ -6,8 +6,7 @@
 MB=$[1024*1024]
 SIZE=$[30 * $MB]
 DEMOSIZE=$[10 * $MB]
-#VALGRIND="valgrind --tool=memcheck"
-VALGRIND=""
+VALGRIND=${VALGRIND:-}
 
 numactl() { 
 	$VALGRIND ../numactl "$@"
@@ -35,6 +34,7 @@ FAILED='========SUCCESS'
 failed() { 
     FAILED='=======FAILED'
     echo $FAILED
+    echo "Check if machine doesn't have background jobs and try again"
     exit 1
 } 
 

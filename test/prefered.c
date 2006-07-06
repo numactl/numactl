@@ -12,44 +12,47 @@
 int main(void)
 {
 	int max = numa_max_node();
-	unsigned long nodes, mask;
-	int sz = getpagesize();
-	char *mem = mmap(NULL, sz*2, PROT_READ|PROT_WRITE, 
-					MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
-	int off = 0;
+	nodemask_t nodes, mask;
+	int pagesize = getpagesize();
 	int i;
 	int pol;
 	int node;
+	int err = 0;
 
-	if (mem == (char *)-1)
-		err("mmap");
+	for (i = max; i >= 0; --i) { 
+		char *mem = mmap(NULL, pagesize*(max+1), PROT_READ|PROT_WRITE, 
+					MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
+		char *adr = mem;
 
-	for (i = max; i >= 0; i--) { 
-		printf("%d\n", i); 
+		if (mem == (char *)-1)
+			err("mmap");
 
-		nodes = 1UL << i;
-		if (mbind(mem+off,  sz, MPOL_PREFERRED, &nodes, 2, 0) < 0) 
+		printf("%d offset %lx\n", i, (adr - mem)); 
+
+		nodemask_zero(&nodes);
+		nodemask_zero(&mask);
+		nodemask_set(&mask, i);
+
+		if (mbind(adr,  pagesize, MPOL_PREFERRED, nodes.n, sizeof(nodemask_t)*8+1, 0) < 0) 
 			err("mbind");
 		
-		mem[off] = 0;
+		++*adr;
 			
-		if (get_mempolicy(&pol, &mask, 64, mem+off, MPOL_F_ADDR) < 0) 
+		if (get_mempolicy(&pol, mask.n, sizeof(nodemask_t)*8+1, adr, MPOL_F_ADDR) < 0) 
 			err("get_mempolicy");
 	
 		assert(pol == MPOL_PREFERRED);
-		assert(mask & (1UL << i)); 
-
+		assert(nodemask_isset(&mask, i));
 
 		node = 0x123;
 		
-		if (get_mempolicy(&node, NULL, 0, mem+off, MPOL_F_ADDR|MPOL_F_NODE) < 0)
+		if (get_mempolicy(&node, NULL, 0, adr, MPOL_F_ADDR|MPOL_F_NODE) < 0)
 			err("get_mempolicy2"); 
 
-		printf("node %d\n", i);
+		printf("got node %d expected %d\n", node, i);
 
-		assert(node == i);	
-
-		off += sz;		
+		if (node != i) 
+			err = 1;
 	}
-	return 0;
+	return err;
 }

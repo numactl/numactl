@@ -1,0 +1,5 @@
+#!/bin/sh
+#print cpu it is running on
+declare -a arr
+arr=( $(< /proc/self/stat) )
+echo ${arr[38]}

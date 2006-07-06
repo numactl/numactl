@@ -118,58 +118,28 @@ make_internal_alias(numa_pagesize);
 static int maxnode = -1; 
 static int maxcpus = -1; 
 
-static int number_of_cpus(void)
+static int number_of_configured_cpus(void)
 { 
-	char *line = NULL;
-	size_t len = 0;
-	char *s;
-	FILE *f;
-	int cpu;
-	
+	int len = 16; 
+	int n;
+	int olde = errno;
+
 	if (maxcpus >= 0) 
 		return maxcpus + 1;
 
-	f = fopen("/proc/cpuinfo","r"); 
-	if (!f) {
-		int n;
-		int len = 8192; 
-		for (;;) { 
-			unsigned long buffer[CPU_LONGS(len)];
-			memset(buffer, 0, sizeof(buffer));
-			n = numa_sched_getaffinity_int(0, CPU_BYTES(len), 
-						       buffer);
-			if (n < 0 && errno == EINVAL && len < 1024*1024) {
-				len *= 2;
-				continue;
-			}
-			if (n >= 0) { 
-				int i, k;
-				for (i = 0; i < n / sizeof(long); i++) {
-					if (!buffer[i])
-						continue;
-					for (k = 0; k< 8; k++) 
-						if (buffer[i] & (1<<k))
-							maxcpus = i*sizeof(long)+k;
-				}
-				return maxcpus;
-			}
-			break;
-		}
-		numa_warn(W_noproc, "/proc not mounted. Assuming zero nodes: %s", 
-			  strerror(errno)); 
-		return 0;
-	}
-	maxcpus = 0;
-	while (getdelim(&line, &len, '\n', f) > 0) { 
-		if (strncmp(line,"processor",9))
+	do { 
+		unsigned long buffer[CPU_LONGS(len)];
+		memset(buffer, 0, sizeof(buffer));
+		n = numa_sched_getaffinity_int(0, CPU_BYTES(len), buffer);
+		if (n < 0 && errno == EINVAL) {
+			if (len >= 1024*1024) 
+				break;
+			len *= 2;
 			continue;
-		s = line + strcspn(line, "0123456789"); 
-		if (sscanf(s, "%d", &cpu) == 1 && cpu > maxcpus) 
-			maxcpus = cpu;
-	} 
-	free(line);
-	fclose(f); 
-	return maxcpus + 1;
+		}
+	} while (n < 0);
+	errno = olde;
+	return len;
 } 
 
 static int fallback_max_node(void)
@@ -428,32 +398,67 @@ void numa_free(void *mem, size_t size)
 
 static unsigned long *node_cpu_mask[NUMA_NUM_NODES];  
 
+static void bad_cpumap(int ncpus, unsigned long *mask)
+{
+	int n;
+	for (n = 0; n < ncpus; n++)
+		set_bit(n, mask);
+}
+
+int numa_parse_bitmap(char *line, unsigned long *mask, int ncpus)
+{
+	int i;
+	char *p = strchr(line, '\n'); 
+	if (!p)
+		return -1;
+
+	for (i = 0; p > line;i++) {
+		char *oldp, *endp; 
+		oldp = p;
+		if (*p == ',') 
+			--p;
+		while (p > line && *p != ',')
+			--p;
+		/* Eat two 32bit fields at a time to get longs */
+		if (sizeof(unsigned long) == 8) {
+			oldp--;
+			memmove(p, p+1, oldp-p+1);
+			while (p > line && *p != ',')
+				--p;
+		}
+		if (*p == ',')
+			p++;
+		if (i >= CPU_LONGS(ncpus))
+			return -1;
+		mask[i] = strtoul(p, &endp, 16);
+		if (endp != oldp)
+			return -1;
+		p--;
+	}
+	return 0;
+}
+
 /* This would be better with some locking, but I don't want to make libnuma
    dependent on pthreads right now. The races are relatively harmless. */
 int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen) 
 {
+	int err = 0;
 	char fn[64];
 	FILE *f; 
 	char *line = NULL; 
 	size_t len = 0; 
-	char *s;
-	int n;
 	int buflen_needed;
-	unsigned long *mask, prev;
-	int ncpus = number_of_cpus();
-	int i;
-	int mask_words;
-	int bits_in_mask_0;
+	unsigned long *mask;
+	int ncpus = number_of_configured_cpus();
 
 	buflen_needed = CPU_BYTES(ncpus);
 	if ((unsigned)node > maxnode || bufferlen < buflen_needed) { 
 		errno = ERANGE;
 		return -1;
 	}
-
+	if (bufferlen > buflen_needed)
+		memset(buffer, 0, bufferlen); 
 	if (node_cpu_mask[node]) { 
-		if (bufferlen > buflen_needed)
-			memset(buffer, 0, bufferlen); 
 		memcpy(buffer, node_cpu_mask[node], buflen_needed);
 		return 0;
 	}
@@ -462,73 +467,43 @@ int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen)
 	if (!mask) 
 		mask = (unsigned long *)buffer; 
 	memset(mask, 0, buflen_needed); 
-			
+
 	sprintf(fn, "/sys/devices/system/node/node%d/cpumap", node); 
 	f = fopen(fn, "r"); 
 	if (!f || getdelim(&line, &len, '\n', f) < 1) { 
 		numa_warn(W_nosysfs2,
 		   "/sys not mounted or invalid. Assuming one node: %s",
 			  strerror(errno)); 
-		for (n = 0; n < ncpus; n++)
-			set_bit(n, (unsigned long *)mask);
-		goto out;
+		bad_cpumap(ncpus, mask);
+		err = -1;
 	} 
-        mask_words = 0;
-	bits_in_mask_0 = 0;
-	n = 0;
-	s = line;
-	prev = 0; 
-        for (i = 0; s[i]; i++) {
-                static const char hexdigits[] = "0123456789abcdef";
-                char *w = strchr(hexdigits, tolower(s[i]));
-                if (!w) {
-                        if (isspace(s[i]) || s[i] == ',')
-                                continue;
-                        numa_warn(W_cpumap,
-                                  "Unexpected character `%c' in sysfs cpumap", 
-					s[i]);
-                        set_bit(node, mask);
-                        goto out;
-		}
-
-		/* if mask[0] is full shift left before adding another */
-		if (bits_in_mask_0 >= sizeof(mask[0])*8) {
-		        /* skip any leading zeros */
-		        if (prev || mask[0]){
-			        /* shift over any previously loaded masks */
-			        memmove(mask+mask_words+1, mask+mask_words,
-					sizeof(mask[0]) * mask_words);
-				mask_words++;
-				bits_in_mask_0 = 0;
-				mask[0] = 0;
-				prev = 1;
-			}
-		}
- 
-		mask[0] = (mask[0]*16) + (w - hexdigits);
-	      	bits_in_mask_0 += 4; /* 4 bits per hex char */
-	}
- out:
- 	free(line);
-	if (f) 
+	if (f)
 		fclose(f);
+
+	if (line && numa_parse_bitmap(line, mask, ncpus) < 0) {
+		numa_warn(W_cpumap, "Cannot parse cpumap. Assuming one node");
+		bad_cpumap(ncpus, mask);
+		err = -1;
+	}
+
+	free(line);
 	memcpy(buffer, mask, buflen_needed);
 
 	/* slightly racy, see above */ 
 	if (node_cpu_mask[node]) {
-		if (mask != (unsigned long *)buffer)
+		if (mask != buffer)
 			free(mask); 	       
 	} else {
-		node_cpu_mask[node] = (unsigned long *)mask; 
+		node_cpu_mask[node] = mask; 
 	} 
-	return 0; 
+	return err; 
 } 
 
 make_internal_alias(numa_node_to_cpus);
 
 int numa_run_on_node_mask(const nodemask_t *mask)
 { 	
-	int ncpus = number_of_cpus();
+	int ncpus = number_of_configured_cpus();
 	int i, k, err;
 	unsigned long cpus[CPU_LONGS(ncpus)], nodecpus[CPU_LONGS(ncpus)];
 	memset(cpus, 0, CPU_BYTES(ncpus));
@@ -582,7 +557,7 @@ make_internal_alias(numa_run_on_node_mask);
 
 nodemask_t numa_get_run_node_mask(void)
 { 
-	int ncpus = number_of_cpus();
+	int ncpus = number_of_configured_cpus();
 	nodemask_t mask;
 	int i, k;
 	int max = numa_max_node_int();
@@ -594,7 +569,7 @@ nodemask_t numa_get_run_node_mask(void)
 		return numa_no_nodes; 
 	for (i = 0; i <= max; i++) {
 		if (numa_node_to_cpus_int(i, nodecpus, CPU_BYTES(ncpus)) < 0) {
-			numa_warn(W_noderunmask, "Cannot read node cpumask from sysfs");
+			/* It's possible for the node to not exist */
 			continue;
 		}
 		for (k = 0; k < CPU_LONGS(ncpus); k++) {
@@ -612,12 +587,15 @@ int numa_migrate_pages(int pid, const nodemask_t *fromnodes, const nodemask_t *t
 
 int numa_run_on_node(int node)
 { 
-	int ncpus = number_of_cpus();
+	int ncpus = number_of_configured_cpus();
 	unsigned long cpus[CPU_LONGS(ncpus)];
 
-	if (node == -1)
-		memset(cpus, 0xff, CPU_BYTES(ncpus));
-	else if (node < NUMA_NUM_NODES) {
+	if (node == -1) {
+		int i;
+		memset(cpus, 0, CPU_BYTES(ncpus));
+		for (i = 0; i < ncpus; i++) 
+			cpus[i / BITS_PER_LONG] |= 1UL << (i%BITS_PER_LONG);
+	} else if (node < NUMA_NUM_NODES) {
 		if (numa_node_to_cpus_int(node, cpus, CPU_BYTES(ncpus)) < 0) {
 			numa_warn(W_noderunmask, "Cannot read node cpumask from sysfs");
 			return -1; 
@@ -649,7 +627,7 @@ int numa_preferred(void)
 void numa_set_preferred(int node)
 { 
 	nodemask_t n;
-	if (node == -1) {
+	if (node < 0) {
 		nodemask_t empty;
 		nodemask_zero(&empty);
 		setpol(MPOL_DEFAULT, empty);

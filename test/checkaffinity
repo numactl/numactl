@@ -1,0 +1,27 @@
+#!/bin/bash
+# check if affinity works
+
+BASE=`pwd`/..
+export LD_LIBRARY_PATH=$BASE
+export PATH=$BASE:$PATH
+
+numcpus=$(grep -c processor /proc/cpuinfo)
+numnodes=$(ls /sys/devices/system/node | wc -l)
+
+for i in $(seq 0 $[$numcpus - 1]) ; do
+    if [ $(numactl --physcpubind=$i ./printcpu) != $i ] ; then
+       echo "--physcpubind for $i doesn't work"
+       exit 1
+    fi
+    if [ $(numactl --physcpubind=$i numactl --show | awk '/^physcpubind/ { print $2 }' ) != $i ] ; then
+	echo "--show doesn't agree with physcpubind for cpu $i"
+	exit 1
+    fi
+done
+
+for i in $(seq 0 $[$numnodes - 1]) ; do
+    if [ $(numactl --cpunodebind=$i numactl --show | awk '/nodebind/ { print $2 }' ) != $i ] ; then
+	echo "--show doesn't agree with cpunodebind for node $i"
+	exit 1
+    fi
+done

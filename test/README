@@ -1,13 +1,21 @@
 
 Various simple test scripts to verify some parts of the NUMA API.
 
-You should have at least two nodes for the test suite. For x86-64
-there is a patch in numa-emu-2 that allows to simulate multiple nodes
-on a non NUMA machine.
+To do a full regression test run make test
+
+You should have at least two nodes on a NUMA system for the test suite.
 
 The tests in regress assume that there is enough memory free on nodes 0/1.
 They consider PREFERRED/INTERLEAVE not hitting the first choice node an 
 error. 
+
+They also require a relatively idle machine to avoid too much
+noise from memory allocation from other processes. Without
+that regress1 might fail.
+
+You can run the tests under valgrind with VALGRIND=valgrind make test
+Older valgrind versions incorrectly report a uninitialized byte error
+on set_mempolicy. That is a false positive.
 
 TBD: more detailed unit tests for mbind / shm / {get,set}_mempolicy
 Currently everything is tested using numactl only.

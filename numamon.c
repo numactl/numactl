@@ -16,7 +16,8 @@
 
    Display some numa statistics collected by the CPU.
    Opteron specific. Also not reliable because the counters
-   are not quite correct in hardware. */
+   are not quite correct in hardware.  */
+
 #define _LARGE_FILE_SOURCE 1
 #define _GNU_SOURCE 1
 #include <string.h>

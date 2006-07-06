@@ -46,15 +46,16 @@ numactl \- Control NUMA policy for processes or shared memory
 ] [
 .B \-\-offset offset
 ] [
-.B \-\-mode shmmode
+.B \-\-shmmode shmmode
 ] [
 .B \-\-length length
 ] [
 .B \-\-strict
 ]
 .br
+[
 .B \-\-shmid id
-|
+]
 .B \-\-shm shmkeyfile
 |
 .B \-\-file tmpfsfile
@@ -148,7 +149,7 @@ Give an error when a page in the policied area in the shared memory
 segment already was faulted in with a conflicting policy. Default
 is to silently ignore this.
 .TP
-.B \-\-mode shmmode
+.B \-\-shmmode shmmode
 Only valid before \-\-shmid or \-\-shm
 When creating a shared memory segment set it to numeric mode 
 .I shmmode.

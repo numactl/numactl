@@ -1,11 +1,13 @@
 #!/bin/sh
 # More regression tests for libnuma/numa api
 
+VALGRIND=${VALGRIND:-}
+
 export LD_LIBRARY_PATH=`pwd`/..
 
 T() {
        echo "$@" 
-       if ! "$@" ;  then
+       if ! $VALGRIND "$@" ;  then
 	  echo	$1 FAILED!!!!
 	  exit 1
        fi
@@ -14,9 +16,11 @@ T() {
 
 # various tests
 
-# failure is harmless because prefered is only a hint
+# still broken
 #T ./prefered
-
 T ./distance
 T ./nodemap
+T ./checkaffinity
+T ./checktopology
+T ./tbitmap
 #T ./randmap

@@ -22,6 +22,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <ctype.h>
 #include "numaif.h"
 #include "numa.h"
 #include "numaint.h"
@@ -63,13 +64,13 @@ void usage(void)
 		"               [--membind=nodes] [--localalloc] command args ...\n"
 		"       numactl [--show]\n"
 		"       numactl [--hardware]\n"
-		"       numactl [--length length] [--offset offset] [--mode shmmode] [--strict]\n"
+		"       numactl [--length length] [--offset offset] [--shmmode shmmode] [--strict]\n"
 		"               --shm shmkeyfile | --file tmpfsfile | --shmid id\n"
 		"               [--huge] [--touch]\n" 
 		"               memory policy\n"
 		"\n"
 		"memory policy is --interleave, --preferred, --membind, --localalloc\n"
-		"nodes is a comma delimited list of node numbers or A-B ranges or none/all.\n"
+		"nodes is a comma delimited list of node numbers or A-B ranges or all.\n"
 		"cpus is a comma delimited list of cpu numbers or A-B ranges or all\n"
 		"all ranges can be inverted with !\n"
 		"the old --cpubind argument is deprecated.\n"
@@ -193,6 +194,29 @@ static void print_distances(int maxnode)
 	}			
 }
 
+void print_node_cpus(int node)
+{
+	int len = 1;
+	for (;;) { 
+		int i;
+		unsigned long cpus[len];
+		errno = 0;
+		int err = numa_node_to_cpus(node, cpus, len * sizeof(long));
+		if (err < 0) {
+			if (errno == ERANGE) {
+				len *= 2; 
+				continue;
+			}
+			break; 
+		}
+		for (i = 0; i < len*BITS_PER_LONG; i++) 
+			if (test_bit(i, cpus))
+				printf(" %d", i);
+		break;
+	}
+	putchar('\n');
+}
+
 void hardware(void)
 { 
 	int i;
@@ -202,6 +226,8 @@ void hardware(void)
 		char buf[64];
 		long long fr;
 		unsigned long long sz = numa_node_size64(i, &fr); 
+		printf("node %d cpus:", i);
+		print_node_cpus(i);
 		printf("node %d size: %s\n", i, fmt_mem(sz, buf));
 		printf("node %d free: %s\n", i, fmt_mem(fr, buf));
 	}
@@ -261,25 +287,46 @@ void noshm(char *opt)
 	shmoption = opt;		
 } 
 
+void dontshm(char *opt) 
+{
+	if (shmoption)
+		usage_msg("%s shm option is not allowed before %s", shmoption, opt);
+}
+
 void needshm(char *opt)
 { 
 	if (!shmattached)
 		usage_msg("%s must be after shared memory specification", opt);
 } 
 
+void get_short_opts(struct option *o, char *s)
+{
+	while (o->name) { 
+		if (isprint(o->val)) {
+			*s++ = o->val;
+			if (o->has_arg) 
+				*s++ = ':';
+		}
+		o++;
+	}
+	*s = '\0';
+}
+
 int main(int ac, char **av)
 { 
 	int c;
 	long arg; 
 	char *end;
-
-	while ((c = getopt_long(ac,av,"+i:h:c:p:sm:l", opts, NULL)) != -1) { 
+	char shortopts[array_len(opts)*2 + 1];
+	get_short_opts(opts,shortopts);
+	while ((c = getopt_long(ac, av, shortopts, opts, NULL)) != -1) { 
 		nodemask_t mask;
 		switch (c) { 
 		case 's': /* --show */
 			show();
 			exit(0);  
 		case 'H': /* --hardware */
+			nopolicy();
 			hardware();
 			exit(0);
 		case 'i': /* --interleave */
@@ -295,6 +342,8 @@ int main(int ac, char **av)
 			break;
 		case 'N': /* --cpunodebind */
 		case 'c': /* --cpubind */
+			dontshm("-c/--cpubind/--cpunodebind");
+			checknuma();
 			mask = nodemask(optarg);
 			errno = 0;
 			check_cpubind(do_shm);
@@ -306,6 +355,7 @@ int main(int ac, char **av)
 		{
 			int ncpus;
 			unsigned long *cpubuf;
+			dontshm("-C/--physcpubind");
 			cpubuf = cpumask(optarg, &ncpus);
 			errno = 0;
 			check_cpubind(do_shm);
@@ -333,7 +383,7 @@ int main(int ac, char **av)
 			checknuma();
 			setpolicy(MPOL_PREFERRED);
 			arg = strtoul(optarg,&end,0); 
-			if (*end || end == optarg) 
+			if (*end || end == optarg || arg < 0 || arg > numa_max_node()) 
 				usage();
 			errno = 0;
 			numa_set_bind_policy(0);

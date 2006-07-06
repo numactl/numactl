@@ -41,7 +41,7 @@ void usage(void)
 	fprintf(stderr,
 		"usage: migratepages pid from-nodes to-nodes\n"
 		"\n"
-		"nodes is a comma delimited list of node numbers or A-B ranges or none/all.\n"
+		"nodes is a comma delimited list of node numbers or A-B ranges or all.\n"
 );
 	exit(1);
 }
