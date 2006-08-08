@@ -151,7 +151,7 @@ in all cases
 - Add make test target to run regression test easier and fix up
 test/README
 
-Lots of fixes thanks to thorough testing from Noriyuki Taniuchi:
+Lots of fixes thanks to thorough testing by Noriyuki Taniuchi:
 - Better command line parsing in numactl and fix various documentation bugs
 - Wrong arguments to --prefered don't crash numactl anymore
 - Fix --cpunodebind=all
@@ -159,4 +159,7 @@ Lots of fixes thanks to thorough testing from Noriyuki Taniuchi:
 - Fix documentation of numa_set_localalloc. It doesn't have a flag. 
 - Fix numa_run_on_node(-1)
 - numa_get_run_node_mask(): Fix documentation, don't warn
+
+0.9.10:
+- Fix cpumap parsing bug when NR_CPUS < 32 (dean gaudet)  
 

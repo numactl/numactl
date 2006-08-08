@@ -420,7 +420,7 @@ int numa_parse_bitmap(char *line, unsigned long *mask, int ncpus)
 		while (p > line && *p != ',')
 			--p;
 		/* Eat two 32bit fields at a time to get longs */
-		if (sizeof(unsigned long) == 8) {
+		if (p > line && sizeof(unsigned long) == 8) {
 			oldp--;
 			memmove(p, p+1, oldp-p+1);
 			while (p > line && *p != ',')
