@@ -163,3 +163,7 @@ Lots of fixes thanks to thorough testing by Noriyuki Taniuchi:
 0.9.10:
 - Fix cpumap parsing bug when NR_CPUS < 32 (dean gaudet)  
 
+0.9.11
+- Fix usage output for --shmid (Noriyuki Taniuchi)
+- Use correct syscall number for migrate_pages() on PPC
+ 

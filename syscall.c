@@ -60,7 +60,7 @@
 #define __NR_mbind 259
 #define __NR_get_mempolicy 260
 #define __NR_set_mempolicy 261
-#define __NR_migrate_pages 280
+#undef __NR_migrate_pages 258
 
 #elif !defined(DEPS_RUN)
 #error "Add syscalls for your architecture or update kernel headers"

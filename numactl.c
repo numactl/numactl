@@ -66,7 +66,7 @@ void usage(void)
 		"       numactl [--hardware]\n"
 		"       numactl [--length length] [--offset offset] [--shmmode shmmode]\n"
 		"               [--strict]\n"
-		"               --shm shmkeyfile | --file tmpfsfile | --shmid id\n"
+		"               [--shmid id] --shm shmkeyfile | --file tmpfsfile\n"
 		"               [--huge] [--touch]\n" 
 		"               memory policy\n"
 		"\n"
