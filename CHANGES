@@ -167,3 +167,7 @@ Lots of fixes thanks to thorough testing by Noriyuki Taniuchi:
 - Fix usage output for --shmid (Noriyuki Taniuchi)
 - Use correct syscall number for migrate_pages() on PPC
  
+1.0
+- Add sleep to regression test to work with delayed statistic
+updating in newer kernels (Mel Gorman) 
+- Default to -O2

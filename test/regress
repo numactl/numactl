@@ -7,10 +7,17 @@ MB=$[1024*1024]
 SIZE=$[30 * $MB]
 DEMOSIZE=$[10 * $MB]
 VALGRIND=${VALGRIND:-}
+STAT_INTERVAL=5
 
 numactl() { 
 	$VALGRIND ../numactl "$@"
 }
+
+# Get the interval vm statistics refresh at
+if [ -e /proc/sys/vm/stat_interval ]; then
+	STAT_INTERVAL=`cat /proc/sys/vm/stat_interval`
+	STAT_INTERVAL=`expr $STAT_INTERVAL \* 2`
+fi
 
 BASE=`pwd`/..
 export LD_LIBRARY_PATH=$BASE
@@ -40,6 +47,7 @@ failed() {
 
 # args: statname node
 nstat() { 
+    sleep $STAT_INTERVAL
     declare -a fields
     numastat | grep $1 | while read -a fields ; do	
 	echo ${fields[$[1 + $2]]}
