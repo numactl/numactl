@@ -171,3 +171,6 @@ Lots of fixes thanks to thorough testing by Noriyuki Taniuchi:
 - Add sleep to regression test to work with delayed statistic
 updating in newer kernels (Mel Gorman) 
 - Default to -O2
+
+1.0.1
+- Fix build on powerpc
