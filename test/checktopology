@@ -9,7 +9,7 @@ export PATH=$BASE:$PATH
 numcpus=$(grep -c processor /proc/cpuinfo)
 numnodes=$(ls /sys/devices/system/node | wc -l)
 
-nccpus=$(numactl --hardware | grep cpus | sed 's/node.*cpus: //' | wc -w ) 
+nccpus=$(numactl --hardware | grep cpus | sed 's/node.*cpus://' | wc -w ) 
 ncnodes=$(numactl --hardware | grep -c 'node.*size' ) 
 
 if [ $numnodes != $ncnodes ] ; then

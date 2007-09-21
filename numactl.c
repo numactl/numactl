@@ -302,6 +302,7 @@ void needshm(char *opt)
 
 void get_short_opts(struct option *o, char *s)
 {
+	*s++ = '+';
 	while (o->name) { 
 		if (isprint(o->val)) {
 			*s++ = o->val;
@@ -314,7 +315,7 @@ void get_short_opts(struct option *o, char *s)
 }
 
 int main(int ac, char **av)
-{ 
+{
 	int c;
 	long arg; 
 	char *end;

@@ -425,8 +425,11 @@ locates memory with the current NUMA policy. The constraints described for
 apply here too.
 
 .BR numa_node_to_cpus ()
-converts a node number to a bitmask of CPUs. The user must pass a long enough
-buffer. If the buffer is not long enough 
+converts a node number to a bitmask of CPUs. 
+.I bufferlen
+is the size of buffer in bytes.
+The user must pass a large enough
+buffer. If the buffer is not large enough 
 .I errno
 will be set to
 .I ERANGE

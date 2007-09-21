@@ -27,7 +27,7 @@ int main(void)
 		if (mem == (char *)-1)
 			err("mmap");
 
-		printf("%d offset %lx\n", i, (adr - mem)); 
+		printf("%d offset %lx\n", i, (long)(adr - mem)); 
 
 		nodemask_zero(&nodes);
 		nodemask_zero(&mask);

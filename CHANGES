@@ -174,3 +174,8 @@ updating in newer kernels (Mel Gorman)
 
 1.0.1
 - Fix build on powerpc
+
+1.0.2
+- Fix parallel Makefile build (Andreas Herrmann)
+- Fix target command argument parsing for numactl (no -- needed again anymore) 
+- Clarify numa_node_to_cpus() manpage
