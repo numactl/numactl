@@ -36,11 +36,13 @@
 #define __NR_set_mempolicy 238
 #define __NR_get_mempolicy 239
 #define __NR_migrate_pages 256
+#define __NR_move_pages 279
 
 #elif defined(__ia64__)
 #define __NR_sched_setaffinity    1231
 #define __NR_sched_getaffinity    1232
 #define __NR_migrate_pages	1280
+#define __NR_move_pages 1276
 
 /* Official allocation */
 
@@ -54,6 +56,7 @@
 #define __NR_get_mempolicy 275
 #define __NR_set_mempolicy 276
 #define __NR_migrate_pages 294
+#define __NR_move_pages 317
 
 #elif defined(__powerpc__)
 
@@ -61,6 +64,9 @@
 #define __NR_get_mempolicy 260
 #define __NR_set_mempolicy 261
 #define __NR_migrate_pages 258
+/* FIXME: powerpc is missing move pages!!!
+#define __NR_move_pages xxx
+*/
 
 #elif !defined(DEPS_RUN)
 #error "Add syscalls for your architecture or update kernel headers"
@@ -151,6 +157,12 @@ long WEAK migrate_pages(int pid, unsigned long maxnode,
 	return syscall(__NR_migrate_pages, pid, maxnode, frommask, tomask);
 }
 
+long WEAK move_pages(int pid, unsigned long count,
+	void **pages, const int *nodes, int *status, int flags)
+{
+	return syscall(__NR_move_pages, pid, count, pages, nodes, status, flags);
+}
+
 /* SLES8 glibc doesn't define those */
 
 int numa_sched_setaffinity(pid_t pid, unsigned len, const unsigned long *mask)
@@ -167,7 +179,3 @@ int numa_sched_getaffinity(pid_t pid, unsigned len, const unsigned long *mask)
 make_internal_alias(numa_sched_getaffinity);
 make_internal_alias(numa_sched_setaffinity);
 make_internal_alias(get_mempolicy);
-make_internal_alias(set_mempolicy);
-make_internal_alias(mbind);
-make_internal_alias(migrate_pages);
-

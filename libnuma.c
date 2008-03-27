@@ -585,6 +585,12 @@ int numa_migrate_pages(int pid, const nodemask_t *fromnodes, const nodemask_t *t
 	return migrate_pages(pid, NUMA_NUM_NODES + 1, &fromnodes->n[0], &tonodes->n[0]);
 }
 
+int numa_move_pages(int pid, unsigned long count,
+	void **pages, const int *nodes, int *status, int flags)
+{
+	return move_pages(pid, count, pages, nodes, status, flags);
+}
+
 int numa_run_on_node(int node)
 { 
 	int ncpus = number_of_configured_cpus();

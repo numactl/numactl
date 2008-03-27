@@ -18,6 +18,9 @@ extern long set_mempolicy(int mode, const unsigned long *nmask,
 extern long migratepages(int pid, unsigned long maxnode, unsigned long *fromnode,
 			unsigned long *tonode);
 
+extern long move_pages(int pid, unsigned long count,
+		void **pages, const int *nodes, int *status, int flags);
+
 /* Policies */
 #define MPOL_DEFAULT     0
 #define MPOL_PREFERRED    1

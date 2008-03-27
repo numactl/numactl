@@ -178,6 +178,9 @@ void numa_warn(int num, char *fmt, ...);
 
 int numa_migrate_pages(int pid, const nodemask_t *from, const nodemask_t *to);
 
+int numa_move_pages(int pid, unsigned long count, void **pages,
+		const int *nodes, int *status, int flags);
+
 #ifdef __cplusplus
 }
 #endif

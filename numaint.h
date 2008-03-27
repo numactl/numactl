@@ -14,6 +14,9 @@ extern long set_mempolicy_int(int mode, const unsigned long *nmask,
 extern long migrate_pages(int pid, unsigned long maxnode, const unsigned long *frommask,
 	const unsigned long *tomask);
 
+extern long move_pages(int pid, unsigned long count,
+	void **pages, const int *nodes, int *status, int flags);
+
 #define SHM_HUGETLB     04000   /* segment will use huge TLB pages */
 
 #define CPU_BYTES(x) (round_up(x, BITS_PER_LONG)/8)
