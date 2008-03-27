@@ -22,7 +22,8 @@ CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      test/pagesize test/tshared test/mynode.o test/tshared.o mt.o \
 	      test/mynode test/ftok test/prefered test/randmap \
 	      .depend .depend.X test/nodemap test/distance test/tbitmap \
-		test/after test/before threadtest migratepages migspeed
+	      test/after test/before threadtest test_move_pages \
+	      migratepages migspeed
 SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
 	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c mt.c \
 	test/*.c
@@ -33,7 +34,7 @@ docdir := ${prefix}/share/doc
 
 all: numactl migratepages migspeed libnuma.so numademo numamon memhog \
      test/tshared stream test/mynode test/pagesize test/ftok test/prefered \
-     test/randmap test/nodemap test/distance test/tbitmap
+     test/randmap test/nodemap test/distance test/tbitmap test/move_pages
 
 numactl: numactl.o util.o shm.o bitops.o libnuma.so
 
@@ -93,8 +94,9 @@ test/nodemap: test/nodemap.c libnuma.so
 
 test/distance: test/distance.c libnuma.so
 
-
 test/tbitmap: test/tbitmap.c libnuma.so
+
+test/move_pages: test/move_pages.c libnuma.so
 
 .PHONY: install all clean html depend
 
