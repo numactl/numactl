@@ -1,15 +1,19 @@
 /* Internal interfaces of libnuma */
 #include "bitops.h"
 
-extern int numa_sched_setaffinity(pid_t pid, struct bitmask *mask);
-extern int numa_sched_getaffinity(pid_t pid, struct bitmask *mask);
-extern int numa_sched_setaffinity_int(pid_t pid, struct bitmask *mask);
-extern int numa_sched_getaffinity_int(pid_t pid, struct bitmask *mask);
-extern long get_mempolicy_int(int *policy, const unsigned long *nmask,
+extern int numa_sched_setaffinity_v1(pid_t pid, unsigned len, const unsigned long *mask);
+extern int numa_sched_getaffinity_v1(pid_t pid, unsigned len, const unsigned long *mask);
+extern int numa_sched_setaffinity_v1_int(pid_t pid, unsigned len,const unsigned long *mask);
+extern int numa_sched_getaffinity_v1_int(pid_t pid, unsigned len,const unsigned long *mask);
+extern int numa_sched_setaffinity_v2(pid_t pid, struct bitmask *mask);
+extern int numa_sched_getaffinity_v2(pid_t pid, struct bitmask *mask);
+extern int numa_sched_setaffinity_v2_int(pid_t pid, struct bitmask *mask);
+extern int numa_sched_getaffinity_v2_int(pid_t pid, struct bitmask *mask);
+extern long get_mempolicy(int *policy, const unsigned long *nmask,
                               unsigned long maxnode, void *addr, int flags);
-extern long mbind_int(void *start, unsigned long len, int mode, 
+extern long mbind(void *start, unsigned long len, int mode,
 	  const unsigned long *nmask, unsigned long maxnode, unsigned flags);
-extern long set_mempolicy_int(int mode, const unsigned long *nmask, 
+extern long set_mempolicy(int mode, const unsigned long *nmask,
 			  unsigned long maxnode);
 extern long migrate_pages(int pid, unsigned long maxnode, const unsigned long *frommask,
 	const unsigned long *tomask);

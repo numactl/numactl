@@ -73,14 +73,14 @@ int main(void)
 	struct bitmask *mask, *mask2;
 	int i;
 
-	mask  = bitmask_alloc(MASKSIZE);
-	mask2 = bitmask_alloc(MASKSIZE);
+	mask  = numa_bitmask_alloc(MASKSIZE);
+	mask2 = numa_bitmask_alloc(MASKSIZE);
 
 	printf("Testing bitmap functions\n");
 	for (i = 0; i < MASKSIZE; i++) {
-		bitmask_clearall(mask);
-		bitmask_clearall(mask2);
-		bitmask_setbit(mask, i);
+		numa_bitmask_clearall(mask);
+		numa_bitmask_clearall(mask2);
+		numa_bitmask_setbit(mask, i);
 		bitmap_scnprintf(buf, sizeof(buf), mask);
 		strcat(buf,"\n");
 		if (numa_parse_bitmap(buf, mask2) < 0)

@@ -84,8 +84,16 @@ int main(int argc, char *argv[])
 	if (*end || end == argv[0])
 		usage();
 
-	fromnodes = nodemask(argv[1]);
-	tonodes = nodemask(argv[2]);
+	fromnodes = numa_parse_nodestring(argv[1]);
+	if (!fromnodes) {
+		printf ("<%s> is invalid\n", argv[1]);
+		exit(1);
+	}
+	tonodes = numa_parse_nodestring(argv[2]);
+	if (!tonodes) {
+		printf ("<%s> is invalid\n", argv[2]);
+		exit(1);
+	}
 
 	rc = numa_migrate_pages(pid, fromnodes, tonodes);
 

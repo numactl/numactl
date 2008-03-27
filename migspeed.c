@@ -38,8 +38,6 @@ void usage(void)
 	exit(1);
 }
 
-int numa_exit_on_error = 1;
-
 void displaymap(void)
 {
 	FILE *f = fopen("/proc/self/numa_maps","r");
@@ -102,7 +100,13 @@ int main(int argc, char *argv[])
 	if (verbose > 1)
 		printf("numa_max_node = %d\n", numa_max_node());
 
-	from = nodemask(argv[optind]);
+	numa_exit_on_error = 1;
+
+	from = numa_parse_nodestring(argv[optind]);
+	if (!from) {
+                printf ("<%s> is invalid\n", argv[optind]);
+		exit(1);
+	}
 	if (errno) {
 		perror("from mask");
 		exit(1);
@@ -114,7 +118,11 @@ int main(int argc, char *argv[])
 	if (!argv[optind+1])
 		usage();
 
-	to = nodemask(argv[optind+1]);
+	to = numa_parse_nodestring(argv[optind+1]);
+	if (!to) {
+                printf ("<%s> is invalid\n", argv[optind+1]);
+		exit(1);
+	}
 	if (errno) {
 		perror("to mask");
 		exit(1);

@@ -8,13 +8,13 @@ int main(void)
 {
 	int i, k, w, ncpus;
 	struct bitmask *cpus;
-	int maxnode = number_of_configured_nodes()-1;
+	int maxnode = numa_num_configured_nodes()-1;
 
 	if (numa_available() < 0)  {
 		printf("no numa\n");
 		exit(1);
 	}
-	cpus = allocate_cpumask();
+	cpus = numa_allocate_cpumask();
 	ncpus = cpus->size;
 
 	for (i = 0; i <= maxnode ; i++) {
@@ -24,7 +24,7 @@ int main(void)
 		printf("%d: ", i); 
 		w = 0;
 		for (k = 0; k < ncpus; k++)
-			if (bitmask_isbitset(cpus, k))
+			if (numa_bitmask_isbitset(cpus, k))
 				printf(" %s%d", w>0?",":"", k);
 		putchar('\n');		
 	}

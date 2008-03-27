@@ -93,12 +93,12 @@ void usage_msg(char *msg, ...)
 
 void show_physcpubind(void)
 {
-	int ncpus = number_of_configured_cpus();
+	int ncpus = numa_num_configured_cpus();
 	
 	for (;;) { 
 		struct bitmask *cpubuf;
 
-		cpubuf = bitmask_alloc(ncpus);
+		cpubuf = numa_bitmask_alloc(ncpus);
 
 		if (numa_sched_getaffinity(0, cpubuf) < 0) {
 			if (errno == EINVAL && ncpus < 1024*1024) {
@@ -118,7 +118,7 @@ void show(void)
 	struct bitmask *membind, *interleave, *cpubind;
 	unsigned long cur;
 	int policy;
-	int numa_num_nodes = number_of_possible_nodes();
+	int numa_num_nodes = numa_num_possible_nodes();
 	
 	if (numa_available() < 0) { 
 		show_physcpubind();
@@ -200,13 +200,13 @@ static void print_distances(int maxnode)
 void print_node_cpus(int node)
 {
 	int len = 1;
-	int conf_cpus = number_of_configured_cpus();
+	int conf_cpus = numa_num_configured_cpus();
 
 	for (;;) { 
 		int i, err;
 		struct bitmask *cpus;
 
-		cpus = bitmask_alloc(conf_cpus);
+		cpus = numa_bitmask_alloc(conf_cpus);
 		errno = 0;
 		err = numa_node_to_cpus(node, cpus);
 		if (err < 0) {
@@ -217,7 +217,7 @@ void print_node_cpus(int node)
 			break; 
 		}
 		for (i = 0; i < len*BITS_PER_LONG; i++) 
-			if (bitmask_isbitset(cpus, i))
+			if (numa_bitmask_isbitset(cpus, i))
 				printf(" %d", i);
 		break;
 	}
@@ -227,7 +227,7 @@ void print_node_cpus(int node)
 void hardware(void)
 { 
 	int i;
-	int maxnode = number_of_configured_nodes()-1;
+	int maxnode = numa_num_configured_nodes()-1;
 	printf("available: %d nodes (0-%d)\n", 1+maxnode, maxnode); 	
 	for (i = 0; i <= maxnode; i++) { 
 		char buf[64];
@@ -322,11 +322,11 @@ void get_short_opts(struct option *o, char *s)
 
 int main(int ac, char **av)
 {
-	int c, ncpus, i, nnodes=0;
+	int c, i, nnodes=0;
 	long node=-1;
 	char *end;
 	char shortopts[array_len(opts)*2 + 1];
-	struct bitmask *mask;
+	struct bitmask *mask = NULL;
 
 	get_short_opts(opts,shortopts);
 	while ((c = getopt_long(ac, av, shortopts, opts, NULL)) != -1) {
@@ -340,7 +340,12 @@ int main(int ac, char **av)
 			exit(0);
 		case 'i': /* --interleave */
 			checknuma();
-			mask = nodemask(optarg);
+			mask = numa_parse_nodestring(optarg);
+			if (!mask) {
+				printf ("<%s> is invalid\n", optarg);
+				usage();
+			}
+
 			errno = 0;
 			setpolicy(MPOL_INTERLEAVE);
 			if (shmfd >= 0)
@@ -353,7 +358,11 @@ int main(int ac, char **av)
 		case 'c': /* --cpubind */
 			dontshm("-c/--cpubind/--cpunodebind");
 			checknuma();
-			mask = nodemask(optarg);
+			mask = numa_parse_nodestring(optarg);
+			if (!mask) {
+				printf ("<%s> is invalid\n", optarg);
+				usage();
+			}
 			errno = 0;
 			check_cpubind(do_shm);
 			did_cpubind = 1;
@@ -364,7 +373,11 @@ int main(int ac, char **av)
 		{
 			struct bitmask *cpubuf;
 			dontshm("-C/--physcpubind");
-			cpubuf = cpumask(optarg, &ncpus);
+			cpubuf = numa_parse_cpustring(optarg);
+			if (!cpubuf) {
+				printf ("<%s> is invalid\n", optarg);
+				usage();
+			}
 			errno = 0;
 			check_cpubind(do_shm);
 			did_cpubind = 1;
@@ -376,7 +389,11 @@ int main(int ac, char **av)
 		case 'm': /* --membind */
 			checknuma();
 			setpolicy(MPOL_BIND);
-			mask = nodemask(optarg); 
+			mask = numa_parse_nodestring(optarg);
+			if (!mask) {
+				printf ("<%s> is invalid\n", optarg);
+				usage();
+			}
 			errno = 0;
 			numa_set_bind_policy(1);
 			if (shmfd >= 0) { 
@@ -390,16 +407,20 @@ int main(int ac, char **av)
 		case 'p': /* --preferred */
 			checknuma();
 			setpolicy(MPOL_PREFERRED);
-			mask = nodemask(optarg);
+			mask = numa_parse_nodestring(optarg);
+			if (!mask) {
+				printf ("<%s> is invalid\n", optarg);
+				usage();
+			}
 			for (i=0; i<mask->size; i++) {
-				if (bitmask_isbitset(mask, i)) {
+				if (numa_bitmask_isbitset(mask, i)) {
 					node = i;
 					nnodes++;
 				}
 			}
 			if (nnodes != 1)
 				usage();
-			bitmask_free(mask);
+			numa_bitmask_free(mask);
 			errno = 0;
 			numa_set_bind_policy(0);
 			if (shmfd >= 0) 
@@ -476,7 +497,10 @@ int main(int ac, char **av)
 			if (set_policy < 0) 
 				complain("Need a policy first to verify");
 			numa_police_memory(shmptr, shmlen); 
-			verify_shm(set_policy, mask);
+			if (!mask)
+				complain("Need a mask to verify");
+			else
+				verify_shm(set_policy, mask);
 			break;
 
 		default:

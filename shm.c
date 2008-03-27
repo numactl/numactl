@@ -184,8 +184,8 @@ void dump_shm(void)
 		return;
 	}
 
-	nodes = allocate_nodemask();
-	prevnodes = allocate_nodemask();
+	nodes = numa_allocate_nodemask();
+	prevnodes = numa_allocate_nodemask();
 
 	for (c = 0; c < shmlen; c += shm_pagesize) { 
 		if (get_mempolicy(&pol, nodes->maskp, nodes->size, c+shmptr,
@@ -215,10 +215,10 @@ static void vwarn(char *ptr, char *fmt, ...)
 
 static unsigned interleave_next(unsigned cur, struct bitmask *mask)
 {
-	int numa_num_nodes = number_of_possible_nodes();
+	int numa_num_nodes = numa_num_possible_nodes();
 
 	++cur;
-	while (!nodemask_isset(mask, cur)) { 		
+	while (!numa_bitmask_isbitset(mask, cur)) {
 		cur = (cur+1) % numa_num_nodes;
 	} 
 	return cur;
@@ -232,7 +232,7 @@ void verify_shm(int policy, struct bitmask *nodes)
 	int pol2;
 	struct bitmask *nodes2;
 
-	nodes2 = allocate_nodemask();
+	nodes2 = numa_allocate_nodemask();
 	
 	if (policy == MPOL_INTERLEAVE) {
 		if (get_mempolicy(&ilnode, NULL, 0, shmptr,
@@ -250,7 +250,7 @@ void verify_shm(int policy, struct bitmask *nodes)
 			      policy_name(pol2), policy_name(policy));
 			return;
 		}
-		if (memcmp(nodes2, nodes, bitmask_nbytes(nodes))) {
+		if (memcmp(nodes2, nodes, numa_bitmask_nbytes(nodes))) {
 			vwarn(p, "mismatched node mask\n"); 
 			printmask("expected", nodes);
 			printmask("real", nodes2);
@@ -261,7 +261,7 @@ void verify_shm(int policy, struct bitmask *nodes)
 
 		switch (policy) { 
 		case MPOL_INTERLEAVE: 
-			if (node < 0 || !nodemask_isset(nodes2, node))
+			if (node < 0 || !numa_bitmask_isbitset(nodes2, node))
 				vwarn(p, "interleave node out of range %d\n", node);
 			if (node != ilnode) { 
 				vwarn(p, "expected interleave node %d, got %d\n",
@@ -272,7 +272,7 @@ void verify_shm(int policy, struct bitmask *nodes)
 			break;
 		case MPOL_PREFERRED:
 		case MPOL_BIND:
-			if (!nodemask_isset(nodes2, node)) {
+			if (!numa_bitmask_isbitset(nodes2, node)) {
 				vwarn(p, "unexpected node %d\n", node);
 				printmask("expected", nodes2);
 			}	

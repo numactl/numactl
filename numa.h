@@ -21,10 +21,21 @@
 
 #include <stddef.h>
 #include <string.h>
+#include <sys/types.h>
+
+#if defined(__x86_64__) || defined(__i386__)
+#define NUMA_NUM_NODES  128
+#else
+#define NUMA_NUM_NODES  2048
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct {
+        unsigned long n[NUMA_NUM_NODES/(sizeof(unsigned long)*8)];
+} nodemask_t;
 
 struct bitmask {
 	unsigned long size; /* number of bits in the map */
@@ -36,37 +47,40 @@ struct bitmask {
 #define longsperbits(n) howmany(n, bitsperlong)
 #define bytesperbits(x) ((x+7)/8)
 
-int bitmask_isbitset(const struct bitmask *, unsigned int);
-struct bitmask *bitmask_clearall(struct bitmask *);
-struct bitmask *bitmask_setbit(struct bitmask *, unsigned int);
-struct bitmask *bitmask_clearbit(struct bitmask *, unsigned int);
-unsigned int bitmask_nbytes(struct bitmask *);
-struct bitmask *bitmask_alloc(unsigned int);
-void bitmask_free(struct bitmask *);
-int bitmask_equal(const struct bitmask *, const struct bitmask *);
+/* operations on struct bitmask */
+int numa_bitmask_isbitset(const struct bitmask *, unsigned int);
+struct bitmask *numa_bitmask_setall(struct bitmask *);
+struct bitmask *numa_bitmask_clearall(struct bitmask *);
+struct bitmask *numa_bitmask_setbit(struct bitmask *, unsigned int);
+struct bitmask *numa_bitmask_clearbit(struct bitmask *, unsigned int);
+unsigned int numa_bitmask_nbytes(struct bitmask *);
+struct bitmask *numa_bitmask_alloc(unsigned int);
+void numa_bitmask_free(struct bitmask *);
+int numa_bitmask_equal(const struct bitmask *, const struct bitmask *);
 
+/* compatibility for codes that used them: */
 static inline void nodemask_zero(struct bitmask *mask)
 { 
-	bitmask_clearall(mask);
+	numa_bitmask_clearall(mask);
 } 
 
 static inline void nodemask_set(struct bitmask *mask, int node)
 {
-	bitmask_setbit(mask, node);
+	numa_bitmask_setbit(mask, node);
 } 
 
 static inline void nodemask_clr(struct bitmask *mask, int node)
 {
-	bitmask_clearbit(mask, node);
+	numa_bitmask_clearbit(mask, node);
 }
 
 static inline int nodemask_isset(struct bitmask *mask, int node)
 {
-	return bitmask_isbitset(mask, node);
+	return numa_bitmask_isbitset(mask, node);
 }
 static inline int nodemask_equal(struct bitmask *a, struct bitmask *b)
 { 
-	return bitmask_equal(a, b);
+	return numa_bitmask_equal(a, b);
 } 
 
 /* NUMA support available. If this returns a negative value all other function
@@ -77,6 +91,7 @@ int numa_available(void);
 
 /* Get max available node */
 int numa_max_node(void);
+int numa_max_possible_node(void);
 /* Return preferred node */
 int numa_preferred(void);
 
@@ -87,10 +102,13 @@ long numa_node_size(int node, long *freep);
 int numa_pagesize(void); 
 
 /* Set with all nodes. Only valid after numa_available. */
-extern struct bitmask *numa_all_nodes;
+extern struct bitmask *numa_all_nodes_ptr;
+
+/* Set with all cpus. */
+extern struct bitmask *numa_all_cpus_ptr;
 
 /* Set with no nodes */
-extern struct bitmask *numa_no_nodes;
+extern struct bitmask *numa_no_nodes_ptr;
 
 /* Only run and allocate memory from a specific set of nodes. */
 void numa_bind(struct bitmask *nodes);
@@ -102,7 +120,7 @@ void numa_set_interleave_mask(struct bitmask *nodemask);
 struct bitmask *numa_get_interleave_mask(void);
 
 /* allocate a bitmask big enough for all nodes */
-struct bitmask *allocate_nodemask(void);
+struct bitmask *numa_allocate_nodemask(void);
 
 /* Some node to preferably allocate memory from for thread. */
 void numa_set_preferred(int node);
@@ -166,34 +184,31 @@ void numa_set_bind_policy(int strict);
 void numa_set_strict(int flag);
 
 /* maximum nodes (size of kernel nodemask_t) */
-int number_of_possible_nodes();
+int numa_num_possible_nodes();
 
 /* maximum cpus (size of kernel cpumask_t) */
-int number_of_possible_cpus();
+int numa_num_possible_cpus();
 
 /* nodes in the system */
-int number_of_configured_nodes();
+int numa_num_configured_nodes();
 
 /* maximum cpus */
-int number_of_configured_cpus();
+int numa_num_configured_cpus();
 
 /* maximum cpus allowed to current task */
-int number_of_task_cpus();
+int numa_num_task_cpus();
 
 /* maximum nodes allowed to current task */
-int number_of_task_nodes();
+int numa_num_task_nodes();
 
 /* allocate a bitmask the size of the kernel cpumask_t */
-struct bitmask *allocate_cpumask();
-
-/* allocate a bitmask the size of the kernel nodemask_t */
-struct bitmask *allocate_nodemask();
+struct bitmask *numa_allocate_cpumask();
 
 /* set up to represent the cpus available to the current task */
 struct bitmask *numa_all_cpus;
 
 /* Convert node to CPU mask. -1/errno on failure, otherwise 0. */
-int numa_node_to_cpus(int node, struct bitmask *buffer);
+int numa_node_to_cpus(int, struct bitmask *);
 
 /* Report distance of node1 from node2. 0 on error.*/
 int numa_distance(int node1, int node2);
@@ -216,9 +231,18 @@ int numa_migrate_pages(int pid, struct bitmask *from, struct bitmask *to);
 int numa_move_pages(int pid, unsigned long count, void **pages,
 		const int *nodes, int *status, int flags);
 
+int numa_sched_getaffinity(pid_t, struct bitmask *);
+int numa_sched_setaffinity(pid_t, struct bitmask *);
+
+/* Convert an ascii list of nodes to a bitmask */
+struct bitmask *numa_parse_nodestring(char *);
+
+/* Convert an ascii list of cpu to a bitmask */
+struct bitmask *numa_parse_cpustring(char *);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+

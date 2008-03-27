@@ -143,8 +143,8 @@ long WEAK get_mempolicy(int *policy, const unsigned long *nmask,
 long WEAK mbind(void *start, unsigned long len, int mode, 
 	const unsigned long *nmask, unsigned long maxnode, unsigned flags)
 {
-	return syscall6(__NR_mbind, (long)start, len, mode, nmask, maxnode,
-							flags);
+	return syscall6(__NR_mbind, (long)start, len, mode, (long)nmask,
+				maxnode, flags);
 }
 
 long WEAK set_mempolicy(int mode, const unsigned long *nmask, 
@@ -168,22 +168,37 @@ long WEAK move_pages(int pid, unsigned long count,
 }
 
 /* SLES8 glibc doesn't define those */
-
-int numa_sched_setaffinity(pid_t pid, struct bitmask *mask)
+int numa_sched_setaffinity_v1(pid_t pid, unsigned len, const unsigned long *mask)
 {
-	return syscall(__NR_sched_setaffinity, pid, bitmask_nbytes(mask),
+	return syscall(__NR_sched_setaffinity,pid,len,mask);
+}
+__asm__(".symver numa_sched_setaffinity_v1,numa_sched_setaffinity@libnuma_1.1");
+
+int numa_sched_setaffinity_v2(pid_t pid, struct bitmask *mask)
+{
+	return syscall(__NR_sched_setaffinity, pid, numa_bitmask_nbytes(mask),
 								mask->maskp);
 }
+__asm__(".symver numa_sched_setaffinity_v2,numa_sched_setaffinity@@libnuma_1.2");
 
-int numa_sched_getaffinity(pid_t pid, struct bitmask *mask)
+int numa_sched_getaffinity_v1(pid_t pid, unsigned len, const unsigned long *mask)
+{
+	return syscall(__NR_sched_getaffinity,pid,len,mask);
+
+}
+__asm__(".symver numa_sched_getaffinity_v1,numa_sched_getaffinity@libnuma_1.1");
+
+int numa_sched_getaffinity_v2(pid_t pid, struct bitmask *mask)
 {
 	/* len is length in bytes */
-	return syscall(__NR_sched_getaffinity, pid, bitmask_nbytes(mask),
+	return syscall(__NR_sched_getaffinity, pid, numa_bitmask_nbytes(mask),
 								mask->maskp);
 	/* sched_getaffinity returns sizeof(cpumask_t) */
 
 }
+__asm__(".symver numa_sched_getaffinity_v2,numa_sched_getaffinity@@libnuma_1.2");
 
-make_internal_alias(numa_sched_getaffinity);
-make_internal_alias(numa_sched_setaffinity);
-make_internal_alias(get_mempolicy);
+make_internal_alias(numa_sched_getaffinity_v1);
+make_internal_alias(numa_sched_getaffinity_v2);
+make_internal_alias(numa_sched_setaffinity_v1);
+make_internal_alias(numa_sched_setaffinity_v2);

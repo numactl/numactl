@@ -18,8 +18,8 @@ int main(void)
 	int pol;
 	int node;
 	int err = 0;
-	nodes = bitmask_alloc(max+1);
-	mask = bitmask_alloc(max+1);
+	nodes = numa_bitmask_alloc(max+1);
+	mask = numa_bitmask_alloc(max+1);
 
 	for (i = max; i >= 0; --i) { 
 		char *mem = mmap(NULL, pagesize*(max+1), PROT_READ|PROT_WRITE, 
@@ -31,9 +31,9 @@ int main(void)
 
 		printf("%d offset %lx\n", i, (long)(adr - mem)); 
 
-		bitmask_clearall(nodes);
-		bitmask_clearall(mask);
-		bitmask_setbit(mask, i);
+		numa_bitmask_clearall(nodes);
+		numa_bitmask_clearall(mask);
+		numa_bitmask_setbit(mask, i);
 
 		if (mbind(adr,  pagesize, MPOL_PREFERRED, nodes->maskp,
 							nodes->size, 0) < 0)
@@ -45,7 +45,7 @@ int main(void)
 			err("get_mempolicy");
 	
 		assert(pol == MPOL_PREFERRED);
-		assert(bitmask_isbitset(mask, i));
+		assert(numa_bitmask_isbitset(mask, i));
 
 		node = 0x123;
 		

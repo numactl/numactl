@@ -69,7 +69,7 @@ stream: stream_lib.o stream_main.o  libnuma.so util.o
 stream_main.o: stream_main.c
 
 libnuma.so.1: libnuma.o syscall.o distance.o
-	${CC} -shared -Wl,-soname=libnuma.so.1 -o libnuma.so.1 $^
+	${CC} -shared -Wl,-soname=libnuma.so.1 -Wl,--version-script,versions.ldscript -Wl,-init,numa_init -o libnuma.so.1 $^
 
 libnuma.so: libnuma.so.1
 	ln -sf libnuma.so.1 libnuma.so

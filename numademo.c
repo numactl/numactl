@@ -250,7 +250,7 @@ void test(enum test type)
 		memtest("memory without policy", numa_alloc(msize)); 
 	} 
 
-	numa_set_interleave_mask(numa_all_nodes);
+	numa_set_interleave_mask(numa_all_nodes_ptr);
 	memtest("manual interleaving to all nodes", numa_alloc(msize)); 
 
 	if (max_node > 0) { 
@@ -262,7 +262,7 @@ void test(enum test type)
 		printf("current interleave node %d\n", numa_get_interleave_node()); 
 	} 
 
-	numa_set_interleave_mask(numa_no_nodes);
+	numa_set_interleave_mask(numa_no_nodes_ptr);
 
 	nodes = numa_allocate_nodemask();
 
@@ -293,7 +293,7 @@ void test(enum test type)
 			numa_bitmask_setbit(nodes, k);
 			numa_set_membind(nodes);
 			memtest(buf, numa_alloc(msize)); 			
-			numa_set_membind(numa_all_nodes);
+			numa_set_membind(numa_all_nodes_ptr);
 		}
 		
 		numa_set_localalloc(); 

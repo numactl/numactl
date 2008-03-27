@@ -23,10 +23,14 @@ int main(int ac, char **av)
 
 	policy = parse_policy(av[1], av[2]); 
 
-        nodes = allocate_nodemask();
+        nodes = numa_allocate_nodemask();
 
 	if (av[1] && av[2])
-		nodes = nodemask(av[2]);
+		nodes = numa_parse_nodestring(av[2]);
+	if (!nodes) {
+		printf ("<%s> is invalid\n", av[2]);
+		exit(1);
+	}
 	size = stream_memsize();  
 	map = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,
 		   0, 0); 

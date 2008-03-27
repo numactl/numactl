@@ -67,8 +67,8 @@ int main(int ac, char **av)
 	int i;
 	int fd = -1; 
 
-	nodes = allocate_nodemask();
-	gnodes = allocate_nodemask();
+	nodes = numa_allocate_nodemask();
+	gnodes = numa_allocate_nodemask();
 
 	while (av[1] && av[1][0] == '-') { 
 		switch (av[1][1]) { 
@@ -96,7 +96,11 @@ int main(int ac, char **av)
 		loose = 1;
 	policy = parse_policy(av[2], av[3]);
 	if (policy != MPOL_DEFAULT)
-		nodes = nodemask(av[3]);
+		nodes = numa_parse_nodestring(av[3]);
+        if (!nodes) {
+		printf ("<%s> is invalid\n", av[3]);
+		exit(1);
+	}
 	
 	if (fd >= 0)
 		map = mmap(NULL,length,PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0); 
@@ -117,7 +121,7 @@ int main(int ac, char **av)
 		ret = 1;
 		printf("policy %d gpolicy %d\n", policy, gpolicy); 
 	}
-	if (!loose && !bitmask_equal(gnodes, nodes)) {
+	if (!loose && !numa_bitmask_equal(gnodes, nodes)) {
 		printf("nodes differ %lx, %lx!\n",
 			gnodes->maskp[0], nodes->maskp[0]);
 		ret = 1;
