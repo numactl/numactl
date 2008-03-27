@@ -8,11 +8,10 @@ extern "C" {
 /* Kernel interface for NUMA API */
 
 /* System calls */
-extern long get_mempolicy(int *policy, 
-			  const unsigned long *nmask, unsigned long maxnode,
-			  void *addr, int flags);
+extern long get_mempolicy(int *policy, const unsigned long *nmask,
+			unsigned long maxnode, void *addr, int flags);
 extern long mbind(void *start, unsigned long len, int mode, 
-		  const unsigned long *nmask, unsigned long maxnode, unsigned flags);
+	const unsigned long *nmask, unsigned long maxnode, unsigned flags);
 extern long set_mempolicy(int mode, const unsigned long *nmask, 
 			  unsigned long maxnode);
 extern long migratepages(int pid, unsigned long maxnode, unsigned long *fromnode,

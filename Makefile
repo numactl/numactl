@@ -24,7 +24,7 @@ CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      .depend .depend.X test/nodemap test/distance test/tbitmap \
 	      test/after test/before threadtest test_move_pages \
 	      test/mbind_mig_pages test/migrate_pages \
-	      migratepages migspeed
+	      migratepages migspeed migspeed.o
 SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
 	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c mt.c \
 	test/*.c

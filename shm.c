@@ -160,7 +160,7 @@ void attach_shared(char *name)
 } 
 
 static void 
-dumppol(unsigned long long start, unsigned long long end, int pol, nodemask_t mask)
+dumppol(unsigned long long start, unsigned long long end, int pol, struct bitmask *mask)
 { 
 	if (pol == MPOL_DEFAULT)
 		return;
@@ -168,13 +168,13 @@ dumppol(unsigned long long start, unsigned long long end, int pol, nodemask_t ma
 	       shmoffset+start, 
 	       shmoffset+end, 
 	       policy_name(pol));
-	printmask("", &mask);
+	printmask("", mask);
 } 
 
 /* Dump policies in a shared memory segment. */
 void dump_shm(void) 
 { 
-	nodemask_t nodes, prevnodes;
+	struct bitmask *nodes, *prevnodes;
 	int prevpol = -1, pol; 
 	unsigned long long c, start; 
 
@@ -184,9 +184,12 @@ void dump_shm(void)
 		return;
 	}
 
+	nodes = allocate_nodemask();
+	prevnodes = allocate_nodemask();
+
 	for (c = 0; c < shmlen; c += shm_pagesize) { 
-		if (get_mempolicy(&pol, nodes.n, NUMA_NUM_NODES+1, c+shmptr, 
-				  MPOL_F_ADDR) < 0) 
+		if (get_mempolicy(&pol, nodes->maskp, nodes->size, c+shmptr,
+						MPOL_F_ADDR) < 0)
 			err("get_mempolicy on shm");
 		if (pol == prevpol) 
 			continue;
@@ -210,42 +213,47 @@ static void vwarn(char *ptr, char *fmt, ...)
 	exitcode = 1;
 } 
 
-static unsigned interleave_next(unsigned cur, nodemask_t *mask)
+static unsigned interleave_next(unsigned cur, struct bitmask *mask)
 {
+	int numa_num_nodes = number_of_possible_nodes();
+
 	++cur;
 	while (!nodemask_isset(mask, cur)) { 		
-		cur = (cur+1) % NUMA_NUM_NODES;
+		cur = (cur+1) % numa_num_nodes;
 	} 
 	return cur;
 }
 
 /* Verify policy in a shared memory segment */
-void verify_shm(int policy, nodemask_t nodes)
+void verify_shm(int policy, struct bitmask *nodes)
 {
 	char *p; 
 	int ilnode, node;
 	int pol2;
-	nodemask_t nodes2;
+	struct bitmask *nodes2;
+
+	nodes2 = allocate_nodemask();
 	
 	if (policy == MPOL_INTERLEAVE) {
-		if (get_mempolicy(&ilnode, NULL, 0, shmptr, MPOL_F_ADDR|MPOL_F_NODE) 
+		if (get_mempolicy(&ilnode, NULL, 0, shmptr,
+					MPOL_F_ADDR|MPOL_F_NODE)
 		    < 0) 
 			err("get_mempolicy");
 	} 
 	
 	for (p = shmptr; p - (char *)shmptr < shmlen; p += shm_pagesize) { 
-		if (get_mempolicy(&pol2, nodes2.n, NUMA_NUM_NODES, p, MPOL_F_ADDR)
-		    < 0) 
+		if (get_mempolicy(&pol2, nodes2->maskp, nodes2->size, p,
+							MPOL_F_ADDR) < 0)
 			err("get_mempolicy");
 		if (pol2 != policy) { 
 			vwarn(p, "wrong policy %s, expected %s\n", 
 			      policy_name(pol2), policy_name(policy));
 			return;
 		}
-		if (memcmp(&nodes2, &nodes, sizeof(nodemask_t))) { 
+		if (memcmp(nodes2, nodes, bitmask_nbytes(nodes))) {
 			vwarn(p, "mismatched node mask\n"); 
-			printmask("expected", &nodes);
-			printmask("real", &nodes2);
+			printmask("expected", nodes);
+			printmask("real", nodes2);
 		} 
 
 		if (get_mempolicy(&node, NULL, 0, p, MPOL_F_ADDR|MPOL_F_NODE) < 0) 
@@ -253,20 +261,20 @@ void verify_shm(int policy, nodemask_t nodes)
 
 		switch (policy) { 
 		case MPOL_INTERLEAVE: 
-			if (node < 0 || !nodemask_isset(&nodes2, node))
+			if (node < 0 || !nodemask_isset(nodes2, node))
 				vwarn(p, "interleave node out of range %d\n", node);
 			if (node != ilnode) { 
 				vwarn(p, "expected interleave node %d, got %d\n",
 				     ilnode,node); 
 				return;
 			}
-			ilnode = interleave_next(ilnode, &nodes2); 
+			ilnode = interleave_next(ilnode, nodes2);
 			break;
 		case MPOL_PREFERRED:
 		case MPOL_BIND:
-			if (!nodemask_isset(&nodes2, node)) {
+			if (!nodemask_isset(nodes2, node)) {
 				vwarn(p, "unexpected node %d\n", node);
-				printmask("expected", &nodes2);
+				printmask("expected", nodes2);
 			}	
 			break;
 

@@ -8,9 +8,9 @@ extern unsigned long long shmoffset;
 extern int shmflags;
 
 extern void dump_shm(void);
-extern void attach_shared(char *name);
-extern void attach_sysvshm(char *name); 
-extern void verify_shm(int policy, nodemask_t nodes);
+extern void attach_shared(char *);
+extern void attach_sysvshm(char *);
+extern void verify_shm(int policy, struct bitmask *);
 
 /* in numactl.c */
 extern int exitcode;

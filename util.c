@@ -25,26 +25,13 @@
 #include <errno.h>
 #include <unistd.h>
 
-void printmask(char *name, nodemask_t *mask)
+void printmask(char *name, struct bitmask *mask)
 { 
 	int i;
-	int max = numa_max_node();
+
 	printf("%s: ", name); 
-#if 0
-	int full = 1;
-	for (i = 0; i <= max; i++) { 
-		if (nodemask_isset(&numa_all_nodes, i) && !nodemask_isset(mask, i)) {
-			full = 0;
-			break;
-		}		
-	} 
-	if (full) { 
-		printf("all nodes\n"); 
-		return;
-	}	
-#endif
-	for (i = 0; i <= max; i++) 
-		if (nodemask_isset(mask, i))
+	for (i = 0; i <= mask->size; i++)
+		if (bitmask_isbitset(mask, i))
 			printf("%d ", i); 
 	putchar('\n');
 } 
@@ -52,82 +39,90 @@ void printmask(char *name, nodemask_t *mask)
 /*
  * Extract a node or processor number from the given string.
  * Allow a relative node / processor specification within the allowed
- * set if a + is prepended to the number.
+ * set if "relative" is nonzero
  */
-unsigned long get_nr(char *s, char **end, int max, unsigned long *mask)
+unsigned long get_nr(char *s, char **end, struct bitmask *bmp, int relative)
 {
-	unsigned long i, nr;
+	long i, nr;
 
-	if (*s != '+')
+	if (!relative)
 		return strtoul(s, end, 0);
-	s++;
+
 	nr = strtoul(s, end, 0);
 	if (s == *end)
 		return nr;
 	/* Find the nth set bit */
-	for (i = 0; nr > 0 && i <= max; i++)
-		if (test_bit(i, mask))
+	for (i = 0; nr >= 0 && i <= bmp->size; i++)
+		if (bitmask_isbitset(bmp, i))
 			nr--;
-	if (nr)
-		*end = s;
-	return i;
-
+	return i-1;
 }
 
-int numcpus; 
-extern unsigned long numa_all_cpus[];
-extern int maxcpus;
-
-/* caller must free buffer */
-unsigned long *cpumask(char *s, int *ncpus) 
+/*
+ * cpumask() is called to create a cpumask_t mask, given
+ * an ascii string such as 25 or 12-15 or 1,3,5-7 or +6-10.
+ * (the + indicates that the numbers are cpuset-relative)
+ *
+ * The cpus may be specified as absolute, or relative to the current cpuset.
+ * The list of available cpus for this task is in map "numa_all_cpus",
+ * which may represent all cpus or the cpus in the current cpuset.
+ * (it is set up by read_constraints() from the current task's Cpus_allowed)
+ *
+ * The caller must free the returned cpubuf buffer.
+ */
+struct bitmask *
+cpumask(char *s, int *ncpus)
 {
 	int invert = 0, relative=0;
+	int conf_cpus = number_of_configured_cpus();
+	int task_cpus = number_of_task_cpus();
 	char *end; 
+	struct bitmask *cpubuf;
 
-	int cpubufsize = round_up(maxcpus, BITS_PER_LONG) / 8;
-	unsigned long *cpubuf = calloc(cpubufsize,1); 
-	if (!cpubuf) 
-		complain("Out of memory");
+	cpubuf = allocate_cpumask();
 
 	if (s[0] == 0) 
 		return cpubuf;
 	if (*s == '!') { 
 		invert = 1;
-		++s;
+		s++;
 	}
-	do {		
+	if (*s == '+') {
+		relative++;
+		s++;
+	}
+	do {
 		unsigned long arg;
+		int i;
 
 		if (!strcmp(s,"all")) { 
 			int i;
-			for (i = 0; i < numcpus; i++)
-				set_bit(i, cpubuf);
+			for (i = 0; i < task_cpus; i++)
+				bitmask_setbit(cpubuf, i);
+			s+=4;
 			break;
 		}
-		if (*s == '+') relative++;
-		arg = get_nr(s, &end, maxcpus, numa_all_cpus);
+		arg = get_nr(s, &end, numa_all_cpus, relative);
 		if (end == s)
-			complain("unparseable node description `%s'\n", s);
-		if (arg > maxcpus)
-			complain("cpu argument %d is out of range\n", arg);
-		set_bit(arg, cpubuf);
+			complain("unparseable cpu description `%s'\n", s);
+		if (arg >= task_cpus)
+			complain("cpu argument %s is out of range\n", s);
+		i = arg;
+		bitmask_setbit(cpubuf, i);
 		s = end; 
 		if (*s == '-') {
 			char *end2;
 			unsigned long arg2;
-			if (relative && *(s+1) != '+') {
-				*s = '+';
-				arg2 = get_nr(s,&end2,maxcpus,numa_all_cpus);
-			} else {
-				arg2 = get_nr(++s,&end2,maxcpus,numa_all_cpus);
-			}
+			int i;
+			arg2 = get_nr(++s, &end2, numa_all_cpus, relative);
 			if (end2 == s)
 				complain("missing cpu argument %s\n", s);
-			if (arg2 > maxcpus)
-				complain("cpu argument %d out of range\n",arg2);
+			if (arg2 >= task_cpus)
+				complain("cpu argument %s out of range\n", s);
 			while (arg <= arg2) {
-				if (test_bit(arg, numa_all_cpus))
-					set_bit(arg, cpubuf);
+				i = arg;
+				if (bitmask_isbitset(numa_all_cpus, i))
+					bitmask_setbit(cpubuf, i);
 				arg++;
 			}
 			s = end2;
@@ -137,67 +132,92 @@ unsigned long *cpumask(char *s, int *ncpus)
 		usage();
 	if (invert) { 
 		int i;
-		for (i = 0; i <= maxcpus; i++) {
-			if (test_bit(i, cpubuf))
-				clear_bit(i, cpubuf);
+		for (i = 0; i < conf_cpus; i++) {
+			if (bitmask_isbitset(cpubuf, i))
+				bitmask_clearbit(cpubuf, i);
 			else
-				set_bit(i, cpubuf);
+				bitmask_setbit(cpubuf, i);
 		}
 	} 
-	*ncpus = cpubufsize;
+	*ncpus = cpubuf->size;
 	return cpubuf;	
 }
 
-void printcpumask(char *name, unsigned long *mask, int size)
+void printcpumask(char *name, struct bitmask *mask)
 { 
 	int i;
 	printf("%s: ", name);
-	for (i = 0; i < size*8; i++) {
-		if (test_bit(i, mask))
+	for (i = 0; i < mask->size; i++) {
+		if (bitmask_isbitset(mask, i))
 			printf("%d ", i);
 	}
 	putchar('\n');
 } 
 
-nodemask_t nodemask(char *s) 
-{ 
-	int max = numa_max_node();
-	nodemask_t mask;
-	int invert = 0;
+/*
+ * nodemask() is called to create a node mask, given
+ * an ascii string such as 25 or 12-15 or 1,3,5-7 or +6-10.
+ * (the + indicates that the numbers are cpuset-relative)
+ *
+ * The nodes may be specified as absolute, or relative to the current cpuset.
+ * The list of available nodes is in map "numa_all_nodes",
+ * which may represent all nodes or the nodes in the current cpuset.
+ * (it is set up by read_constraints() from the current task's Mems_allowed)
+ *
+ * The caller must free the returned nodebuf buffer.
+ */
+struct bitmask *
+nodemask(char *s)
+{
+	int maxnode = numa_max_node();
+	int invert = 0, relative = 0;
+	int conf_nodes = number_of_configured_nodes();
+	int task_nodes = number_of_task_nodes();
 	char *end; 
-	nodemask_zero(&mask);
+	struct bitmask *nodebuf;
+
+	nodebuf = allocate_nodemask();
+
 	if (s[0] == 0) 
-		return numa_no_nodes; 
+		return numa_no_nodes;
 	if (*s == '!') { 
 		invert = 1;
-		++s;
+		s++;
 	}
-	do {		
+	if (*s == '+') {
+		relative++;
+		s++;
+	}
+	do {
 		unsigned long arg;
-
+		int i;
 		if (!strcmp(s,"all")) { 
-			s += 4;
-			mask = numa_all_nodes;
+			int i;
+			for (i = 0; i < task_nodes; i++)
+				bitmask_setbit(nodebuf, i);
+			s+=4;
 			break;
 		}
-		arg = get_nr(s, &end, max, (unsigned long *)numa_all_nodes.n);
+		arg = get_nr(s, &end, numa_all_nodes, relative);
 		if (end == s)
 			complain("unparseable node description `%s'\n", s);
-		if (arg > max)
+		if (arg > maxnode)
 			complain("node argument %d is out of range\n", arg);
-		nodemask_set(&mask, arg);
+		i = arg;
+		bitmask_setbit(nodebuf, i);
 		s = end; 
 		if (*s == '-') { 
 			char *end2;
-			unsigned long arg2 = get_nr(++s, &end2, max,
-					(unsigned long *)numa_all_nodes.n);
+			unsigned long arg2;
+			arg2 = get_nr(++s, &end2, numa_all_nodes, relative);
 			if (end2 == s)
-				complain("missing cpu argument %s\n", s);
-			if (arg2 > max)
-				complain("node argument %d out of range\n",arg2);
+				complain("missing node argument %s\n", s);
+			if (arg2 >= task_nodes)
+				complain("node argument %d out of range\n", arg2);
 			while (arg <= arg2) {
-				if (nodemask_isset(&numa_all_nodes, arg))
-					nodemask_set(&mask, arg);
+				i = arg;
+				if (bitmask_isbitset(numa_all_nodes, i))
+					bitmask_setbit(nodebuf, i);
 				arg++;
 			}
 			s = end2;
@@ -207,17 +227,15 @@ nodemask_t nodemask(char *s)
 		usage();
 	if (invert) { 
 		int i;
-		for (i = 0; i <= max; i++) {
-			if (!nodemask_isset(&numa_all_nodes, i))
-				continue;
-			if (nodemask_isset(&mask, i))
-				nodemask_clr(&mask, i);
+		for (i = 0; i < conf_nodes; i++) {
+			if (bitmask_isbitset(nodebuf, i))
+				bitmask_clearbit(nodebuf, i);
 			else
-				nodemask_set(&mask, i); 
+				bitmask_setbit(nodebuf, i);
 		}
 	} 
-	return mask;
-} 
+	return nodebuf;
+}
 
 void complain(char *fmt, ...)
 {
@@ -306,4 +324,3 @@ void print_policies(void)
 		printf(" %s", policies[i].name);
 	printf("\n"); 
 }
-
