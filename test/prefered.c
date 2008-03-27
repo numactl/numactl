@@ -1,23 +1,25 @@
 /* Test prefer policy */
+#include "numa.h"
 #include "numaif.h"
 #include <sys/mman.h>
 #include <stdio.h>
 #include <assert.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <numa.h>
 
 #define err(x) perror(x),exit(1)
 
 int main(void)
 {
 	int max = numa_max_node();
-	nodemask_t nodes, mask;
+	struct bitmask *nodes, *mask;
 	int pagesize = getpagesize();
 	int i;
 	int pol;
 	int node;
 	int err = 0;
+	nodes = bitmask_alloc(max+1);
+	mask = bitmask_alloc(max+1);
 
 	for (i = max; i >= 0; --i) { 
 		char *mem = mmap(NULL, pagesize*(max+1), PROT_READ|PROT_WRITE, 
@@ -29,20 +31,21 @@ int main(void)
 
 		printf("%d offset %lx\n", i, (long)(adr - mem)); 
 
-		nodemask_zero(&nodes);
-		nodemask_zero(&mask);
-		nodemask_set(&mask, i);
+		bitmask_clearall(nodes);
+		bitmask_clearall(mask);
+		bitmask_setbit(mask, i);
 
-		if (mbind(adr,  pagesize, MPOL_PREFERRED, nodes.n, sizeof(nodemask_t)*8+1, 0) < 0) 
+		if (mbind(adr,  pagesize, MPOL_PREFERRED, nodes->maskp,
+							nodes->size, 0) < 0)
 			err("mbind");
 		
 		++*adr;
 			
-		if (get_mempolicy(&pol, mask.n, sizeof(nodemask_t)*8+1, adr, MPOL_F_ADDR) < 0) 
+		if (get_mempolicy(&pol, mask->maskp, mask->size, adr, MPOL_F_ADDR) < 0)
 			err("get_mempolicy");
 	
 		assert(pol == MPOL_PREFERRED);
-		assert(nodemask_isset(&mask, i));
+		assert(bitmask_isbitset(mask, i));
 
 		node = 0x123;
 		

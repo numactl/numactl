@@ -23,8 +23,8 @@ int *nodes;
 int errors;
 int nr_nodes;
 
-nodemask_t old_nodes;
-nodemask_t new_nodes;
+struct bitmask *old_nodes;
+struct bitmask *new_nodes;
 
 int main(int argc, char **argv)
 {
@@ -32,12 +32,13 @@ int main(int argc, char **argv)
 
 	pagesize = getpagesize();
 
-	nr_nodes = numa_max_node();
+	nr_nodes = numa_max_node()+1;
 
-	old_nodes = numa_no_nodes;
-	new_nodes = numa_no_nodes;
-	nodemask_set(&old_nodes, 0);
-	nodemask_set(&new_nodes, 1);
+	old_nodes = bitmask_alloc(nr_nodes);
+	new_nodes = bitmask_alloc(nr_nodes);
+	bitmask_setbit(old_nodes, 0);
+	bitmask_setbit(new_nodes, 1);
+
 	if (nr_nodes < 2) {
 		printf("A minimum of 2 nodes is required for this test.\n");
 		exit(1);
@@ -89,8 +90,8 @@ int main(int argc, char **argv)
 
 	/* Move to node zero */
 	printf("\nMoving pages via mbind to node 0 ...\n");
-	rc = mbind(pages, page_count * pagesize, MPOL_BIND, old_nodes.n,
-		numa_max_node(), MPOL_MF_MOVE | MPOL_MF_STRICT);
+	rc = mbind(pages, page_count * pagesize, MPOL_BIND, old_nodes->maskp,
+		old_nodes->size, MPOL_MF_MOVE | MPOL_MF_STRICT);
 	if (rc < 0) {
 		perror("mbind");
 		errors++;
@@ -98,8 +99,8 @@ int main(int argc, char **argv)
 
 
 	printf("\nMoving pages via mbind from node 0 to 1 ...\n");
-	rc = mbind(pages, page_count * pagesize, MPOL_BIND, new_nodes.n,
-		numa_max_node(), MPOL_MF_MOVE | MPOL_MF_STRICT);
+	rc = mbind(pages, page_count * pagesize, MPOL_BIND, new_nodes->maskp,
+		new_nodes->size, MPOL_MF_MOVE | MPOL_MF_STRICT);
 	if (rc < 0) {
 		perror("mbind");
 		errors++;

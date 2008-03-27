@@ -22,8 +22,8 @@ int *nodes;
 int errors;
 int nr_nodes;
 
-nodemask_t old_nodes;
-nodemask_t new_nodes;
+struct bitmask *old_nodes;
+struct bitmask *new_nodes;
 
 int main(int argc, char **argv)
 {
@@ -31,12 +31,13 @@ int main(int argc, char **argv)
 
 	pagesize = getpagesize();
 
-	nr_nodes = numa_max_node();
+	nr_nodes = numa_max_node()+1;
 
-	old_nodes = numa_no_nodes;
-	new_nodes = numa_no_nodes;
-	nodemask_set(&old_nodes, 1);
-	nodemask_set(&new_nodes, 0);
+	old_nodes = bitmask_alloc(nr_nodes);
+        new_nodes = bitmask_alloc(nr_nodes);
+        bitmask_setbit(old_nodes, 1);
+        bitmask_setbit(new_nodes, 0);
+
 	if (nr_nodes < 2) {
 		printf("A minimum of 2 nodes is required for this test.\n");
 		exit(1);
@@ -91,7 +92,7 @@ int main(int argc, char **argv)
 	numa_move_pages(0, page_count, addr, nodes, status, 0);
 
 	printf("\nMigrating the current processes pages ...\n");
-	rc = numa_migrate_pages(0, &old_nodes, &new_nodes);
+	rc = numa_migrate_pages(0, old_nodes, new_nodes);
 
 	if (rc < 0) {
 		perror("numa_migrate_pages failed");

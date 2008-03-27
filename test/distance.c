@@ -11,7 +11,7 @@ int main(void)
 		exit(1);
 	}
 
-        numnodes = numa_max_node()+1;
+        numnodes = number_of_configured_nodes();
 	for (a = 0; a < numnodes; a++) { 
 		printf("%03d: ", a); 
 		if (numa_distance(a, a) != 10) { 

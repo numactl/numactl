@@ -1,5 +1,6 @@
 /* Randomly change policy */ 
 #include <stdio.h>
+#include "numa.h"
 #include "numaif.h"
 #include <sys/mman.h>
 #include <sys/shm.h>
@@ -31,7 +32,7 @@ void setpol(unsigned long offset, unsigned long length, int policy, unsigned lon
 
 	printf("off:%lx length:%lx policy:%d nodes:%lx\n",
 	       offset, length, policy, nodes);
-	
+
 	if (mbind(map + offset*pagesize, length*pagesize, policy,
 		  &nodes, 8, 0) < 0) {
 		printf("mbind: %s offset %lx length %lx policy %d nodes %lx\n", 
@@ -56,14 +57,13 @@ void setpol(unsigned long offset, unsigned long length, int policy, unsigned lon
 		int pol2;
 		unsigned long nodes2;
 		if (get_mempolicy(&pol2, &nodes2, sizeof(long)*8, map+i*pagesize, 
-				  MPOL_F_ADDR) < 0)
+				  			MPOL_F_ADDR) < 0)
 			err("get_mempolicy");
 		if (pol2 != pages[i].policy) { 
 			printf("%lx: got policy %d expected %d, nodes got %lx expected %lx\n",
-			       i,
-			       pol2, pages[i].policy, nodes2, pages[i].mask);
+				i, pol2, pages[i].policy, nodes2, pages[i].mask);
 		}
-		if (policy != MPOL_DEFAULT && nodes2 != pages[i].mask) { 
+		if (policy != MPOL_DEFAULT && nodes2 != pages[i].mask) {
 			printf("%lx: nodes %lx, expected %lx, policy %d\n",
 			       i, nodes2, pages[i].mask, policy);
 		}
