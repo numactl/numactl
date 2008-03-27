@@ -74,6 +74,7 @@ void usage(void)
 		"nodes is a comma delimited list of node numbers or A-B ranges or all.\n"
 		"cpus is a comma delimited list of cpu numbers or A-B ranges or all\n"
 		"all ranges can be inverted with !\n"
+		"all numbers and ranges can be made cpuset-relative with +\n"
 		"the old --cpubind argument is deprecated.\n"
 		"use --cpunodebind or --physcpubind instead\n"
 		"length can have g (GB), m (MB) or k (KB) suffixes\n");
@@ -316,8 +317,8 @@ void get_short_opts(struct option *o, char *s)
 
 int main(int ac, char **av)
 {
-	int c;
-	long arg; 
+	int c, i, nnodes=0;
+	long node=-1;
 	char *end;
 	char shortopts[array_len(opts)*2 + 1];
 	get_short_opts(opts,shortopts);
@@ -357,6 +358,7 @@ int main(int ac, char **av)
 		{
 			int ncpus;
 			unsigned long *cpubuf;
+			numa_max_node();
 			dontshm("-C/--physcpubind");
 			cpubuf = cpumask(optarg, &ncpus);
 			errno = 0;
@@ -384,18 +386,21 @@ int main(int ac, char **av)
 		case 'p': /* --preferred */
 			checknuma();
 			setpolicy(MPOL_PREFERRED);
-			arg = strtoul(optarg,&end,0); 
-			if (*end || end == optarg || arg < 0 || arg > numa_max_node()) 
+			mask = nodemask(optarg);
+			for (i=0; i<sizeof(mask); i++) {
+				if (nodemask_isset(&mask, i)) {
+					node = i;
+					nnodes++;
+				}
+			}
+			if (nnodes != 1)
 				usage();
 			errno = 0;
 			numa_set_bind_policy(0);
-			nodemask_zero(&mask);
-			nodemask_set(&mask, arg);
-			numa_set_bind_policy(0);
 			if (shmfd >= 0) 
-				numa_tonode_memory(shmptr, shmlen, arg);
+				numa_tonode_memory(shmptr, shmlen, node);
 			else
-				numa_set_preferred(arg);
+				numa_set_preferred(node);
 			checkerror("setting preferred node");
 			break;
 		case 'l': /* --local */

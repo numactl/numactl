@@ -37,7 +37,8 @@
 
 #define WEAK __attribute__((weak))
 
-#define CPU_BUFFER_SIZE 4096     /* This limits you to 32768 CPUs */
+#define MAX_NR_CPUS		4096
+#define CPU_BUFFER_SIZE ((MAX_NR_CPUS + 8 - 1) / 8)
 
 const nodemask_t numa_no_nodes;
 const nodemask_t numa_all_nodes;
@@ -115,8 +116,10 @@ int numa_pagesize(void)
 
 make_internal_alias(numa_pagesize);
 
-static int maxnode = -1; 
-static int maxcpus = -1; 
+int maxnode = -1;
+int maxcpus = -1;
+
+unsigned long numa_all_cpus[(CPU_BUFFER_SIZE + BYTES_PER_LONG - 1) / BYTES_PER_LONG];
 
 static int number_of_configured_cpus(void)
 { 
@@ -150,33 +153,130 @@ static int fallback_max_node(void)
 	return maxnode;
 }
 
-int numa_max_node(void)
+/*
+ * Read a mask consisting of a sequence of hexadecimal longs separated by
+ * commas. Order them correctly and return the number of the last bit
+ * set.
+ */
+int read_mask(char *s, unsigned long *mask)
+{
+	char *end = s;
+	unsigned int *start = (unsigned int *)mask;
+	unsigned int *p = start;
+	unsigned int *q;
+	unsigned int i;
+	unsigned int n = 0;
+
+	i = strtoul(s, &end, 16);
+
+	/* Skip leading zeros */
+	while (!i && *end++ == ',')
+		i = strtoul(end, &end, 16);
+
+	if (!i)
+		/* End of string. No mask */
+		return -1;
+
+	/* Read sequence of ints */
+	do {
+		start[n++] = i;
+		i = strtoul(end, &end, 16);
+	} while (*end++ == ',');
+	n--;
+
+	/*
+	 * Invert sequence of ints if necessary since the first int
+	 * is the highest and we put it first because we read it first.
+	 */
+	for (q = start + n, p = start; p < q; q--, p++) {
+		unsigned int x = *q;
+
+		*q = *p;
+		*p = x;
+	}
+
+	/* Poor mans fls() */
+	for(i = 31; i >= 0; i--)
+		if (test_bit(i, start + n))
+			break;
+
+	/*
+	 * Return the last bit set
+	 */
+	return sizeof(unsigned int) * n + i;
+}
+
+/*
+ * Read a processes constraints in terms of nodes and cpus from /proc/pid/status.
+ */
+int read_constraints(void)
+{
+	FILE *f;
+	/*
+	 * The maximum line size consists of the string at the beginning plus
+	 * a digit for each 4 cpus and a comma for each 64 cpus.
+	 */
+	char buffer[MAX_NR_CPUS / 4 + MAX_NR_CPUS / BITS_PER_LONG + 20];
+
+	sprintf(buffer,"/proc/%d/status", getpid());
+	f = fopen(buffer, "r");
+	if (!f)
+		return 0;
+
+	while (fgets(buffer, sizeof(buffer), f)) {
+
+		if (strncmp(buffer,"Cpus_allowed",12) == 0)
+			maxcpus = read_mask(buffer + 14, numa_all_cpus);
+
+		if (strncmp(buffer,"Mems_allowed",12) == 0) {
+			*(nodemask_t *)&numa_all_nodes = numa_no_nodes;
+			maxnode = read_mask(buffer + 14,
+					(unsigned long *)numa_all_nodes.n);
+		}
+	}
+	fclose(f);
+
+	if (maxnode < 0)
+		return 0;
+
+	return 1;
+}
+
+void determine_nodes(void)
 {
 	DIR *d;
 	struct dirent *de;
 	int found;
 
-	/* No hotplug yet. */
-	if (maxnode >= 0) 
-		return maxnode;
-	d = opendir("/sys/devices/system/node"); 
+	d = opendir("/sys/devices/system/node");
 	if (!d)
-		return fallback_max_node();
+		goto fail;
+
 	found = 0;
-	while ((de = readdir(d)) != NULL) { 
+	while ((de = readdir(d)) != NULL) {
 		int nd;
 		if (strncmp(de->d_name, "node", 4))
 			continue;
 		found++;
-		nd = strtoul(de->d_name+4, NULL, 0); 
-		if (maxnode < nd) 
-			maxnode = nd; 
-	} 
-	closedir(d); 
-	if (found == 0) 
-		return fallback_max_node();
+		nd = strtoul(de->d_name+4, NULL, 0);
+		if (maxnode < nd)
+			maxnode = nd;
+	}
+	closedir(d);
+	if (found)
+		return;
+fail:
+	maxnode  = fallback_max_node();
+}
+int numa_max_node(void)
+{
+	if (maxnode >= 0)
+		return maxnode;
+	if (!read_constraints())
+		determine_nodes();
+
 	return maxnode;
-} 
+}
 
 make_internal_alias(numa_max_node);
 
@@ -242,12 +342,9 @@ long numa_node_size(int node, long *freep)
 
 int numa_available(void)
 {
-	int max,i;
 	if (get_mempolicy_int(NULL, NULL, 0, 0, 0) < 0 && errno == ENOSYS) 
 		return -1; 
-	max = numa_max_node_int();
-	for (i = 0; i <= max; i++) 
-		nodemask_set((nodemask_t *)&numa_all_nodes, i); 
+	numa_max_node_int();
 	return 0;
 } 
 
@@ -429,10 +526,10 @@ int numa_parse_bitmap(char *line, unsigned long *mask, int ncpus)
 		if (*p == ',')
 			p++;
 		if (i >= CPU_LONGS(ncpus))
-			return -1;
+			return 0; /* filled the mask */
 		mask[i] = strtoul(p, &endp, 16);
 		if (endp != oldp)
-			return -1;
+			return 0;  /* we filled the mask */
 		p--;
 	}
 	return 0;
@@ -557,7 +654,7 @@ make_internal_alias(numa_run_on_node_mask);
 
 nodemask_t numa_get_run_node_mask(void)
 { 
-	int ncpus = number_of_configured_cpus();
+	int ncpus = NUMA_NUM_NODES;
 	nodemask_t mask;
 	int i, k;
 	int max = numa_max_node_int();

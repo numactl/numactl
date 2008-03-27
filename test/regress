@@ -4,11 +4,12 @@
 # Copyright 2003,2004 Andi Kleen, SuSE Labs.
 
 MB=$[1024*1024]
-SIZE=$[30 * $MB]
+SIZE=$[15 * $MB]
 DEMOSIZE=$[10 * $MB]
 VALGRIND=${VALGRIND:-}
 STAT_INTERVAL=5
 
+# cpw: use numactl or numactl.old
 numactl() { 
 	$VALGRIND ../numactl "$@"
 }
@@ -34,7 +35,9 @@ fi
 PAGESIZE=`./pagesize`
 PAGES=`expr $SIZE / $PAGESIZE`
 HALFPAGES=`expr $PAGES / 2`
+HALFPAGES=`expr $HALFPAGES - 100`
 DOUBLEPAGES=`expr $PAGES \* 2`
+DOUBLEPAGES=`expr $DOUBLEPAGES - 200`
 
 FAILED='========SUCCESS'
 

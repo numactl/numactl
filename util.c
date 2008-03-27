@@ -49,18 +49,42 @@ void printmask(char *name, nodemask_t *mask)
 	putchar('\n');
 } 
 
+/*
+ * Extract a node or processor number from the given string.
+ * Allow a relative node / processor specification within the allowed
+ * set if a + is prepended to the number.
+ */
+unsigned long get_nr(char *s, char **end, int max, unsigned long *mask)
+{
+	unsigned long i, nr;
+
+	if (*s != '+')
+		return strtoul(s, end, 0);
+	s++;
+	nr = strtoul(s, end, 0);
+	if (s == *end)
+		return nr;
+	/* Find the nth set bit */
+	for (i = 0; nr > 0 && i <= max; i++)
+		if (test_bit(i, mask))
+			nr--;
+	if (nr)
+		*end = s;
+	return i;
+
+}
+
 int numcpus; 
+extern unsigned long numa_all_cpus[];
+extern int maxcpus;
 
 /* caller must free buffer */
 unsigned long *cpumask(char *s, int *ncpus) 
 {
-	int invert = 0;
+	int invert = 0, relative=0;
 	char *end; 
 
-	if (!numcpus) 
-		numcpus = sysconf(_SC_NPROCESSORS_CONF); 
-
-	int cpubufsize = round_up(numcpus, BITS_PER_LONG) / BYTES_PER_LONG;
+	int cpubufsize = round_up(maxcpus, BITS_PER_LONG) / 8;
 	unsigned long *cpubuf = calloc(cpubufsize,1); 
 	if (!cpubuf) 
 		complain("Out of memory");
@@ -80,22 +104,32 @@ unsigned long *cpumask(char *s, int *ncpus)
 				set_bit(i, cpubuf);
 			break;
 		}
-		arg = strtoul(s, &end, 0); 
+		if (*s == '+') relative++;
+		arg = get_nr(s, &end, maxcpus, numa_all_cpus);
 		if (end == s)
 			complain("unparseable node description `%s'\n", s);
-		if (arg > numcpus)
+		if (arg > maxcpus)
 			complain("cpu argument %d is out of range\n", arg);
 		set_bit(arg, cpubuf);
 		s = end; 
-		if (*s == '-') { 
+		if (*s == '-') {
 			char *end2;
-			unsigned long arg2 = strtoul(++s, &end2, 0); 
+			unsigned long arg2;
+			if (relative && *(s+1) != '+') {
+				*s = '+';
+				arg2 = get_nr(s,&end2,maxcpus,numa_all_cpus);
+			} else {
+				arg2 = get_nr(++s,&end2,maxcpus,numa_all_cpus);
+			}
 			if (end2 == s)
 				complain("missing cpu argument %s\n", s);
-			if (arg > numcpus)
-				complain("cpu argument %d out of range\n", arg);
-			while (++arg <= arg2)
-				set_bit(arg, cpubuf);
+			if (arg2 > maxcpus)
+				complain("cpu argument %d out of range\n",arg2);
+			while (arg <= arg2) {
+				if (test_bit(arg, numa_all_cpus))
+					set_bit(arg, cpubuf);
+				arg++;
+			}
 			s = end2;
 		}
 	} while (*s++ == ','); 
@@ -103,7 +137,7 @@ unsigned long *cpumask(char *s, int *ncpus)
 		usage();
 	if (invert) { 
 		int i;
-		for (i = 0; i <= numcpus; i++) {
+		for (i = 0; i <= maxcpus; i++) {
 			if (test_bit(i, cpubuf))
 				clear_bit(i, cpubuf);
 			else
@@ -146,7 +180,7 @@ nodemask_t nodemask(char *s)
 			mask = numa_all_nodes;
 			break;
 		}
-		arg = strtoul(s, &end, 0); 
+		arg = get_nr(s, &end, max, (unsigned long *)numa_all_nodes.n);
 		if (end == s)
 			complain("unparseable node description `%s'\n", s);
 		if (arg > max)
@@ -155,13 +189,17 @@ nodemask_t nodemask(char *s)
 		s = end; 
 		if (*s == '-') { 
 			char *end2;
-			unsigned long arg2 = strtoul(++s, &end2, 0); 
+			unsigned long arg2 = get_nr(++s, &end2, max,
+					(unsigned long *)numa_all_nodes.n);
 			if (end2 == s)
 				complain("missing cpu argument %s\n", s);
-			if (arg > max)
-				complain("node argument %d out of range\n", arg);
-			while (++arg <= arg2)
-				nodemask_set(&mask, arg);
+			if (arg2 > max)
+				complain("node argument %d out of range\n",arg2);
+			while (arg <= arg2) {
+				if (nodemask_isset(&numa_all_nodes, arg))
+					nodemask_set(&mask, arg);
+				arg++;
+			}
 			s = end2;
 		}
 	} while (*s++ == ','); 
