@@ -22,8 +22,7 @@ CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      test/pagesize test/tshared test/mynode.o test/tshared.o mt.o \
 	      test/mynode test/ftok test/prefered test/randmap \
 	      .depend .depend.X test/nodemap test/distance test/tbitmap \
-		test/after test/before threadtest migratepages
-
+		test/after test/before threadtest migratepages migspeed
 SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
 	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c mt.c \
 	test/*.c
@@ -32,13 +31,16 @@ prefix := /usr
 libdir := ${prefix}/$(shell ./getlibdir)
 docdir := ${prefix}/share/doc
 
-all: numactl migratepages libnuma.so numademo numamon memhog test/tshared stream \
-     test/mynode test/pagesize test/ftok test/prefered test/randmap \
-	 test/nodemap test/distance test/tbitmap
+all: numactl migratepages migspeed libnuma.so numademo numamon memhog \
+     test/tshared stream test/mynode test/pagesize test/ftok test/prefered \
+     test/randmap test/nodemap test/distance test/tbitmap
 
 numactl: numactl.o util.o shm.o bitops.o libnuma.so
 
 migratepages: migratepages.c util.o bitops.o libnuma.so
+
+migspeed: migspeed.o util.o libnuma.so
+	${CC} migspeed.c -o migspeed util.o libnuma.so -lrt
 
 util.o: util.c
 
@@ -91,6 +93,7 @@ test/nodemap: test/nodemap.c libnuma.so
 
 test/distance: test/distance.c libnuma.so
 
+
 test/tbitmap: test/tbitmap.c libnuma.so
 
 .PHONY: install all clean html depend
@@ -104,12 +107,13 @@ run_on_node_mask set_bind_policy  set_interleave_mask set_localalloc \
 set_membind set_preferred set_strict setlocal_memory tonode_memory \
 tonodemask_memory distance
 
-MANPAGES := numa.3 numactl.8 numastat.8 migratepages.8
+MANPAGES := numa.3 numactl.8 numastat.8 migratepages.8 migspeed.8
 
-install: numactl migratepages numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numastat ${MANPAGES}
+install: numactl migratepages migspeed numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numastat ${MANPAGES}
 	mkdir -p ${prefix}/bin
 	cp numactl ${prefix}/bin
 	cp migratepages ${prefix}/bin
+	cp migspeed ${prefix}/bin
 	cp numademo ${prefix}/bin
 	cp memhog ${prefix}/bin
 	mkdir -p ${prefix}/share/man/man2 ${prefix}/share/man/man8 ${prefix}/share/man/man3
