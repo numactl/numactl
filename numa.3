@@ -16,7 +16,7 @@
 .\" 
 .\" Formatted or processed versions of this manual, if unaccompanied by
 .\" the source, must acknowledge the copyright and authors of this work.
-.TH NUMA 3 "May 2004" "SuSE Labs" "Linux Programmer's Manual"
+.TH NUMA 3 "December 2007" "SuSE Labs" "Linux Programmer's Manual"
 .SH NAME
 numa \- NUMA policy library
 .SH SYNOPSIS
@@ -26,84 +26,127 @@ numa \- NUMA policy library
 .sp
 .B int numa_available(void);
 .sp
+.BI "int numa_max_possible_node(void);"
+.br
+.BI "int numa_num_possible_nodes();"
+.sp
 .B int numa_max_node(void);
 .br
-.B int numa_preferred(void);
+.BI "int numa_num_configured_nodes();"
 .br
+.BI "int numa_num_configured_cpus(void);"
+.br
+.BI "struct bitmask *numa_all_nodes_ptr;"
+.br
+.BI "struct bitmask *numa_no_nodes_ptr;"
+.br
+.BI "struct bitmask *numa_all_cpus_ptr;"
+.sp
+.BI "int numa_num_thread_cpus();"
+.br
+.BI "int numa_num_thread_nodes();"
+.sp
+.BI "int numa_parse_bitmap(char *" line " , struct bitmask *" mask ");
+.br
+.BI "struct bitmask *numa_parse_nodestring(char *" string );
+.br
+.BI "struct bitmask *numa_parse_cpustring(char *" string );
+.sp
 .BI "long numa_node_size(int " node ", long *" freep );
 .br
 .BI "long long numa_node_size64(int " node ", long long *" freep );
 .sp
-.BI "nodemask_t " numa_all_nodes ;
-.br
-.BI "nodemask_t " numa_no_nodes ;
-.br
-.BI "int numa_node_to_cpus(int " node ", unsigned long *" buffer ", int " bufferlen );
-.sp
-.br
-.BI "void nodemask_zero(nodemask_t *" mask );
-.br
-.BI "void nodemask_set(nodemask_t *" mask ", int " node );
-.br
-.BI "void nodemask_clr(nodemask_t *" mask ", int " node );
-.br
-.BI "int nodemask_isset(const nodemask_t *" mask ", int " node );
-.br
-.BI "int nodemask_equal(const nodemask_t *" a ", const nodemask_t " b );
-.sp
-.BI "void numa_set_interleave_mask(nodemask_t *" nodemask );
-.br
-.B nodemask_t numa_get_interleave_mask(void);
-.br
-.BI "void numa_bind(nodemask_t *" nodemask );
+.B int numa_preferred(void);
 .br
 .BI "void numa_set_preferred(int " node );
 .br
+.BI "int numa_get_interleave_node(void);
+.br
+.B struct bitmask *numa_get_interleave_mask(void);
+.br
+.BI "void numa_set_interleave_mask(struct bitmask *" nodemask );
+.br
+.BI "void numa_interleave_memory(void *" start ", size_t " size ", struct bitmask *" nodemask );
+.br
+.BI "void numa_bind(struct bitmask *" nodemask );
+.br
 .BI "void numa_set_localalloc(void);
 .br
-.BI "void numa_set_membind(nodemask_t *" nodemask );
+.BI "void numa_set_membind(struct bitmask *" nodemask );
 .br
-.B nodemask_t numa_get_membind(void);
+.B struct bitmask *numa_get_membind(void);
 .sp
-.BI "void *numa_alloc_interleaved_subset(size_t " size ", nodemask_t *" nodemask );
-.br
-.BI "void *numa_alloc_interleaved(size_t " size );
-.br
 .BI "void *numa_alloc_onnode(size_t " size ", int " node );
 .br
 .BI "void *numa_alloc_local(size_t " size );
 .br
+.BI "void *numa_alloc_interleaved(size_t " size );
+.br
+.BI "void *numa_alloc_interleaved_subset(size_t " size ",  struct bitmask *" nodemask );
 .BI "void *numa_alloc(size_t " size );
 .br
 .BI "void numa_free(void *" start ", size_t " size );
 .sp
-.BI "int numa_run_on_node_mask(nodemask_t *" nodemask );
-.br
 .BI "int numa_run_on_node(int " node );
 .br
-.B nodemask_t numa_get_run_node_mask(void);
-.sp
-.BI "void numa_interleave_memory(void *" start ", size_t " size ", nodemask_t *" nodemask );
+.BI "int numa_run_on_node_mask(struct bitmask *" nodemask );
 .br
+.B struct bitmask *numa_get_run_node_mask(void);
+.sp
 .BI "void numa_tonode_memory(void *" start ", size_t " size ", int " node );
 .br
-.BI "void numa_tonodemask_memory(void *" start ", size_t " size ", nodemask_t *" nodemask );
+.BI "void numa_tonodemask_memory(void *" start ", size_t " size ", struct bitmask *" nodemask );
 .br
 .BI "void numa_setlocal_memory(void *" start ", size_t " size );
 .br
 .BI "void numa_police_memory(void *" start ", size_t " size );
 .br
-.BI "int numa_distance(int " node1 ", int " node2 );
-.br
 .BI "void numa_set_bind_policy(int " strict );
 .br
 .BI "void numa_set_strict(int " strict );
+.sp
+.\" should be undocumented ??
+.BI "int numa_distance(int " node1 ", int " node2 );
+.sp
+.BI "int numa_sched_getaffinity(pid_t " pid ", struct bitmask *" mask );
 .br
+.BI "int numa_sched_setaffinity(pid_t " pid ", struct bitmask *" mask );
+.br
+.BI "int numa_node_to_cpus(int " node ", unsigned long *" buffer ", int " bufferlen );
+.sp
+.BI "struct bitmask *numa_allocate_cpumask();"
+.br
+.BI "struct bitmask *numa_allocate_nodemask();"
+.br
+.BI "struct bitmask *numa_bitmask_alloc(unsigned int " n ");
+.br
+.BI "struct bitmask *numa_bitmask_clearall(struct bitmask *" bmp );
+.br
+.BI "struct bitmask *numa_bitmask_clearbit(struct bitmask *" bmp ", unsigned int " n );
+.br
+.BI "int numa_bitmask_equal(const struct bitmask *" bmp1 ", const struct bitmask *" bmp2 );
+.br
+.BI "void numa_bitmask_free(struct bitmask *" bmp );
+.br
+.BI "int numa_bitmask_isbitset(const struct bitmask *" bmp ", unsigned int " n ");"
+.br
+.BI "unsigned int numa_bitmask_nbytes(struct bitmask *" bmp );
+.br
+.BI "struct bitmask *numa_bitmask_setall(struct bitmask *" bmp );
+.br
+.BI "struct bitmask *numa_bitmask_setbit(struct bitmask *" bmp ", unsigned int " n );
+.sp
+.BI "int numa_move_pages(int " pid ", unsigned long " count ", void **" pages ", const int *" nodes ", int *" status ", int " flags );
+.br
+.BI "int numa_migrate_pages(int " pid ", struct bitmask *" fromnodes ", struct bitmask *" tonodes );
+.sp
 .BI "void numa_error(char *" where );
+.sp
+.BI "extern int " numa_exit_on_error ;
 .br
 .BI "void numa_warn(int " number ", char *" where ", ...);"
 .br
-.BI "extern int " numa_exit_on_error ;
+
 .SH DESCRIPTION
 The
 .I libnuma 
@@ -149,23 +192,155 @@ with individual CPUs inside these nodes
 .I numa_node_to_cpus
 )
 
+Some of these functions accept or return a pointer to struct bitmask.
+A struct bitmask controls a bit map of arbitrary length containing a bit
+representation of nodes.  The predefined variable
+.I numa_all_nodes_ptr
+points to a bit mask that has all available nodes set;
+.I numa_no_nodes_ptr
+points to the empty set.
+
 Before any other calls in this library can be used
 .BR numa_available ()
 must be called. If it returns \-1, all other functions in this
 library are undefined.
 
+.BR numa_max_possible_node()
+returns the number of the highest possible node in a system.
+In other words, the size of a kernel type nodemask_t (in bits) minus 1.
+This number can be gotten by calling
+.BR numa_num_possible_nodes()
+and subtracting 1.
+
+.BR numa_num_possible_nodes()
+returns the size of kernel's node mask (kernel type nodemask_t).
+In other words, large enough to represent the maximum number of nodes that
+the kernel can handle. This will match the kernel's MAX_NUMNODES value.
+This count is derived from /proc/self/status, field Mems_allowed.
+
 .BR numa_max_node ()
-returns the highest node number available on the current system. If a node
-number or a node mask with a bit set above the value returned by this function
-is passed to a 
+returns the highest node number available on the current system.
+(See the node numbers in /sys/devices/system/node/ ).  Also see
+.BR numa_num_configured_nodes().
+
+.BR numa_num_configured_nodes()
+returns the number of memory nodes in the system. This count
+includes any nodes that are currently disabled. This count is derived from
+the node numbers in /sys/devices/system/node. (Depends on the kernel being
+configured with /sys (CONFIG_SYSFS)).
+
+.BR numa_num_configured_cpus()
+returns the number of cpus in the system.  This count includes
+any cpus that are currently disabled. This count is derived from the cpu
+numbers in /sys/devices/system/cpu. If the kernel is configured without
+/sys (CONFIG_SYSFS=n) then it falls back to using the number of online cpus.
+
+.BR numa_all_nodes_ptr
+points to a bitmask that is allocated by the library with bits
+representing all nodes on which the calling thread may allocate memory.
+This set may be up to all nodes on the system, or up to the nodes in
+the current cpuset.
+The bitmask is allocated by a call to
+.BR numa_allocate_nodemask()
+using size
+.BR numa_max_possible_node().
+The set of nodes to record is derived from /proc/self/status, field
+"Mems_allowed".  The user should not alter this bitmask.
+
+.BR numa_no_nodes_ptr
+points to a bitmask that is allocated by the library and left all
+zeroes.  The bitmask is allocated by a call to
+.BR numa_allocate_nodemask()
+using size
+.BR numa_max_possible_node().
+The user should not alter this bitmask.
+
+.BR numa_all_cpus_ptr
+points to a bitmask that is allocated by the library with bits
+representing all cpus on which the calling thread may execute.
+This set may be up to all cpus on the system, or up to the cpus in
+the current cpuset.
+The bitmask is allocated by a call to
+.BR numa_allocate_cpumask()
+using size
+.BR numa_num_possible_cpus().
+The set of cpus to record is derived from /proc/self/status, field
+"Cpus_allowed".  The user should not alter this bitmask.
+
+.BR numa_num_thread_cpus()
+returns the number of cpus that the calling thread is allowed
+to use.  This count is derived from the map /proc/self/status, field
+"Cpus_allowed". Also see the bitmask
+.BR numa_all_cpus_ptr.
+
+.BR numa_num_thread_nodes()
+returns the number of nodes on which the calling thread is
+allowed to allocate memory.  This count is derived from the map
+/proc/self/status, field "Mems_allowed".
+Also see the bitmask
+.BR numa_all_nodes_ptr.
+
+.BR numa_parse_bitmap()
+parses
+.I line
+, which is a character string such as found in
+/sys/devices/system/node/nodeN/cpumap into a bitmask structure.
+The string contains the hexadecimal representation of a bit map.
+The bitmask may be allocated with
+.BR numa_allocate_cpumask().
+Returns  0 on success.  Returns -1 on failure.
+This function is probably of little use to a user application, but
+it is used by
 .I libnuma
-function, the result is undefined. 
-    
+internally.
+
+.BR numa_parse_nodestring()
+parses a character string list of nodes into a bit mask.
+The bit mask is allocated by
+.BR numa_allocate_nodemask().
+The string is a comma-separated list of node numbers or node ranges.
+A leading ! can be used to indicate "not" this list (in other words, all
+nodes except this list), and a leading + can be used to indicate that the
+node numbers in the list are relative to the thread's cpuset.  The string can
+be "all" to specify all (
+.BR numa_num_thread_nodes()
+) nodes.  Node numbers are limited by the number in the system.  See
+.BR numa_max_node()
+and
+.BR numa_num_configured_nodes().
+.br
+Examples:  1-5,7,10   !4-5   +0-3
+.br
+If the string is of 0 length, bitmask
+.BR numa_no_nodes_ptr
+is returned.  Returns 0 if the string is invalid.
+
+.BR numa_parse_cpustring()
+parses a character string list of cpus into a bit mask.
+The bit mask is allocated by
+.BR numa_allocate_cpumask().
+The string is a comma-separated list of cpu numbers or cpu ranges.
+A leading ! can be used to indicate "not" this list (in other words, all
+cpus except this list), and a leading + can be used to indicate that the cpu
+numbers in the list are relative to the thread's cpuset.  The string can be
+"all" to specify all (
+.BR numa_num_thread_cpus()
+) cpus.
+Cpu numbers are limited by the number in the system.  See
+.BR numa_num_thread_cpus()
+and
+.BR numa_num_configured_cpus().
+.br
+Examples:  1-5,7,10   !4-5   +0-3
+.br
+Returns 0 if the string is invalid.
+
 .BR numa_node_size ()
 returns the memory size of a node. If the argument
 .I freep
 is not NULL, it used to return the amount of free memory on the node.
 On error it returns \-1.
+
 .BR numa_node_size64 ()
 works the same as 
 .BR numa_node_size ()
@@ -175,58 +350,22 @@ instead of
 .IR long .
 This is useful on 32-bit architectures with large nodes.
 
-Some of these functions accept or return a 
-.IR nodemask .
-A nodemask has type 
-.IR nodemask_t .
-It is an abstract bitmap type containing a bit set of nodes. 
-The maximum node number depends 
-on the architecture, but is not larger than
-.BR numa_max_node ().
-What happens in 
-.I libnuma
-calls when bits above 
-.BR numa_max_node ()
-are passed is undefined.
-A 
-.I nodemask_t 
-should only be manipulated with the
-.BR nodemask_zero (),
-.BR nodemask_clr (),
-.BR nodemask_isset (),
-and
-.BR nodemask_set ()
-functions.  
-.BR nodemask_zero ()
-clears a 
-.IR nodemask_t .
-.BR nodemask_isset ()
-returns true if 
-.I node
-is set in the passed
-.IR nodemask .
-.BR nodemask_clr ()
-clears 
-.I node
-in 
-.IR nodemask .
-.BR nodemask_set ()
-sets 
-.I node
-in 
-.IR nodemask .
-The predefined variable 
-.I numa_all_nodes
-has all available nodes set;
-.I numa_no_nodes
-is the empty set.
-.BR nodemask_equal ()
-returns non-zero if its two nodeset arguments are equal.
-
 .BR numa_preferred ()
 returns the preferred node of the current thread. 
 This is the node on which the kernel preferably
 allocates memory, unless some other policy overrides this.
+
+.BR numa_set_preferred ()
+sets the preferred node for the current thread to
+.IR node .
+The preferred node is the node on which memory is
+preferably allocated before falling back to other nodes.
+The default is to use the node on which the process is currently running
+(local policy). Passing a \-1 argument is equivalent to
+.BR numa_set_localalloc ().
+
+.BR numa_get_interleave_mask ()
+returns the current interleave mask.
 
 .BR numa_set_interleave_mask ()
 sets the memory interleave mask for the current thread to 
@@ -244,8 +383,30 @@ function, it may be more convenient to use the higher level functions like
 or
 .BR numa_alloc_interleaved_subset ().
 
-.BR numa_get_interleave_mask ()
-returns the current interleave mask. 
+.BR numa_interleave_memory ()
+interleaves
+.I size
+bytes of memory page by page from
+.I start
+on nodes
+.IR nodemask .
+This is a lower level function to interleave not yet faulted in but  allocated
+memory. Not yet faulted in means the memory is allocated using
+.BR mmap (2)
+or
+.BR shmat (2),
+but has not been accessed by the current process yet. The memory is page
+interleaved to all nodes specified in
+.IR nodemask .
+Normally
+.BR numa_alloc_interleaved ()
+should be used for private memory instead, but this function is useful to
+handle shared memory areas. To be useful the memory area should be
+several megabytes at least (or tens of megabytes of hugetlbfs mappings)
+If the
+.BR numa_set_strict ()
+flag is true then the operation will cause a numa_error if there were already
+pages in the mapping that do not follow the policy.
 
 .BR numa_bind ()
 binds the current thread and its children to the nodes 
@@ -264,16 +425,6 @@ consider using
 and the
 .I sched_setaffinity(2)
 syscall.
-
-
-.BR numa_set_preferred ()
-sets the preferred node for the current thread to
-.IR node .
-The preferred node is the node on which memory is 
-preferably allocated before falling back to other nodes. 
-The default is to use the node on which the process is currently running
-(local policy). Passing a \-1 argument is equivalent to
-.BR numa_set_localalloc ().
 
 .BR numa_set_localalloc ()
 sets a local memory allocation policy for the calling thread.
@@ -298,23 +449,6 @@ or
 .IR numa_all_nodes ,
 then all nodes are available for memory allocation.
 
-.BR numa_alloc_interleaved ()
-allocates 
-.I size
-bytes of memory page interleaved on all nodes. This function is relatively slow
-and should only be used for large areas consisting of multiple pages. The 
-interleaving works at page level and will only show an effect when the 
-area is large. 
-The allocated memory must be freed with
-.BR numa_free ().
-On error, NULL is returned. 
-
-.BR numa_alloc_interleaved_subset ()
-is like
-.BR numa_alloc_interleaved ()
-except that it also accepts a mask of the nodes to interleave on.
-On error, NULL is returned. 
-
 .BR numa_alloc_onnode ()
 allocates memory on a specific node. This function is relatively slow
 and allocations are rounded up to the system page size. 
@@ -332,6 +466,23 @@ The memory must be freed
 with 
 .BR numa_free ().
 On errors NULL is returned. 
+
+.BR numa_alloc_interleaved ()
+allocates
+.I size
+bytes of memory page interleaved on all nodes. This function is relatively slow
+and should only be used for large areas consisting of multiple pages. The
+interleaving works at page level and will only show an effect when the
+area is large.
+The allocated memory must be freed with
+.BR numa_free ().
+On error, NULL is returned.
+
+.BR numa_alloc_interleaved_subset ()
+is like
+.BR numa_alloc_interleaved ()
+except that it also accepts a mask of the nodes to interleave on.
+On error, NULL is returned.
 
 .BR numa_alloc ()
 allocates
@@ -379,31 +530,6 @@ is set to indicate the error.
 .BR numa_get_run_node_mask ()
 returns the mask of nodes that the current thread is allowed to run on.
 
-.BR numa_interleave_memory ()
-interleaves
-.I size 
-bytes of memory page by page from 
-.I start 
-on nodes
-.IR nodemask .
-This is a lower level function to interleave not yet faulted in but  allocated 
-memory. Not yet faulted in means the memory is allocated using 
-.BR mmap (2)
-or
-.BR shmat (2),
-but has not been accessed by the current process yet. The memory is page
-interleaved to all nodes specified in 
-.IR nodemask . 
-Normally 
-.BR numa_alloc_interleaved ()
-should be used for private memory instead, but this function is useful to 
-handle shared memory areas. To be useful the memory area should be 
-several megabytes at least (or tens of megabytes of hugetlbfs mappings)
-If the
-.BR numa_set_strict ()
-flag is true then the operation will cause a numa_error if there were already
-pages in the mapping that do not follow the policy.
-
 .BR numa_tonode_memory ()
 put memory on a specific node. The constraints described for 
 .BR numa_interleave_memory ()
@@ -424,16 +550,14 @@ locates memory with the current NUMA policy. The constraints described for
 .BR numa_interleave_memory ()
 apply here too.
 
-.BR numa_node_to_cpus ()
-converts a node number to a bitmask of CPUs. 
-.I bufferlen
-is the size of buffer in bytes.
-The user must pass a large enough
-buffer. If the buffer is not large enough 
-.I errno
-will be set to
-.I ERANGE
-and \-1 returned. On success 0 is returned.
+.BR numa_distance ()
+reports the distance in the machine topology between two nodes.
+The factors are a multiple of 10. It returns 0 when the distance
+cannot be determined. A node has distance 10 to itself.
+Reporting the distance requires a Linux
+kernel version of
+.I 2.6.10
+or newer.
 
 .BR numa_set_bind_policy ()
 specifies whether calls that bind memory to a specific node should 
@@ -452,14 +576,183 @@ will fail if the memory cannot be allocated on the target node.
 Default operation is to fall back to other nodes.
 This doesn't apply to interleave and default.
 
-.BR numa_distance ()
-reports the distance in the machine topology between two nodes.
-The factors are a multiple of 10. It returns 0 when the distance
-cannot be determined. A node has distance 10 to itself.
-Reporting the distance requires a Linux
-kernel version of 
-.I 2.6.10 
-or newer.
+.BR numa_get_interleave_node()
+is used by
+.I libnuma
+internally. It is probably not useful for user applications.
+It uses the MPOL_F_NODE flag of the get_mempolicy system call, which is
+not intended for application use (its operation may change or be removed
+altogether in future kernel versions). See get_mempolicy(2).
+
+.BR numa_pagesize()
+returns the number of bytes in page. This function is simply a fast
+alternative to repeated calls to the getpagesize system call.
+See getpagesize(2).
+
+.BR numa_sched_getaffinity()
+retrieves a bitmask of the cpus on which a thread may run.  The thread is
+specified by
+.I pid.
+Returns the return value of the sched_getaffinity
+system call.  See sched_getaffinity(2).
+The bitmask must be at least the size of the kernel's cpu mask structure. Use
+.BR numa_allocate_cpumask()
+to allocate it.
+Test the bits in the mask by calling
+.BR numa_bitmask_isbitset().
+
+.BR numa_sched_setaffinity()
+sets a thread's allowed cpu's to those cpu's specified in
+.I mask.
+The thread is specified by
+.I pid.
+Returns the return value of the sched_setaffinity system call.
+See sched_setaffinity(2).  You may allocate the bitmask with
+.BR numa_allocate_cpumask().
+Or the bitmask may be smaller than the kernel's cpu mask structure. For
+example, call
+.BR numa_bitmask_alloc()
+using a maximum number of cpus from
+.BR numa_num_configured_cpus().
+Set the bits in the mask by calling
+.BR numa_bitmask_setbit().
+
+.BR numa_node_to_cpus ()
+converts a node number to a bitmask of CPUs. The user must pass a long enough
+buffer. If the buffer is not long enough
+.I errno
+will be set to
+.I ERANGE
+and \-1 returned. On success 0 is returned.
+
+.BR numa_allocate_cpumask
+() returns a bitmask of a size equal to the kernel's cpu
+mask (kernel type cpumask_t).  In other words, large enough to represent
+NR_CPUS cpus.  This number of cpus can be gotten by calling
+.BR numa_num_possible_cpus().
+The bitmask is zero-filled.
+
+.BR numa_allocate_nodemask()
+returns a bitmask of a size equal to the kernel's node
+mask (kernel type nodemask_t).  In other words, large enough to represent
+MAX_NUMNODES nodes.  This number of nodes can be gotten by calling
+.BR numa_num_possible_nodes().
+The bitmask is zero-filled.
+
+.BR numa_bitmask_alloc()
+allocates a bitmask structure and its associated bit mask.
+The memory allocated for the bit mask contains enough words (type unsigned
+long) to contain
+.I n
+bits.  The bit mask is zero-filled.  The bitmask
+structure points to the bit mask and contains the
+.I n
+value.
+
+.BR numa_bitmask_clearall()
+sets all bits in the bit mask to 0.  The bitmask structure
+points to the bit mask and contains its size (
+.I bmp
+->size).  The value of
+.I bmp
+is always returned.  Note that
+.BR numa_bitmask_alloc()
+creates a zero-filled bit mask.
+
+.BR numa_bitmask_clearbit()
+sets a specified bit in a bit mask to 0.  Nothing is done if
+the
+.I n
+value is greater than the size of the bitmask (and no error is
+returned). The value of
+.I bmp
+is always returned.
+
+.BR numa_bitmask_equal()
+returns 1 if two bitmasks are equal.  It returns 0 if they
+are not equal.  If the bitmask structures control bit masks of different
+sizes, the "missing" trailing bits of the smaller bit mask are considered
+to be 0.
+
+.BR numa_bitmask_free()
+deallocates the memory of both the bitmask structure pointed
+to by
+.I bmp
+and the bit mask.  It is an error to attempt to free this bitmask twice.
+
+.BR numa_bitmask_isbitset()
+returns the value of a specified bit in a bit mask.
+If the
+.I n
+value is greater than the size of the bit map, 0 is returned.
+
+.BR numa_bitmask_nbytes()
+returns the size (in bytes) of the bit mask controlled by
+.I bmp.
+The bit masks are always full words (type unsigned long), and the returned
+size is the actual size of all those words.
+
+.BR numa_bitmask_setall()
+sets all bits in the bit mask to 1.  The bitmask structure
+points to the bit mask and contains its size (
+.I bmp
+->size).
+The value of
+.I bmp
+is always returned.
+
+.BR numa_bitmask_setbit()
+sets a specified bit in a bit mask to 1.  Nothing is done if
+.I n
+is greater than the size of the bitmask (and no error is
+returned). The value of
+.I bmp
+is always returned.
+
+.br
+.BR numa_move_pages()
+moves a list of pages in the address space of the currently
+executing or current process.
+It simply uses the move_pages system call.
+.br
+.I pid
+- ID of thread.  If not valid, use the current thread.
+.br
+.I count
+- Number of pages.
+.br
+.I pages
+- List of pages to move.
+.br
+.I nodes
+- List of nodes to which pages can be moved.
+.br
+.I status
+- Field to which status is to be returned.
+.br
+.I flags
+- MPOL_MF_MOVE or MPOL_MF_MOVE_ALL
+.br
+See move_pages(2).
+
+.BR numa_migrate_pages()
+simply uses the migrate_pages system call to cause the pages of the calling
+thread, or a specified thread, to be migated from one set of nodes to another.
+See migrate_pages(2).
+The bit masks representing the nodes should be allocated with
+.BR numa_allocate_nodemask()
+, or with
+.BR numa_bitmask_alloc()
+using an
+.I n
+value returned from
+.BR numa_num_possible_nodes().
+A thread's current node set can be gotten by calling
+.BR numa_get_membind().
+Bits in the
+.I tonodes
+mask can be set by calls to
+.BR numa_bitmask_setbit().
 
 .BR numa_error ()
 is a weak internal 
@@ -477,17 +770,16 @@ when a
 .I libnuma
 function fails. It does not affect
 .BR numa_available ().
-
 The
-.BR num_error ()
+.BR numa_error ()
 function defined in
 .I libnuma
 prints an error on
-.I stderr 
+.I stderr
 and terminates
 the program if
 .I numa_exit_on_error
-is set to a non-zero value. 
+is set to a non-zero value.
 The default value of
 .I numa_exit_on_error
 is zero.
@@ -503,7 +795,6 @@ function encounters a non-fatal error.
 The default implementation
 prints a warning to 
 .IR stderr .
-
 The first argument is a unique
 number identifying each warning. After that there is a 
 .BR printf (3)-style 
@@ -524,17 +815,21 @@ or
 from shmfs/hugetlbfs.  It is not shared for
 disk backed file mappings right now although that may change in the future.
 
+
 .SH COPYRIGHT
-Copyright 2002, 2004, Andi Kleen, SuSE Labs.
+Copyright 2002, 2004, 2007, Andi Kleen, SuSE Labs.
 .I libnuma 
 is under the GNU Lesser General Public License, v2.1.
 
 .SH SEE ALSO
 .BR get_mempolicy (2),
+.BR set_mempolicy (2),
 .BR getpagesize (2),
 .BR mbind (2),
 .BR mmap (2),
-.BR set_mempolicy (2),
 .BR shmat (2),
 .BR numactl (8),
+.BR sched_getaffinity (2)
 .BR sched_setaffinity (2)
+.BR move_pages (2)
+.BR migrate_pages (2)
