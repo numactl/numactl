@@ -33,6 +33,7 @@ extern long move_pages(int pid, unsigned long count,
 				/* Warning: MPOL_F_NODE is unsupported and 
 				   subject to change. Don't use. */
 #define MPOL_F_ADDR     (1<<1)  /* look up vma using address */
+#define MPOL_F_MEMS_ALLOWED (1<<2) /* query nodes allowed in cpuset */
 
 /* Flags for mbind */
 #define MPOL_MF_STRICT  (1<<0)  /* Verify existing pages in the mapping */

@@ -103,6 +103,7 @@ libnuma_1.2 {
     numa_get_interleave_mask;
     numa_get_interleave_node;
     numa_get_membind;
+    numa_get_mems_allowed;
     numa_get_run_node_mask;
     numa_interleave_memory;
     numa_max_node;

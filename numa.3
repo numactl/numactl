@@ -34,6 +34,8 @@ numa \- NUMA policy library
 .br
 .BI "int numa_num_configured_nodes();"
 .br
+.B struct bitmask *numa_get_mems_allowed(void);
+.sp
 .BI "int numa_num_configured_cpus(void);"
 .br
 .BI "struct bitmask *numa_all_nodes_ptr;"
@@ -250,6 +252,12 @@ returns the number of memory nodes in the system. This count
 includes any nodes that are currently disabled. This count is derived from
 the node numbers in /sys/devices/system/node. (Depends on the kernel being
 configured with /sys (CONFIG_SYSFS)).
+
+.BR numa_get_mems_allowed()
+returns the mask of nodes from which the process is allowed to allocate
+memory in it's current cpuset context.
+Any nodes that are not included in the returned bitmask will be ignored
+in any of the following libnuma memory policy calls.
 
 .BR numa_num_configured_cpus()
 returns the number of cpus in the system.  This count includes

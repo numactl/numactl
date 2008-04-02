@@ -134,6 +134,9 @@ void numa_set_membind(struct bitmask *nodemask);
 /* Return current membind */ 
 struct bitmask *numa_get_membind(void);
 
+/* Return allowed memories [nodes] */
+struct bitmask *numa_get_mems_allowed(void);
+
 int numa_get_interleave_node(void);
 
 /* NUMA memory allocation. These functions always round to page size
