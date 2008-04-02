@@ -933,7 +933,7 @@ void *numa_alloc_local(size_t size)
 		   0, 0); 
 	if (mem == (char *)-1)
 		return NULL;
-	dombind(mem, size, MPOL_DEFAULT, NULL); 
+	dombind(mem, size, MPOL_PREFERRED, NULL);
 	return mem; 	
 } 
 
@@ -1498,21 +1498,17 @@ void numa_set_preferred(int node)
 	struct bitmask *bmp;
 
 	bmp = numa_allocate_nodemask();
-	if (node >= 0)
+	if (node >= 0) {
 		numa_bitmask_setbit(bmp, node);
-	setpol(MPOL_PREFERRED, bmp);
+		setpol(MPOL_PREFERRED, bmp);
+	} else
+		setpol(MPOL_DEFAULT, bmp);
 	numa_bitmask_free(bmp);
-	return;
 } 
 
 void numa_set_localalloc(void) 
 {	
-	struct bitmask *bmp;
-
-	bmp = numa_allocate_nodemask();
-	setpol(MPOL_PREFERRED, bmp);
-	numa_bitmask_free(bmp);
-	return;
+	setpol(MPOL_DEFAULT, numa_no_nodes_ptr);
 } 
 
 void numa_bind_v1(const nodemask_t *nodemask)
