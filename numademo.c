@@ -104,7 +104,10 @@ static inline unsigned long long timerfold(struct timeval *tv)
 
 void memtest(char *name, unsigned char *mem)
 { 
-	long k, w;
+	long k;
+#ifdef HAVE_MT
+	long w;
+#endif
 	struct timeval start, end, res;
 	unsigned long long max, min, sum, r; 
 	int i;
@@ -126,6 +129,8 @@ void memtest(char *name, unsigned char *mem)
 			gettimeofday(&start,NULL);
 			memset(mem, 0xff, msize); 
 			gettimeofday(&end,NULL);
+			break;
+
 		case MEMCPY: 
 			gettimeofday(&start,NULL);
 			memcpy(mem, mem + msize/2, msize/2); 
@@ -188,7 +193,10 @@ void memtest(char *name, unsigned char *mem)
 #undef H
 #undef D3
 	output(title,result);
+
+#ifdef HAVE_STREAM_LIB
  out:
+#endif
 	numa_free(mem, msize); 
 } 
 
