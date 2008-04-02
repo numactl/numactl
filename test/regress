@@ -1,36 +1,22 @@
 #!/bin/bash
 # simple regression test for numactl/numaapi
-# note the statistics checks may fail when the system is under memory pressure
+# must be run from 'test' directory of numactl source package,
+# after build [just use 'make test']
+# note the statistics checks may fail when the system is under
+# memory pressure
 # Copyright 2003,2004 Andi Kleen, SuSE Labs.
+
+BASE=`(cd ..; pwd)`
+export LD_LIBRARY_PATH=$BASE
+export PATH=$BASE:$PATH
+
+: ${NUMACTL:=$BASE/numactl}
+VALGRIND=${VALGRIND:-}
 
 MB=$[1024*1024]
 SIZE=$[15 * $MB]
 DEMOSIZE=$[10 * $MB]
-VALGRIND=${VALGRIND:-}
 STAT_INTERVAL=5
-
-# cpw: use numactl or numactl.old
-numactl() { 
-	$VALGRIND ../numactl "$@"
-}
-
-# Get the interval vm statistics refresh at
-if [ -e /proc/sys/vm/stat_interval ]; then
-	STAT_INTERVAL=`cat /proc/sys/vm/stat_interval`
-	STAT_INTERVAL=`expr $STAT_INTERVAL \* 2`
-fi
-
-BASE=`pwd`/..
-export LD_LIBRARY_PATH=$BASE
-export PATH=$BASE:$PATH
-
-numnodes=$(numactl --hardware | awk '/^available/ { print $2 }')
-maxnode=$(expr $numnodes - 1)
-
-if [ $numnodes -lt 2 ] ; then
-    echo need at least two nodes for this
-    exit 1
-fi
 
 PAGESIZE=`./pagesize`
 PAGES=`expr $SIZE / $PAGESIZE`
@@ -39,121 +25,158 @@ HALFPAGES=`expr $HALFPAGES - 100`
 DOUBLEPAGES=`expr $PAGES \* 2`
 DOUBLEPAGES=`expr $DOUBLEPAGES - 200`
 
-FAILED='========SUCCESS'
+declare -i maxnode
 
-failed() { 
-    FAILED='=======FAILED'
-    echo $FAILED
+# =====================================================================
+numactl() {
+	$VALGRIND $NUMACTL "$@"
+}
+
+failed() {
+    echo '=======FAILED'
     echo "Check if machine doesn't have background jobs and try again"
     exit 1
-} 
+}
 
-# args: statname node
-nstat() { 
+# nstat statname node
+nstat() {
     sleep $STAT_INTERVAL
     declare -a fields
-    numastat | grep $1 | while read -a fields ; do	
+    numastat | grep $1 | while read -a fields ; do
 	echo ${fields[$[1 + $2]]}
     done
 }
 
-numactl --cpubind=0 /bin/true
-numactl --cpubind=1 /bin/true
-
-numactl -s
-numactl --hardware
-
-numastat > A
-
-# process state
-test() {
-    echo '=>testing numactl' "$@" "memhog $SIZE" 
+# =========================================================================
+_test_process_state() {
+    echo '=>testing numactl' "$@" "memhog $SIZE"
     numactl "$@" memhog $SIZE  || failed
-} 
+}
 
-test --interleave=1
+test_process_state()
+{
+	_test_process_state --interleave=1
 
-a0=`nstat interleave_hit 0`
-a1=`nstat interleave_hit 1`
-test --interleave=0,1
-b0=`nstat interleave_hit 0`
-b1=`nstat interleave_hit 1`
-if [ $(expr $b1 - $a1) -lt $HALFPAGES ]; then
-    echo "interleaving test failed 1 $b1 $a1"
-    failed
-fi
-if [ $(expr $b0 - $a0) -lt $HALFPAGES ]; then
-    echo "interleaving test failed 0 $b0 $a0"
-    failed
-fi
+	a0=`nstat interleave_hit 0`
+	a1=`nstat interleave_hit 1`
+	_test_process_state --interleave=0,1
+	b0=`nstat interleave_hit 0`
+	b1=`nstat interleave_hit 1`
+	if [ $(expr $b1 - $a1) -lt $HALFPAGES ]; then
+	    echo "interleaving test failed 1 $b1 $a1"
+	    failed
+	fi
+	if [ $(expr $b0 - $a0) -lt $HALFPAGES ]; then
+	    echo "interleaving test failed 0 $b0 $a0"
+	    failed
+	fi
 
-test --interleave=all
-test --membind=all
+	_test_process_state --interleave=all
+	_test_process_state --membind=all
 
-a=$(expr $(nstat numa_hit 0) + $(nstat numa_hit 1))
-test --membind=0,1
-b=$(expr $(nstat numa_hit 0) + $(nstat numa_hit 1))
-if [ $(expr $b - $a) -lt $PAGES ]; then
-    echo "membind test failed 1 $b $a ($PAGES)"
-    failed
-fi
+	a=$(expr $(nstat numa_hit 0) + $(nstat numa_hit 1))
+	_test_process_state --membind=0,1
+	b=$(expr $(nstat numa_hit 0) + $(nstat numa_hit 1))
+	if [ $(expr $b - $a) -lt $PAGES ]; then
+	    echo "membind test failed 1 $b $a ($PAGES)"
+	    failed
+	fi
 
-for i in $(seq $maxnode) ; do
-a=`nstat numa_hit $i`
-test --membind=$i
-test --preferred=$i 
-b=`nstat numa_hit $i`
-if [ $(expr $b - $a) -lt $DOUBLEPAGES ]; then
-    echo "membind/preferred on node $i failed $b $a"
-    failed
-fi
-done
-test --localalloc 
+	for i in $(seq $maxnode) ; do
+	a=`nstat numa_hit $i`
+	_test_process_state --membind=$i
+	_test_process_state --preferred=$i
+	b=`nstat numa_hit $i`
+	if [ $(expr $b - $a) -lt $DOUBLEPAGES ]; then
+	    echo "membind/preferred on node $i failed $b $a"
+	    failed
+	fi
+	done
+	_test_process_state --localalloc
+}
 
-# mbind
+# =========================================================================
+# test mbind
 
-test() { 
+_test_mbind() {
 	echo '=>testing memhog' "$@"
 	memhog $SIZE "$@" || failed
 }
 
-a0=`nstat interleave_hit 0`
-a1=`nstat interleave_hit 1`
-test interleave 0,1 
-b0=`nstat interleave_hit 0`
-b1=`nstat interleave_hit 1`
-if [ $(expr $b1 - $a1) -lt $HALFPAGES ]; then
-    echo "interleaving test 2 failed 1 $b1 $a1 expected $HALFPAGES"
-    failed
-fi
-if [ $(expr $b0 - $a0) -lt $HALFPAGES ]; then
-    echo "interleaving test 2 failed 0 $b0 $a0"
-    failed
-fi
+test_mbind()
+{
+	a0=`nstat interleave_hit 0`
+	a1=`nstat interleave_hit 1`
+	_test_mbind interleave 0,1
+	b0=`nstat interleave_hit 0`
+	b1=`nstat interleave_hit 1`
+	if [ $(expr $b1 - $a1) -lt $HALFPAGES ]; then
+	    echo "interleaving test 2 failed 1 $b1 $a1 expected $HALFPAGES"
+	    failed
+	fi
+	if [ $(expr $b0 - $a0) -lt $HALFPAGES ]; then
+	    echo "interleaving test 2 failed 0 $b0 $a0"
+	    failed
+	fi
 
-test interleave all
+	_test_mbind interleave all
 
-a=$(expr $(nstat numa_hit 0) + $(nstat numa_hit 1))
-test membind 0,1
-b=$(expr $(nstat numa_hit 0) + $(nstat numa_hit 1))
-if [ $(expr $b - $a) -lt $PAGES ]; then
-    echo "membind test 2 failed $b $a ($PAGES)"
-    failed
-fi
+	a=$(expr $(nstat numa_hit 0) + $(nstat numa_hit 1))
+	_test_mbind membind 0,1
+	b=$(expr $(nstat numa_hit 0) + $(nstat numa_hit 1))
+	if [ $(expr $b - $a) -lt $PAGES ]; then
+	    echo "membind test 2 failed $b $a ($PAGES)"
+	    failed
+	fi
 
-for i in $(seq $maxnode) ; do
-a=`nstat numa_hit $i`
-test membind $i
-test preferred $i
-b=`nstat numa_hit $i`
-if [ $(expr $b - $a) -lt $DOUBLEPAGES ]; then
-    echo "membind/preferred test 2 on node $i failed $b $a"
-    failed
-fi
-done
+	for i in $(seq $maxnode) ; do
+	a=`nstat numa_hit $i`
+	_test_mbind membind $i
+	_test_mbind preferred $i
+	b=`nstat numa_hit $i`
+	if [ $(expr $b - $a) -lt $DOUBLEPAGES ]; then
+	    echo "membind/preferred test 2 on node $i failed $b $a"
+	    failed
+	fi
+	done
+}
 
-numastat > B 
-diff -u A B
-rm A B 
+# =========================================================================
+main()
+{
 
-echo $FAILED
+	# Get the interval vm statistics refresh at
+	if [ -e /proc/sys/vm/stat_interval ]; then
+		STAT_INTERVAL=`cat /proc/sys/vm/stat_interval`
+		STAT_INTERVAL=`expr $STAT_INTERVAL \* 2`
+	fi
+
+	numnodes=$(numactl --hardware | awk '/^available/ { print $2 }')
+	maxnode=$(expr $numnodes - 1)
+
+	if [ $numnodes -lt 2 ] ; then
+	    echo need at least two nodes for this
+	    exit 1
+	fi
+
+	numactl --cpubind=0 /bin/true
+	numactl --cpubind=1 /bin/true
+
+	numactl -s
+	numactl --hardware
+
+	numastat > A
+
+	test_process_state
+
+	test_mbind
+
+	numastat > B
+	diff -u A B
+	rm A B
+
+	echo '========SUCCESS'
+}
+
+# =========================================================================
+main
