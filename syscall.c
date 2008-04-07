@@ -24,7 +24,8 @@
 #define WEAK __attribute__((weak))
 
 #if !defined(__NR_mbind) || !defined(__NR_set_mempolicy) || \
-    !defined(__NR_get_mempolicy) || !defined(NR_migratepages)
+    !defined(__NR_get_mempolicy) || !defined(__NR_migrate_pages) || \
+    !defined(__NR_move_pages)
 
 #if defined(__x86_64__)
 
