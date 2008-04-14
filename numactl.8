@@ -34,7 +34,7 @@ numactl \- Control NUMA policy for processes or shared memory
 .B \-\-physcpubind cpus
 ] [
 .B \-\-localalloc
-] command {arguments ...}
+] [\-\-] command {arguments ...}
 .br
 .B numactl \-\-show
 .br
@@ -72,40 +72,75 @@ runs processes with a specific NUMA scheduling or memory placement policy.
 The policy is set for command and inherited by all of its children.
 In addition it can set persistent policy for shared memory segments or files.
 .TP
+Use -- before command if using command options that could be confused
+with numactl options.
+.TP
 Policy settings are:
 .TP
 .B \-\-interleave=nodes, \-i nodes
-Set an memory interleave policy. Memory will be allocated using round robin
+Set a memory interleave policy. Memory will be allocated using round robin
 on 
 .I nodes.
 When memory cannot be allocated on the current interleave target fall back
 to other nodes.
+Multiple nodes may be specified on --interleave, --membind and --cpunodebind.
+You may specify "all", which means all nodes in the current cpuset.
+.I nodes
+may be specified as N,N,N or  N-N or N,N-N or  N-N,N-N and so forth.
+Relative
+.I nodes
+may be specifed as +N,N,N or  +N-N or +N,N-N and so forth. The + indicates that
+the node numbers are relative to the process' set of allowed nodes in its
+current cpuset.
+A !N-N notation indicates the inverse of N-N, in other words all nodes
+except N-N.  If used with + notation, specify !+N-N.
 .TP
 .B \-\-membind=nodes, \-m nodes
 Only allocate memory from nodes.  Allocation will fail when there
 is not enough memory available on these nodes.
+.I nodes
+may be specified as noted above.
 .TP
 .B \-\-cpunodebind=nodes, \-N nodes
-Only execute process on the CPUs of
+Only execute
+.I command
+on the CPUs of
 .I nodes. 
 Note that nodes may consist of multiple CPUs.
+.I nodes
+may be specified as noted above.
 .TP
 .B \-\-physcpubind=cpus, \-C cpus
-Only execute process on 
+Only execute
+.I process
+on
 .I cpus.
 This accepts physical cpu numbers as shown in the 
 .I processor
 fields of 
-.I /proc/cpuinfo.
+.I /proc/cpuinfo,
+or relative cpus as in relative to the current cpuset.
+You may specify "all", which means all cpus in the current cpuset.
+Physical
+.I cpus
+may be specified as N,N,N or  N-N or N,N-N or  N-N,N-N and so forth.
+Relative
+.I cpus
+may be specifed as +N,N,N or  +N-N or +N,N-N and so forth. The + indicates that
+the cpu numbers are relative to the process' set of allowed cpus in its
+current cpuset.
+A !N-N notation indicates the inverse of N-N, in other words all cpus
+except N-N.  If used with + notation, specify !+N-N.
 .TP
 .B \-\-localalloc, \-l 
-Do always local allocation on the current node.
+Always allocate on the current node.
 .TP
 .B \-\-preferred=node
 Preferably allocate memory on 
 .I node,
 but if memory cannot be allocated there fall back to other nodes.
 This option takes only a single node number.
+Relative notation may be used.
 .TP
 .B \-\-show, \-s
 Show NUMA policy settings of the current process. 
@@ -201,11 +236,18 @@ number1-number2:Nodes from number1 to number2
 ! nodes:Invert selection of the following specification.
 .TE
 .SH EXAMPLES
+numactl \-\-physcpubind=+0-4,8-12 myapplic arguments
+Run myapplic on cpus 0-4 and 8-12 of the current cpuset.
+
 numactl \-\-interleave=all bigdatabase arguments
 Run big database with its memory interleaved on all CPUs.
 
-numactl \-\-cpubind=0\-\-membind=0,1 process
+numactl \-\-cpubind=0 \-\-membind=0,1 process
 Run process on node 0 with memory allocated on node 0 and 1.
+
+numactl \-\-cpubind=0 \-\-membind=0,1 -- process -l
+Run process as above, but with an option (-l) that would be confused with
+a numactl option.
 
 numactl \-\-preferred=1 numactl \-\-show
 Set preferred node 1 and show the resulting state.

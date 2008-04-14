@@ -6,7 +6,7 @@ export LD_LIBRARY_PATH=$BASE
 export PATH=$BASE:$PATH
 
 numcpus=$(grep -c processor /proc/cpuinfo)
-numnodes=$(ls /sys/devices/system/node | wc -l)
+numnodes=$(ls -1d /sys/devices/system/node/node[0-9]* | wc -l )
 
 for i in $(seq 0 $[$numcpus - 1]) ; do
     if [ $(numactl --physcpubind=$i ./printcpu) != $i ] ; then

@@ -8,15 +8,17 @@ extern "C" {
 /* Kernel interface for NUMA API */
 
 /* System calls */
-extern long get_mempolicy(int *policy, 
-			  const unsigned long *nmask, unsigned long maxnode,
-			  void *addr, int flags);
+extern long get_mempolicy(int *policy, const unsigned long *nmask,
+			unsigned long maxnode, void *addr, int flags);
 extern long mbind(void *start, unsigned long len, int mode, 
-		  const unsigned long *nmask, unsigned long maxnode, unsigned flags);
+	const unsigned long *nmask, unsigned long maxnode, unsigned flags);
 extern long set_mempolicy(int mode, const unsigned long *nmask, 
 			  unsigned long maxnode);
 extern long migratepages(int pid, unsigned long maxnode, unsigned long *fromnode,
 			unsigned long *tonode);
+
+extern long move_pages(int pid, unsigned long count,
+		void **pages, const int *nodes, int *status, int flags);
 
 /* Policies */
 #define MPOL_DEFAULT     0
@@ -31,6 +33,7 @@ extern long migratepages(int pid, unsigned long maxnode, unsigned long *fromnode
 				/* Warning: MPOL_F_NODE is unsupported and 
 				   subject to change. Don't use. */
 #define MPOL_F_ADDR     (1<<1)  /* look up vma using address */
+#define MPOL_F_MEMS_ALLOWED (1<<2) /* query nodes allowed in cpuset */
 
 /* Flags for mbind */
 #define MPOL_MF_STRICT  (1<<0)  /* Verify existing pages in the mapping */

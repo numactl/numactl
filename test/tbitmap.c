@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include "numa.h"
 
 #define ALIGN(x,a) (((x)+(a)-1)&~((a)-1))
 
@@ -33,14 +34,11 @@ typedef unsigned u32;
  * bitmap_scnprintf - convert bitmap to an ASCII hex string.
  * @buf: byte buffer into which string is placed
  * @buflen: reserved size of @buf, in bytes
- * @maskp: pointer to bitmap to convert
- * @nmaskbits: size of bitmap, in bits
+ * @mask: pointer to struct bitmask to convert
  *
- * Exactly @nmaskbits bits are displayed.  Hex digits are grouped into
- * comma-separated sets of eight digits per set.
+ * Hex digits are grouped into comma-separated sets of eight digits per set.
  */
-int bitmap_scnprintf(char *buf, unsigned int buflen,
-        const unsigned long *maskp, int nmaskbits)
+int bitmap_scnprintf(char *buf, unsigned int buflen, struct bitmask *mask)
 {
         int i, word, bit, len = 0;
         unsigned long val;
@@ -48,16 +46,16 @@ int bitmap_scnprintf(char *buf, unsigned int buflen,
         int chunksz;
         u32 chunkmask;
 
-        chunksz = nmaskbits & (CHUNKSZ - 1);
+        chunksz = mask->size & (CHUNKSZ - 1);
         if (chunksz == 0)
                 chunksz = CHUNKSZ;
 
-        i = ALIGN(nmaskbits, CHUNKSZ) - CHUNKSZ;
+        i = ALIGN(mask->size, CHUNKSZ) - CHUNKSZ;
         for (; i >= 0; i -= CHUNKSZ) {
                 chunkmask = ((1ULL << chunksz) - 1);
                 word = i / BITS_PER_LONG;
                 bit = i % BITS_PER_LONG;
-                val = (maskp[word] >> bit) & chunkmask;
+                val = (mask->maskp[word] >> bit) & chunkmask;
                 len += snprintf(buf+len, buflen-len, "%s%0*lx", sep,
                         (chunksz+3)/4, val);
                 chunksz = CHUNKSZ;
@@ -66,24 +64,29 @@ int bitmap_scnprintf(char *buf, unsigned int buflen,
         return len;
 }
 
-extern int numa_parse_bitmap(char  *buf,unsigned long *mask, unsigned bits);
+extern int numa_parse_bitmap(char  *buf, struct bitmask *mask);
+#define MASKSIZE 300
 
 int main(void)
 {
 	char buf[1024];
-	unsigned long mask[20], mask2[20];
+	struct bitmask *mask, *mask2;
 	int i;
+
+	mask  = numa_bitmask_alloc(MASKSIZE);
+	mask2 = numa_bitmask_alloc(MASKSIZE);
+
 	printf("Testing bitmap functions\n");
-	for (i = 0; i < 300; i++) {
-		memset(mask, 0, sizeof(mask));
-		memset(mask2, 0, sizeof(mask));
-		set_bit(i, mask);
-		bitmap_scnprintf(buf, sizeof(buf), mask, 300);
+	for (i = 0; i < MASKSIZE; i++) {
+		numa_bitmask_clearall(mask);
+		numa_bitmask_clearall(mask2);
+		numa_bitmask_setbit(mask, i);
+		bitmap_scnprintf(buf, sizeof(buf), mask);
 		strcat(buf,"\n");
-		if (numa_parse_bitmap(buf, mask2, 300) < 0)
+		if (numa_parse_bitmap(buf, mask2) < 0)
 			assert(0);
 		if (memcmp(mask, mask2, sizeof(mask))) { 
-			bitmap_scnprintf(buf, sizeof(buf), mask2, 300);	
+			bitmap_scnprintf(buf, sizeof(buf), mask2);
 			printf("mask2 differs: %s\n", buf);
 			assert(0);
 		}
@@ -91,4 +94,3 @@ int main(void)
 	printf("Passed\n");
 	return 0;
 }
-

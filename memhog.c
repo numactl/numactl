@@ -60,14 +60,15 @@ void hog(void *map)
 int main(int ac, char **av) 
 { 
 	char *map; 
-	nodemask_t nodes, gnodes;
+	struct bitmask *nodes, *gnodes;
 	int policy, gpolicy;
 	int ret = 0;
 	int loose = 0; 
 	int i;
 	int fd = -1; 
 
-	nodemask_zero(&nodes); 
+	nodes = numa_allocate_nodemask();
+	gnodes = numa_allocate_nodemask();
 
 	while (av[1] && av[1][0] == '-') { 
 		switch (av[1][1]) { 
@@ -95,7 +96,11 @@ int main(int ac, char **av)
 		loose = 1;
 	policy = parse_policy(av[2], av[3]);
 	if (policy != MPOL_DEFAULT)
-		nodes = nodemask(av[3]);
+		nodes = numa_parse_nodestring(av[3]);
+        if (!nodes) {
+		printf ("<%s> is invalid\n", av[3]);
+		exit(1);
+	}
 	
 	if (fd >= 0)
 		map = mmap(NULL,length,PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0); 
@@ -106,19 +111,19 @@ int main(int ac, char **av)
 	if (map == (char*)-1) 
 		err("mmap");
 	
-	if (mbind(map, length, policy, nodes.n, NUMA_NUM_NODES + 1, 0) < 0) 
+	if (mbind(map, length, policy, nodes->maskp, nodes->size, 0) < 0)
 		terr("mbind");
 	
 	gpolicy = -1; 
-	if (get_mempolicy(&gpolicy, gnodes.n, NUMA_NUM_NODES + 1, map,
-			  MPOL_F_ADDR) < 0)
+	if (get_mempolicy(&gpolicy, gnodes->maskp, gnodes->size, map, MPOL_F_ADDR) < 0)
 		terr("get_mempolicy");
 	if (!loose && policy != gpolicy) {
 		ret = 1;
 		printf("policy %d gpolicy %d\n", policy, gpolicy); 
 	}
-	if (!loose && !nodemask_equal(&gnodes, &nodes)) { 
-		printf("nodes differ %lx, %lx!\n", gnodes.n[0], nodes.n[0]); 
+	if (!loose && !numa_bitmask_equal(gnodes, nodes)) {
+		printf("nodes differ %lx, %lx!\n",
+			gnodes->maskp[0], nodes->maskp[0]);
 		ret = 1;
 	}
 

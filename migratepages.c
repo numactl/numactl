@@ -26,8 +26,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
-#include "numaif.h"
 #include "numa.h"
+#include "numaif.h"
 #include "numaint.h"
 #include "util.h"
 
@@ -62,8 +62,8 @@ int main(int argc, char *argv[])
 	char *end;
 	int rc;
 	int pid;
-	nodemask_t fromnodes;
-	nodemask_t tonodes;
+	struct bitmask *fromnodes;
+	struct bitmask *tonodes;
 
 	while ((c = getopt_long(argc,argv,"h", opts, NULL)) != -1) {
 		switch (c) {
@@ -84,10 +84,18 @@ int main(int argc, char *argv[])
 	if (*end || end == argv[0])
 		usage();
 
-	fromnodes = nodemask(argv[1]);
-	tonodes = nodemask(argv[2]);
+	fromnodes = numa_parse_nodestring(argv[1]);
+	if (!fromnodes) {
+		printf ("<%s> is invalid\n", argv[1]);
+		exit(1);
+	}
+	tonodes = numa_parse_nodestring(argv[2]);
+	if (!tonodes) {
+		printf ("<%s> is invalid\n", argv[2]);
+		exit(1);
+	}
 
-	rc = numa_migrate_pages(pid, &fromnodes, &tonodes);
+	rc = numa_migrate_pages(pid, fromnodes, tonodes);
 
 	if (rc < 0) {
 		perror("migrate_pages");

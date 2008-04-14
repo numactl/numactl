@@ -17,13 +17,15 @@
 #include <sys/types.h>
 #include <asm/unistd.h>
 #include <errno.h>
+#include "numa.h"
 #include "numaif.h"
 #include "numaint.h"
 
 #define WEAK __attribute__((weak))
 
 #if !defined(__NR_mbind) || !defined(__NR_set_mempolicy) || \
-    !defined(__NR_get_mempolicy) || !defined(NR_migratepages)
+    !defined(__NR_get_mempolicy) || !defined(__NR_migrate_pages) || \
+    !defined(__NR_move_pages)
 
 #if defined(__x86_64__)
 
@@ -36,11 +38,13 @@
 #define __NR_set_mempolicy 238
 #define __NR_get_mempolicy 239
 #define __NR_migrate_pages 256
+#define __NR_move_pages 279
 
 #elif defined(__ia64__)
 #define __NR_sched_setaffinity    1231
 #define __NR_sched_getaffinity    1232
 #define __NR_migrate_pages	1280
+#define __NR_move_pages 1276
 
 /* Official allocation */
 
@@ -54,6 +58,7 @@
 #define __NR_get_mempolicy 275
 #define __NR_set_mempolicy 276
 #define __NR_migrate_pages 294
+#define __NR_move_pages 317
 
 #elif defined(__powerpc__)
 
@@ -61,6 +66,9 @@
 #define __NR_get_mempolicy 260
 #define __NR_set_mempolicy 261
 #define __NR_migrate_pages 258
+/* FIXME: powerpc is missing move pages!!!
+#define __NR_move_pages xxx
+*/
 
 #elif !defined(DEPS_RUN)
 #error "Add syscalls for your architecture or update kernel headers"
@@ -126,23 +134,26 @@ long syscall6(long call, long a, long b, long c, long d, long e, long f)
 #define syscall6 syscall
 #endif
 
-long WEAK get_mempolicy(int *policy, 
-		   const unsigned long *nmask, unsigned long maxnode,
-		   void *addr, int flags)          
+long WEAK get_mempolicy(int *policy, const unsigned long *nmask,
+				unsigned long maxnode, void *addr, int flags)
 {
-	return syscall(__NR_get_mempolicy, policy, nmask, maxnode, addr, flags);
+	return syscall(__NR_get_mempolicy, policy, nmask,
+					maxnode, addr, flags);
 }
 
 long WEAK mbind(void *start, unsigned long len, int mode, 
-	   const unsigned long *nmask, unsigned long maxnode, unsigned flags) 
+	const unsigned long *nmask, unsigned long maxnode, unsigned flags)
 {
-	return syscall6(__NR_mbind, (long)start, len, mode, (long)nmask, maxnode, flags); 
+	return syscall6(__NR_mbind, (long)start, len, mode, (long)nmask,
+				maxnode, flags);
 }
 
 long WEAK set_mempolicy(int mode, const unsigned long *nmask, 
                                    unsigned long maxnode)
 {
-	return syscall(__NR_set_mempolicy,mode,nmask,maxnode);
+	long i;
+	i = syscall(__NR_set_mempolicy,mode,nmask,maxnode);
+	return i;
 }
 
 long WEAK migrate_pages(int pid, unsigned long maxnode,
@@ -151,23 +162,44 @@ long WEAK migrate_pages(int pid, unsigned long maxnode,
 	return syscall(__NR_migrate_pages, pid, maxnode, frommask, tomask);
 }
 
-/* SLES8 glibc doesn't define those */
+long WEAK move_pages(int pid, unsigned long count,
+	void **pages, const int *nodes, int *status, int flags)
+{
+	return syscall(__NR_move_pages, pid, count, pages, nodes, status, flags);
+}
 
-int numa_sched_setaffinity(pid_t pid, unsigned len, const unsigned long *mask)
+/* SLES8 glibc doesn't define those */
+int numa_sched_setaffinity_v1(pid_t pid, unsigned len, const unsigned long *mask)
 {
 	return syscall(__NR_sched_setaffinity,pid,len,mask);
 }
+__asm__(".symver numa_sched_setaffinity_v1,numa_sched_setaffinity@libnuma_1.1");
 
-int numa_sched_getaffinity(pid_t pid, unsigned len, const unsigned long *mask)
+int numa_sched_setaffinity_v2(pid_t pid, struct bitmask *mask)
+{
+	return syscall(__NR_sched_setaffinity, pid, numa_bitmask_nbytes(mask),
+								mask->maskp);
+}
+__asm__(".symver numa_sched_setaffinity_v2,numa_sched_setaffinity@@libnuma_1.2");
+
+int numa_sched_getaffinity_v1(pid_t pid, unsigned len, const unsigned long *mask)
 {
 	return syscall(__NR_sched_getaffinity,pid,len,mask);
 
 }
+__asm__(".symver numa_sched_getaffinity_v1,numa_sched_getaffinity@libnuma_1.1");
 
-make_internal_alias(numa_sched_getaffinity);
-make_internal_alias(numa_sched_setaffinity);
-make_internal_alias(get_mempolicy);
-make_internal_alias(set_mempolicy);
-make_internal_alias(mbind);
-make_internal_alias(migrate_pages);
+int numa_sched_getaffinity_v2(pid_t pid, struct bitmask *mask)
+{
+	/* len is length in bytes */
+	return syscall(__NR_sched_getaffinity, pid, numa_bitmask_nbytes(mask),
+								mask->maskp);
+	/* sched_getaffinity returns sizeof(cpumask_t) */
 
+}
+__asm__(".symver numa_sched_getaffinity_v2,numa_sched_getaffinity@@libnuma_1.2");
+
+make_internal_alias(numa_sched_getaffinity_v1);
+make_internal_alias(numa_sched_getaffinity_v2);
+make_internal_alias(numa_sched_setaffinity_v1);
+make_internal_alias(numa_sched_setaffinity_v2);

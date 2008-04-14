@@ -104,7 +104,10 @@ static inline unsigned long long timerfold(struct timeval *tv)
 
 void memtest(char *name, unsigned char *mem)
 { 
-	long k, w;
+	long k;
+#ifdef HAVE_MT
+	long w;
+#endif
 	struct timeval start, end, res;
 	unsigned long long max, min, sum, r; 
 	int i;
@@ -126,6 +129,8 @@ void memtest(char *name, unsigned char *mem)
 			gettimeofday(&start,NULL);
 			memset(mem, 0xff, msize); 
 			gettimeofday(&end,NULL);
+			break;
+
 		case MEMCPY: 
 			gettimeofday(&start,NULL);
 			memcpy(mem, mem + msize/2, msize/2); 
@@ -188,7 +193,10 @@ void memtest(char *name, unsigned char *mem)
 #undef H
 #undef D3
 	output(title,result);
+
+#ifdef HAVE_STREAM_LIB
  out:
+#endif
 	numa_free(mem, msize); 
 } 
 
@@ -210,8 +218,9 @@ void test(enum test type)
 	unsigned long mask;
 	int i, k;
 	char buf[512];
-	nodemask_t nodes;
+	struct bitmask *nodes;
 
+	nodes = numa_allocate_nodemask();
 	thistest = type; 
 
 	memtest("memory with no policy", numa_alloc(msize));
@@ -228,10 +237,10 @@ void test(enum test type)
 		char buf2[10];
 		if (popcnt(mask) == 1) 
 			continue;
-		nodemask_zero(&nodes); 
+		numa_bitmask_clearall(nodes);
 		for (w = 0; mask >> w; w++) { 
 			if ((mask >> w) & 1)
-				nodemask_set(&nodes, w); 
+				numa_bitmask_setbit(nodes, w);
 		} 
 
 		sprintf(buf, "memory interleaved on"); 
@@ -240,7 +249,7 @@ void test(enum test type)
 				sprintf(buf2, " %d", k);
 				strcat(buf, buf2);
 			}
-		memtest(buf, numa_alloc_interleaved_subset(msize, &nodes)); 
+		memtest(buf, numa_alloc_interleaved_subset(msize, nodes));
 	}
 
 	for (i = 0; i <= max_node; i++) { 
@@ -249,19 +258,21 @@ void test(enum test type)
 		memtest("memory without policy", numa_alloc(msize)); 
 	} 
 
-	numa_set_interleave_mask(&numa_all_nodes); 
+	numa_set_interleave_mask(numa_all_nodes_ptr);
 	memtest("manual interleaving to all nodes", numa_alloc(msize)); 
 
 	if (max_node > 0) { 
-		nodemask_zero(&nodes); 
-		nodemask_set(&nodes, 0);
-		nodemask_set(&nodes, 1);
-		numa_set_interleave_mask(&nodes); 
+		numa_bitmask_clearall(nodes);
+		numa_bitmask_setbit(nodes, 0);
+		numa_bitmask_setbit(nodes, 1);
+		numa_set_interleave_mask(nodes);
 		memtest("manual interleaving on node 0/1", numa_alloc(msize)); 
 		printf("current interleave node %d\n", numa_get_interleave_node()); 
 	} 
 
-	numa_set_interleave_mask(&numa_no_nodes); 
+	numa_set_interleave_mask(numa_no_nodes_ptr);
+
+	nodes = numa_allocate_nodemask();
 
 	for (i = 0; i <= max_node; i++) { 
 		int oldhn = numa_preferred();
@@ -275,22 +286,22 @@ void test(enum test type)
 			numa_alloc_interleaved(msize)); 
 
 		if (max_node >= 1) { 
-			nodemask_zero(&nodes);
-			nodemask_set(&nodes, 0);
-			nodemask_set(&nodes, 1);
+			numa_bitmask_clearall(nodes);
+			numa_bitmask_setbit(nodes, 0);
+			numa_bitmask_setbit(nodes, 1);
 			memtest("memory interleaved on node 0/1", 
-				numa_alloc_interleaved_subset(msize, &nodes)); 
+				numa_alloc_interleaved_subset(msize, nodes));
 		} 
 
 		for (k = 0; k <= max_node; k++) { 
 			if (k == i) 
 				continue;
 			sprintf(buf, "alloc on node %d", k);
-			nodemask_zero(&nodes);
-			nodemask_set(&nodes, k); 
-			numa_set_membind(&nodes); 
+			numa_bitmask_clearall(nodes);
+			numa_bitmask_setbit(nodes, k);
+			numa_set_membind(nodes);
 			memtest(buf, numa_alloc(msize)); 			
-			numa_set_membind(&numa_all_nodes);
+			numa_set_membind(numa_all_nodes_ptr);
 		}
 		
 		numa_set_localalloc(); 

@@ -25,160 +25,26 @@
 #include <errno.h>
 #include <unistd.h>
 
-void printmask(char *name, nodemask_t *mask)
+void printmask(char *name, struct bitmask *mask)
 { 
 	int i;
-	int max = numa_max_node();
+
 	printf("%s: ", name); 
-#if 0
-	int full = 1;
-	for (i = 0; i <= max; i++) { 
-		if (nodemask_isset(&numa_all_nodes, i) && !nodemask_isset(mask, i)) {
-			full = 0;
-			break;
-		}		
-	} 
-	if (full) { 
-		printf("all nodes\n"); 
-		return;
-	}	
-#endif
-	for (i = 0; i <= max; i++) 
-		if (nodemask_isset(mask, i))
+	for (i = 0; i <= mask->size; i++)
+		if (numa_bitmask_isbitset(mask, i))
 			printf("%d ", i); 
 	putchar('\n');
 } 
 
-int numcpus; 
-
-/* caller must free buffer */
-unsigned long *cpumask(char *s, int *ncpus) 
-{
-	int invert = 0;
-	char *end; 
-
-	if (!numcpus) 
-		numcpus = sysconf(_SC_NPROCESSORS_CONF); 
-
-	int cpubufsize = round_up(numcpus, BITS_PER_LONG) / BYTES_PER_LONG;
-	unsigned long *cpubuf = calloc(cpubufsize,1); 
-	if (!cpubuf) 
-		complain("Out of memory");
-
-	if (s[0] == 0) 
-		return cpubuf;
-	if (*s == '!') { 
-		invert = 1;
-		++s;
-	}
-	do {		
-		unsigned long arg;
-
-		if (!strcmp(s,"all")) { 
-			int i;
-			for (i = 0; i < numcpus; i++)
-				set_bit(i, cpubuf);
-			break;
-		}
-		arg = strtoul(s, &end, 0); 
-		if (end == s)
-			complain("unparseable node description `%s'\n", s);
-		if (arg > numcpus)
-			complain("cpu argument %d is out of range\n", arg);
-		set_bit(arg, cpubuf);
-		s = end; 
-		if (*s == '-') { 
-			char *end2;
-			unsigned long arg2 = strtoul(++s, &end2, 0); 
-			if (end2 == s)
-				complain("missing cpu argument %s\n", s);
-			if (arg > numcpus)
-				complain("cpu argument %d out of range\n", arg);
-			while (++arg <= arg2)
-				set_bit(arg, cpubuf);
-			s = end2;
-		}
-	} while (*s++ == ','); 
-	if (s[-1] != '\0')
-		usage();
-	if (invert) { 
-		int i;
-		for (i = 0; i <= numcpus; i++) {
-			if (test_bit(i, cpubuf))
-				clear_bit(i, cpubuf);
-			else
-				set_bit(i, cpubuf);
-		}
-	} 
-	*ncpus = cpubufsize;
-	return cpubuf;	
-}
-
-void printcpumask(char *name, unsigned long *mask, int size)
+void printcpumask(char *name, struct bitmask *mask)
 { 
 	int i;
 	printf("%s: ", name);
-	for (i = 0; i < size*8; i++) {
-		if (test_bit(i, mask))
+	for (i = 0; i < mask->size; i++) {
+		if (numa_bitmask_isbitset(mask, i))
 			printf("%d ", i);
 	}
 	putchar('\n');
-} 
-
-nodemask_t nodemask(char *s) 
-{ 
-	int max = numa_max_node();
-	nodemask_t mask;
-	int invert = 0;
-	char *end; 
-	nodemask_zero(&mask);
-	if (s[0] == 0) 
-		return numa_no_nodes; 
-	if (*s == '!') { 
-		invert = 1;
-		++s;
-	}
-	do {		
-		unsigned long arg;
-
-		if (!strcmp(s,"all")) { 
-			s += 4;
-			mask = numa_all_nodes;
-			break;
-		}
-		arg = strtoul(s, &end, 0); 
-		if (end == s)
-			complain("unparseable node description `%s'\n", s);
-		if (arg > max)
-			complain("node argument %d is out of range\n", arg);
-		nodemask_set(&mask, arg);
-		s = end; 
-		if (*s == '-') { 
-			char *end2;
-			unsigned long arg2 = strtoul(++s, &end2, 0); 
-			if (end2 == s)
-				complain("missing cpu argument %s\n", s);
-			if (arg > max)
-				complain("node argument %d out of range\n", arg);
-			while (++arg <= arg2)
-				nodemask_set(&mask, arg);
-			s = end2;
-		}
-	} while (*s++ == ','); 
-	if (s[-1] != '\0')
-		usage();
-	if (invert) { 
-		int i;
-		for (i = 0; i <= max; i++) {
-			if (!nodemask_isset(&numa_all_nodes, i))
-				continue;
-			if (nodemask_isset(&mask, i))
-				nodemask_clr(&mask, i);
-			else
-				nodemask_set(&mask, i); 
-		}
-	} 
-	return mask;
 } 
 
 void complain(char *fmt, ...)
@@ -268,4 +134,3 @@ void print_policies(void)
 		printf(" %s", policies[i].name);
 	printf("\n"); 
 }
-

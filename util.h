@@ -1,7 +1,7 @@
-extern void printmask(char *name, nodemask_t *mask);
-extern void printcpumask(char *name, unsigned long *mask, int len);
-extern nodemask_t nodemask(char *s);
-extern unsigned long *cpumask(char *s, int *ncpus);
+extern void printmask(char *name, struct bitmask *mask);
+extern void printcpumask(char *name, struct bitmask *mask);
+extern struct bitmask *nodemask(char *s);
+extern struct bitmask *cpumask(char *s, int *ncpus);
 extern int read_sysctl(char *name);
 extern void complain(char *fmt, ...);
 extern void nerror(char *fmt, ...);
