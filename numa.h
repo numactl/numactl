@@ -22,6 +22,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <sys/types.h>
+#include <stdlib.h>
 
 #if defined(__x86_64__) || defined(__i386__)
 #define NUMA_NUM_NODES  128
@@ -57,6 +58,8 @@ unsigned int numa_bitmask_nbytes(struct bitmask *);
 struct bitmask *numa_bitmask_alloc(unsigned int);
 void numa_bitmask_free(struct bitmask *);
 int numa_bitmask_equal(const struct bitmask *, const struct bitmask *);
+void copy_nodemask_to_bitmask(nodemask_t *, struct bitmask *);
+void copy_bitmask_to_nodemask(struct bitmask *, nodemask_t *);
 
 /* compatibility for codes that used them: */
 static inline void nodemask_zero(struct bitmask *mask)
@@ -64,20 +67,6 @@ static inline void nodemask_zero(struct bitmask *mask)
 	numa_bitmask_clearall(mask);
 } 
 
-static inline void nodemask_set(struct bitmask *mask, int node)
-{
-	numa_bitmask_setbit(mask, node);
-} 
-
-static inline void nodemask_clr(struct bitmask *mask, int node)
-{
-	numa_bitmask_clearbit(mask, node);
-}
-
-static inline int nodemask_isset(struct bitmask *mask, int node)
-{
-	return numa_bitmask_isbitset(mask, node);
-}
 static inline int nodemask_equal(struct bitmask *a, struct bitmask *b)
 { 
 	return numa_bitmask_equal(a, b);
@@ -104,11 +93,17 @@ int numa_pagesize(void);
 /* Set with all nodes. Only valid after numa_available. */
 extern struct bitmask *numa_all_nodes_ptr;
 
+/* For source compatibility */
+extern nodemask_t numa_all_nodes;
+
 /* Set with all cpus. */
 extern struct bitmask *numa_all_cpus_ptr;
 
 /* Set with no nodes */
 extern struct bitmask *numa_no_nodes_ptr;
+
+/* Source compatibility */
+extern nodemask_t numa_no_nodes;
 
 /* Only run and allocate memory from a specific set of nodes. */
 void numa_bind(struct bitmask *nodes);
@@ -243,9 +238,281 @@ struct bitmask *numa_parse_nodestring(char *);
 /* Convert an ascii list of cpu to a bitmask */
 struct bitmask *numa_parse_cpustring(char *);
 
+/*
+ * The following functions are for source code compatibility
+ * with releases prior to version 2.
+ * Such codes should be compiled with VERSION1_COMPATIBILITY defined.
+ */
+
+static inline void nodemask_zero_compat(nodemask_t *mask)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)mask;
+	tmp.size = sizeof(nodemask_t) * 8;
+	numa_bitmask_clearall(&tmp);
+}
+
+static inline void nodemask_set(struct bitmask *mask, int node)
+{
+	numa_bitmask_setbit(mask, node);
+}
+
+static inline void nodemask_set_compat(nodemask_t *mask, int node)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)mask;
+	tmp.size = sizeof(nodemask_t) * 8;
+	numa_bitmask_setbit(&tmp, node);
+}
+
+static inline void nodemask_clr(struct bitmask *mask, int node)
+{
+	numa_bitmask_clearbit(mask, node);
+}
+
+static inline void nodemask_clr_compat(nodemask_t *mask, int node)
+{
+        mask->n[node / (8*sizeof(unsigned long))] &=
+                ~(1UL<<(node%(8*sizeof(unsigned long))));
+}
+
+static inline int nodemask_isset(struct bitmask *mask, int node)
+{
+	return numa_bitmask_isbitset(mask, node);
+}
+
+static inline int nodemask_isset_compat(nodemask_t *mask, int node)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)mask;
+	tmp.size = sizeof(nodemask_t) * 8;
+	return numa_bitmask_isbitset(&tmp, node);
+}
+
+static inline int nodemask_equal_compat(nodemask_t *a, nodemask_t *b)
+{
+	struct bitmask tmpa, tmpb;
+
+	tmpa.maskp = (unsigned long *)a;
+	tmpa.size = sizeof(nodemask_t) * sizeof(unsigned long);
+	tmpb.maskp = (unsigned long *)b;
+	tmpb.size = sizeof(nodemask_t) * sizeof(unsigned long);
+	return numa_bitmask_equal(&tmpa, &tmpb);
+}
+
+static inline void numa_set_interleave_mask_compat(nodemask_t *nodemask)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)nodemask;
+	tmp.size = sizeof(nodemask_t) * 8;
+	numa_set_interleave_mask(&tmp);
+}
+
+static inline nodemask_t numa_get_interleave_mask_compat()
+{
+	struct bitmask *tp;
+	nodemask_t mask;
+
+	tp = numa_get_interleave_mask();
+	copy_bitmask_to_nodemask(tp, &mask);
+	numa_bitmask_free(tp);
+	return mask;
+}
+
+static inline void numa_bind_compat(nodemask_t *mask)
+{
+	struct bitmask *tp;
+
+	tp = numa_allocate_nodemask();
+	copy_nodemask_to_bitmask(mask, tp);
+	numa_bind(tp);
+	numa_bitmask_free(tp);
+}
+
+static inline void numa_set_membind_compat(nodemask_t *mask)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)mask;
+	tmp.size = sizeof(nodemask_t) * 8;
+	numa_set_membind(&tmp);
+}
+
+static inline nodemask_t numa_get_membind_compat()
+{
+	struct bitmask *tp;
+	nodemask_t mask;
+
+	tp = numa_get_membind();
+	copy_bitmask_to_nodemask(tp, &mask);
+	numa_bitmask_free(tp);
+	return mask;
+}
+
+static inline void *numa_alloc_interleaved_subset_compat(size_t size,
+					const nodemask_t *mask)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)mask;
+	tmp.size = sizeof(nodemask_t) * 8;
+	return numa_alloc_interleaved_subset(size, &tmp);
+}
+
+static inline int numa_run_on_node_mask_compat(const nodemask_t *mask)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)mask;
+	tmp.size = sizeof(nodemask_t) * 8;
+	return numa_run_on_node_mask(&tmp);
+}
+
+static inline nodemask_t numa_get_run_node_mask_compat()
+{
+	struct bitmask *tp;
+	nodemask_t mask;
+
+	tp = numa_get_run_node_mask();
+	copy_bitmask_to_nodemask(tp, &mask);
+	numa_bitmask_free(tp);
+	return mask;
+}
+
+static inline void numa_interleave_memory_compat(void *mem, size_t size,
+						const nodemask_t *mask)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)mask;
+	tmp.size = sizeof(nodemask_t) * 8;
+	numa_interleave_memory(mem, size, &tmp);
+}
+
+static inline void numa_tonodemask_memory_compat(void *mem, size_t size,
+						const nodemask_t *mask)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)mask;
+	tmp.size = sizeof(nodemask_t) * 8;
+	numa_tonodemask_memory(mem, size, &tmp);
+}
+
+static inline int numa_sched_getaffinity_compat(pid_t pid, unsigned len,
+						unsigned long *mask)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)mask;
+	tmp.size = len * 8;
+	return numa_sched_getaffinity(pid, &tmp);
+}
+
+static inline int numa_sched_setaffinity_compat(pid_t pid, unsigned len,
+						unsigned long *mask)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)mask;
+	tmp.size = len * 8;
+	return numa_sched_setaffinity(pid, &tmp);
+}
+
+void printcpumask(char *name, struct bitmask *mask);
+static inline void printcpumask_compat(char *name, unsigned long *mask,
+								int size)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)mask;
+	tmp.size = size * 8;
+	printcpumask(name, &tmp);
+}
+
+void printmask(char *name, struct bitmask *mask);
+static inline void printmask_compat(char *name, nodemask_t *mask)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)mask;
+	tmp.size = sizeof(nodemask_t) * 8;
+	printmask(name, &tmp);
+}
+
+static inline int numa_node_to_cpus_compat(int node, unsigned long *buffer,
+							int buffer_len)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)buffer;
+	tmp.size = buffer_len * 8;
+	return numa_node_to_cpus(node, &tmp);
+}
+
+void verify_shm(int policy, struct bitmask *nodes);
+static inline void verify_shm_compat(int policy, nodemask_t mask)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)&mask;
+	tmp.size = sizeof(nodemask_t) * 8;
+	verify_shm(policy, &tmp);
+}
+
+static inline nodemask_t nodemask_compat(char *c)
+{
+	struct bitmask *tp;
+	nodemask_t mask;
+
+	tp = numa_parse_nodestring(c);
+	copy_bitmask_to_nodemask(tp, &mask);
+	numa_bitmask_free(tp);
+	return mask;
+}
+
+void complain(char *fmt, ...);
+static inline unsigned long *cpumask_compat(char *c, int *ncpus)
+{
+	struct bitmask *tp;
+	unsigned long *cpubuf;
+
+	tp = numa_parse_cpustring(c);
+	*ncpus = tp->size;
+	cpubuf = calloc(tp->size,1);
+        if (!cpubuf)
+                complain("Out of memory");
+	memcpy(cpubuf, tp->maskp, tp->size/8);
+	numa_bitmask_free(tp);
+	return cpubuf;
+}
+
+#include <stdio.h>
+static inline int test_bit_compat(int bit, unsigned long *mask)
+{
+	struct bitmask tmp;
+
+	tmp.maskp = mask;
+	tmp.size = sizeof(nodemask_t) * 8;
+	return numa_bitmask_isbitset(&tmp, bit);
+}
+
+/* end of version 1 compatibility functions */
+
+/*
+ * To compile an application that uses libnuma version 1:
+ *   add -DVERSION1_COMPATIBILITY to your Makefile's CFLAGS
+ */
+#ifdef VERSION1_COMPATIBILITY
+#include <numacompat1.h>
+#endif
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

@@ -71,6 +71,9 @@ libnuma_1.1 {
 
 libnuma_1.2 {
   global:
+    copy_bitmask_to_nodemask;
+    copy_nodemask_to_bitmask;
+    copy_bitmask_to_bitmask;
     set_mempolicy;
     get_mempolicy;
     mbind;

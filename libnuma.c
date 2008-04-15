@@ -72,6 +72,7 @@ struct bitmask *numa_allocate_nodemask(void);
 void set_sizes(void);
 void copy_nodemask_to_bitmask(nodemask_t *, struct bitmask *);
 void copy_bitmask_to_nodemask(struct bitmask *, nodemask_t *);
+void copy_bitmask_to_bitmask(struct bitmask *, struct bitmask *);
 
 static inline void
 nodemask_set_v1(nodemask_t *mask, int node)
@@ -984,6 +985,28 @@ copy_bitmask_to_nodemask(struct bitmask *bmp, nodemask_t *nmp)
 }
 
 /*
+ * copy a bitmask map body to another bitmask body
+ * fill a larger destination with zeroes
+ */
+void
+copy_bitmask_to_bitmask(struct bitmask *bmpfrom, struct bitmask *bmpto)
+{
+	int bytes;
+
+	if (bmpfrom->size >= bmpto->size) {
+		memcpy(bmpto->maskp, bmpfrom->maskp, CPU_BYTES(bmpto->size));
+	} else if (bmpfrom->size < bmpto->size) {
+		bytes = CPU_BYTES(bmpfrom->size);
+		memcpy(bmpto->maskp, bmpfrom->maskp, bytes);
+		memset(((char *)bmpto->maskp)+bytes, 0,
+					CPU_BYTES(bmpto->size)-bytes);
+	} else {
+		bytes = CPU_BYTES(bmpfrom->size);
+		memcpy(bmpto->maskp, bmpfrom->maskp, bytes);
+	}
+}
+
+/*
  * copy a numa.h nodemask_t structure to a bitmask map body
  */
 void
@@ -1262,7 +1285,7 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 	}
 
 	free(line);
-	memcpy(buffer->maskp, mask->maskp, bufferlen);
+	copy_bitmask_to_bitmask(mask, buffer);
 
 	/* slightly racy, see above */ 
 	/* save the mask we created */

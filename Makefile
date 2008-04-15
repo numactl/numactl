@@ -1,5 +1,4 @@
 # these can (and should) be overridden on the make command line for production
-# use
 CFLAGS :=  -g -Wall -O2
 # these are used for the benchmarks in addition to the normal CFLAGS. 
 # Normally no need to overwrite unless you find a new magic flag to make
@@ -117,7 +116,7 @@ tonodemask_memory distance
 
 MANPAGES := numa.3 numactl.8 numastat.8 migratepages.8 migspeed.8
 
-install: numactl migratepages migspeed numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numastat ${MANPAGES}
+install: numactl migratepages migspeed numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numacompat1.h numastat ${MANPAGES}
 	mkdir -p ${prefix}/bin
 	cp numactl ${prefix}/bin
 	cp migratepages ${prefix}/bin
@@ -133,7 +132,7 @@ install: numactl migratepages migspeed numademo.c numamon memhog libnuma.so.1 nu
 	cp libnuma.so.1 ${libdir}
 	cd ${libdir} ; ln -sf libnuma.so.1 libnuma.so
 	mkdir -p ${prefix}/include
-	cp numa.h numaif.h ${prefix}/include
+	cp numa.h numaif.h numacompat1.h ${prefix}/include
 	cp numastat ${prefix}/bin
 	if [ -d ${docdir} ] ; then \
 		mkdir -p ${docdir}/numactl/examples ; \

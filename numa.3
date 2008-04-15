@@ -137,6 +137,12 @@ numa \- NUMA policy library
 .BI "struct bitmask *numa_bitmask_setall(struct bitmask *" bmp );
 .br
 .BI "struct bitmask *numa_bitmask_setbit(struct bitmask *" bmp ", unsigned int " n );
+.br
+.BI "void copy_bitmask_to_nodemask(struct bitmask *" bmp ", nodemask_t *" nodemask )
+.br
+.BI "void copy_nodemask_to_bitmask(nodemask_t *" nodemask ", struct bitmask *" bmp )
+.br
+.BI "void copy_bitmask_to_bitmask(struct bitmask *" bmpfrom ", struct bitmask *" bmpto )
 .sp
 .BI "int numa_move_pages(int " pid ", unsigned long " count ", void **" pages ", const int *" nodes ", int *" status ", int " flags );
 .br
@@ -802,6 +808,33 @@ returned). The value of
 .I bmp
 is always returned.
 
+.BR copy_bitmask_to_nodemask()
+copies the body (the bit map itself) of the bitmask structure pointed
+to by
+.I bmp
+to the nodemask_t structure pointed to by the
+.I nodemask
+pointer. If the two areas differ in size, the copy is truncated to the size
+of the receiving field or zero-filled.
+
+.BR copy_nodemask_to_bitmask()
+copies the nodemask_t structure pointed to by the
+.I nodemask
+pointer to the body (the bit map itself) of the bitmask structure pointed
+to by the
+.I bmp
+pointer. If the two areas differ in size, the copy is truncated to the size
+of the receiving field or zero-filled.
+
+.BR copy_bitmask_to_bitmask()
+copies the body (the bit map itself) of the bitmask structure pointed
+to by the
+.I bmpfrom
+pointer to the body of the bitmask structure pointed to by the
+.I bmpto
+pointer. If the two areas differ in size, the copy is truncated to the size
+of the receiving field or zero-filled.
+
 .br
 .BR numa_move_pages()
 moves a list of pages in the address space of the currently
@@ -893,6 +926,14 @@ number identifying each warning. After that there is a
 .BR printf (3)-style
 format string and a variable number of arguments.
 
+.SH Compatibility with libnuma version 1
+Binaries that were compiled for libnuma version 1 need not be re-compiled
+to run with libnuma version 2.
+.br
+Source codes written for libnuma version 1 may be re-compiled without
+change with version 2 installed. To do so, in the code's Makefile add
+this option to CFLAGS:  -DVERSION1_COMPATIBILITY
+
 .SH THREAD SAFETY
 .I numa_set_bind_policy
 and
@@ -900,7 +941,7 @@ and
 are process global. The other calls are thread safe.
 
 .SH COPYRIGHT
-Copyright 2002, 2004, 2007, Andi Kleen, SuSE Labs.
+Copyright 2002, 2004, 2007, 2008 Andi Kleen, SuSE Labs.
 .I libnuma
 is under the GNU Lesser General Public License, v2.1.
 
