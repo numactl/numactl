@@ -1,5 +1,4 @@
 # these can (and should) be overridden on the make command line for production
-# use
 CFLAGS :=  -g -Wall -O2
 # these are used for the benchmarks in addition to the normal CFLAGS. 
 # Normally no need to overwrite unless you find a new magic flag to make

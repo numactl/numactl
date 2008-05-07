@@ -930,10 +930,9 @@ format string and a variable number of arguments.
 Binaries that were compiled for libnuma version 1 need not be re-compiled
 to run with libnuma version 2.
 .br
-Source codes written for libnuma version 1 may be re-compiled (almost) without
-change with version 2 installed. The one necessary addition:
-#include <numacompat1.h> should be added to the source code at the end
-of its list of #include's.
+Source codes written for libnuma version 1 may be re-compiled without
+change with version 2 installed. To do so, in the code's Makefile add
+this option to CFLAGS:  -DVERSION1_COMPATIBILITY
 
 .SH THREAD SAFETY
 .I numa_set_bind_policy
@@ -942,7 +941,7 @@ and
 are process global. The other calls are thread safe.
 
 .SH COPYRIGHT
-Copyright 2002, 2004, 2007, Andi Kleen, SuSE Labs.
+Copyright 2002, 2004, 2007, 2008 Andi Kleen, SuSE Labs.
 .I libnuma
 is under the GNU Lesser General Public License, v2.1.
 

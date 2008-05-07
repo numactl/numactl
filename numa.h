@@ -241,8 +241,7 @@ struct bitmask *numa_parse_cpustring(char *);
 /*
  * The following functions are for source code compatibility
  * with releases prior to version 2.
- * Such codes must include compat1.h  (the #include should follow that
- * of numa.h).
+ * Such codes should be compiled with VERSION1_COMPATIBILITY defined.
  */
 
 static inline void nodemask_zero_compat(nodemask_t *mask)
@@ -503,6 +502,14 @@ static inline int test_bit_compat(int bit, unsigned long *mask)
 }
 
 /* end of version 1 compatibility functions */
+
+/*
+ * To compile an application that uses libnuma version 1:
+ *   add -DVERSION1_COMPATIBILITY to your Makefile's CFLAGS
+ */
+#ifdef VERSION1_COMPATIBILITY
+#include <numacompat1.h>
+#endif
 
 #ifdef __cplusplus
 }
