@@ -50,7 +50,7 @@ memhog: util.o memhog.o libnuma.so
 
 numactl.o: numactl.c
 
-numademo: LDFLAGS += -lm
+numademo: override LDFLAGS += -lm
 # GNU make 3.80 appends BENCH_CFLAGS twice. Bug? It's harmless though.
 numademo: CFLAGS += -DHAVE_STREAM_LIB -DHAVE_MT ${BENCH_CFLAGS} 
 stream_lib.o: CFLAGS += ${BENCH_CFLAGS}
