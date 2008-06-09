@@ -1,5 +1,6 @@
 /* Simple NUMA library.
-   Copyright (C) 2003,2004,2005 Andi Kleen, SuSE Labs.
+   Copyright (C) 2003,2004,2005,2008 Andi Kleen,SuSE Labs and
+   Cliff Wickman,SGI.
 
    libnuma is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -477,12 +478,12 @@ set_thread_constraints(void)
 
 	while (fgets(buffer, buflen, f)) {
 
-		if (strncmp(buffer,"Cpus_allowed",12) == 0)
-			maxproccpu = read_mask(buffer + 14, numa_all_cpus_ptr);
+		if (strncmp(buffer,"Cpus_allowed:",13) == 0)
+			maxproccpu = read_mask(buffer + 15, numa_all_cpus_ptr);
 
-		if (strncmp(buffer,"Mems_allowed",12) == 0) {
+		if (strncmp(buffer,"Mems_allowed:",13) == 0) {
 			maxprocnode =
-				read_mask(buffer + 14, numa_all_nodes_ptr);
+				read_mask(buffer + 15, numa_all_nodes_ptr);
 		}
 	}
 	fclose(f);
