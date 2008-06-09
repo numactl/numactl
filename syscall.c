@@ -105,6 +105,10 @@
 #define __NR_migrate_pages (__NR_Linux + 250)
 #endif
 
+#elif defined(__hppa__)
+
+#define __NR_migrate_pages	272
+
 #elif !defined(DEPS_RUN)
 #error "Add syscalls for your architecture or update kernel headers"
 #endif
