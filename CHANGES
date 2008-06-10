@@ -180,15 +180,8 @@ updating in newer kernels (Mel Gorman)
 - Fix target command argument parsing for numactl (no -- needed again anymore) 
 - Clarify numa_node_to_cpus() manpage
 
-2.0.0[-rc1]
+1.0.3[-rc1]
 
-- Version 2 (symbol versioning)
-- Modify libnuma to use variable-length bit masks (the bitmask structure)
-- Modify numactl, migspeed, memhog, migratepages, numademo and stream_main
-  to use variable-length bit masks
-- Modify the test/ programs to use the libnuma that uses variable size bit masks
-- Man page changes with the change to variable-length bit masks, move_pages
-  migrate_pages and others
 - Add the migspeed test program to test the speed of migrating pages from
   one node to another
 - Support for move_pages(2) to numactl, and numa_move_pages() to libnuma
@@ -198,17 +191,54 @@ updating in newer kernels (Mel Gorman)
 - Add the migrate_pages test command to test that a task's pages can be
   moved with move_pages(2)
 - Support numactl +nn syntax for cpuset_relative cpu and node numbers
-- L.S. :
--   libnuma man pages -- General Cleanup
--   add numa_get_mems_allowed()
--   fix checktopology regression test
--   numa_maps man page clarifications and cleanup
--   minor cleanups of numademo.c
--   numactl - fix numastat sysfs scanning
--   numactl -  reorganize regress test script.
--   fix mempolicy regression test for assymetric platforms and memoryless nodes.
--   numactl - fix checkaffinity regression test
--   numactl - fix/cleanup libnuma local allocation behavior
-- P.M. :
--   fix __NR_migrate_pages reference.
-- Provide numacompat1.h for source code compatibility with version 1
+- Modify libnuma to use variable-length bit masks (the bitmask structure)
+- Modify numactl, migspeed, memhog, migratepages, numademo and stream_main
+  to use variable-length bit masks
+- Modify the test/ programs to use the libnuma that uses variable size bit masks
+- Version 2 (symbol versioning)
+- Man page changes with the change to variable-length bit masks, move_pages
+  migrate_pages and others
+
+2.0.0
+- Added API version 2 and symbol versioning.  This provides binary
+  compatibility with old codes that use libnuma.
+- Brought the man page in line with the version 2 changes.
+- Provide numacompat1.h and additions to numa.h, which provide source code
+  compatibility to libnuma version 1.  (The application progamming interface
+  changes, but the ABI is preserved through the use of symbol versioning. So
+  the library stays libnuma.so.1)
+- Added variable-length bit masks to libnuma.  These are struct bitmask.
+  This allows libnuma to be independent of ever increasing cpu counts.
+  o Modified the test/ programs to use variable size bit masks.
+  o Modified numactl, migspeed, memhog, migratepages, numademo and stream_main
+    to use variable-length bit masks.
+- Added support for move_pages(2) (sys_move_pages()) to numactl.  Adds
+  numa_move_pages() to libnuma.
+  o Added the mbind_mig_pages test command to verify the moving of a
+    task's pages with move_pages(2).
+  o Added the move_pages test command to exercise the move_pages(2) system call.
+  o Added the migrate_pages test command to test that a task's pages can
+    be moved with move_pages(2).
+  o Added the migspeed test program.  It tests the speed of migrating pages
+    from one node to another.
+- Allow a numactl +nn syntax for cpuset_relative cpu and node numbers.
+- General cleanup of man page.
+- Return nodes allowed by the application's current cpuset context via new
+  API numa_get_mems_allowed().
+- Change numa_alloc_local() to use MPOL_PREFERRED with NULL nodemask to
+  effect local allocation.
+- Man page for numactl: numa_maps man page clarifications and cleanup
+- Minor cleanups of numademo.c
+- Fix numastat sysfs scanning in numactl
+- Reorganize the regress test script.
+- Fix mempolicy regression test for assymetric platforms and memoryless nodes.
+- Fix checkaffinity and checktopology regression tests.
+- Fix the __NR_migrate_pages system call number.
+- Fix the way numactl handles the building of the mask when executing
+  the --physbind option, and the way Cpus_allowed mask is created.
+
+2.0.1
+- Fix bug in dombind (when passed a null)
+- Make 4 fixes from Debian: MIPS support, MIPS hppa fix for syscalls,
+                            make sure -lm for numademo, build a static library 
+- Fix parsing of /proc/self/status for 2.6.25 additions to it

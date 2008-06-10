@@ -23,7 +23,7 @@ CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      .depend .depend.X test/nodemap test/distance test/tbitmap \
 	      test/after test/before threadtest test_move_pages \
 	      test/mbind_mig_pages test/migrate_pages \
-	      migratepages migspeed migspeed.o
+	      migratepages migspeed migspeed.o libnuma.a
 SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
 	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c mt.c \
 	test/*.c
@@ -35,7 +35,7 @@ docdir := ${prefix}/share/doc
 all: numactl migratepages migspeed libnuma.so numademo numamon memhog \
      test/tshared stream test/mynode test/pagesize test/ftok test/prefered \
      test/randmap test/nodemap test/distance test/tbitmap test/move_pages \
-     test/mbind_mig_pages test/migrate_pages
+     test/mbind_mig_pages test/migrate_pages libnuma.a
 
 numactl: numactl.o util.o shm.o bitops.o libnuma.so
 
@@ -50,7 +50,7 @@ memhog: util.o memhog.o libnuma.so
 
 numactl.o: numactl.c
 
-numademo: LDFLAGS += -lm
+numademo: override LDFLAGS += -lm
 # GNU make 3.80 appends BENCH_CFLAGS twice. Bug? It's harmless though.
 numademo: CFLAGS += -DHAVE_STREAM_LIB -DHAVE_MT ${BENCH_CFLAGS} 
 stream_lib.o: CFLAGS += ${BENCH_CFLAGS}
@@ -74,6 +74,10 @@ libnuma.so: libnuma.so.1
 	ln -sf libnuma.so.1 libnuma.so
 
 libnuma.o : CFLAGS += -fPIC
+
+libnuma.a: libnuma.o syscall.o distance.o
+	ar rc $@ $^
+	ranlib $@
 
 distance.o : CFLAGS += -fPIC
 
@@ -131,6 +135,7 @@ install: numactl migratepages migspeed numademo.c numamon memhog libnuma.so.1 nu
 	mkdir -p ${libdir}
 	cp libnuma.so.1 ${libdir}
 	cd ${libdir} ; ln -sf libnuma.so.1 libnuma.so
+	cp libnuma.a ${libdir}
 	mkdir -p ${prefix}/include
 	cp numa.h numaif.h numacompat1.h ${prefix}/include
 	cp numastat ${prefix}/bin

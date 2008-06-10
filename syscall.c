@@ -70,6 +70,45 @@
 #define __NR_move_pages xxx
 */
 
+#elif defined(__mips__)
+
+#if _MIPS_SIM == _ABIO32
+/*
+ * Linux o32 style syscalls are in the range from 4000 to 4999.
+ */
+#define __NR_Linux 4000
+#define __NR_mbind (__NR_Linux + 268)
+#define __NR_get_mempolicy (__NR_Linux + 269)
+#define __NR_set_mempolicy (__NR_Linux + 270)
+#define __NR_migrate_pages (__NR_Linux + 287)
+#endif
+
+#if _MIPS_SIM == _ABI64
+/*
+ * Linux 64-bit syscalls are in the range from 5000 to 5999.
+ */
+#define __NR_Linux 5000
+#define __NR_mbind (__NR_Linux + 227)
+#define __NR_get_mempolicy (__NR_Linux + 228)
+#define __NR_set_mempolicy (__NR_Linux + 229)
+#define __NR_migrate_pages (__NR_Linux + 246)
+#endif
+
+#if _MIPS_SIM == _ABIN32
+/*
+ * Linux N32 syscalls are in the range from 6000 to 6999.
+ */
+#define __NR_Linux 6000
+#define __NR_mbind (__NR_Linux + 231)
+#define __NR_get_mempolicy (__NR_Linux + 232)
+#define __NR_set_mempolicy (__NR_Linux + 233)
+#define __NR_migrate_pages (__NR_Linux + 250)
+#endif
+
+#elif defined(__hppa__)
+
+#define __NR_migrate_pages	272
+
 #elif !defined(DEPS_RUN)
 #error "Add syscalls for your architecture or update kernel headers"
 #endif
