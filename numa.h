@@ -60,6 +60,7 @@ void numa_bitmask_free(struct bitmask *);
 int numa_bitmask_equal(const struct bitmask *, const struct bitmask *);
 void copy_nodemask_to_bitmask(nodemask_t *, struct bitmask *);
 void copy_bitmask_to_nodemask(struct bitmask *, nodemask_t *);
+void copy_bitmask_to_bitmask(struct bitmask *, struct bitmask *);
 
 /* compatibility for codes that used them: */
 static inline void nodemask_zero(struct bitmask *mask)

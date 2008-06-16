@@ -69,11 +69,7 @@ static int nodemask_sz = 0;
 static int cpumask_sz = 0;
 
 int numa_exit_on_error = 0;
-struct bitmask *numa_allocate_nodemask(void);
-void set_sizes(void);
-void copy_nodemask_to_bitmask(nodemask_t *, struct bitmask *);
-void copy_bitmask_to_nodemask(struct bitmask *, nodemask_t *);
-void copy_bitmask_to_bitmask(struct bitmask *, struct bitmask *);
+static void set_sizes(void);
 
 static inline void
 nodemask_set_v1(nodemask_t *mask, int node)
@@ -100,7 +96,7 @@ nodemask_isset_v1(const nodemask_t *mask, int node)
  * The v1 library depends upon nodemask_t's of all nodes and no nodes.
  */
 void
-numa_init()
+numa_init(void)
 {
 	int max,i;
 
@@ -293,7 +289,7 @@ make_internal_alias(numa_pagesize);
 /*
  * Find the highest numbered existing memory node: maxconfigurednode.
  */
-void
+static void
 set_configured_nodes(void)
 {
 	DIR *d;
@@ -356,7 +352,7 @@ static const char *nodemask_prefix = "Mems_allowed:\t";
  * (this could also be used to find the cpumask size)
  */
 static void
-set_nodemask_size()
+set_nodemask_size(void)
 {
 	FILE *fp = NULL;
 	char *buf = NULL;
@@ -392,7 +388,7 @@ done:
  * commas. Order them correctly and return the number of the last bit
  * set.
  */
-int
+static int
 read_mask(char *s, struct bitmask *bmp)
 {
 	char *end = s;
@@ -450,7 +446,7 @@ read_mask(char *s, struct bitmask *bmp)
  * Read a processes constraints in terms of nodes and cpus from
  * /proc/self/status.
  */
-void
+static void
 set_thread_constraints(void)
 {
 	int max_cpus = numa_num_possible_cpus();
@@ -519,7 +515,7 @@ set_thread_constraints(void)
  * Find the highest cpu number possible (in other words the size
  * of a kernel cpumask_t (in bits) - 1)
  */
-void
+static void
 set_numa_max_cpu(void)
 {
 	int len = 2048;
@@ -547,8 +543,8 @@ set_numa_max_cpu(void)
 /*
  * get the total (configured) number of cpus - both online and offline
  */
-void
-set_configured_cpus()
+static void
+set_configured_cpus(void)
 {
 	int		filecount=0;
 	char		*dirnamep = "/sys/devices/system/cpu";
@@ -576,8 +572,8 @@ set_configured_cpus()
 /*
  * Initialize all the sizes.
  */
-void
-set_sizes()
+static void
+set_sizes(void)
 {
 	sizes_set++;
 	set_configured_nodes();	/* configured nodes listed in /sys */
@@ -588,7 +584,7 @@ set_sizes()
 }
 
 int
-numa_num_configured_nodes()
+numa_num_configured_nodes(void)
 {
 	return maxconfigurednode+1;
 }
@@ -601,25 +597,25 @@ numa_num_configured_cpus(void)
 }
 
 int
-numa_num_possible_nodes()
+numa_num_possible_nodes(void)
 {
 	return nodemask_sz;
 }
 
 int
-numa_num_possible_cpus()
+numa_num_possible_cpus(void)
 {
 	return cpumask_sz;
 }
 
 int
-numa_num_thread_nodes()
+numa_num_thread_nodes(void)
 {
 	return maxprocnode+1;
 }
 
 int
-numa_num_thread_cpus()
+numa_num_thread_cpus(void)
 {
 	return maxproccpu+1;
 }
@@ -673,7 +669,7 @@ numa_allocate_cpumask()
  * Allocate a bitmask the size of a libnuma nodemask_t
  */
 static struct bitmask *
-allocate_nodemask_v1()
+allocate_nodemask_v1(void)
 {
 	int nnodes = numa_max_possible_node_v1_int()+1;
 
@@ -685,7 +681,7 @@ allocate_nodemask_v1()
  * match the kernel's nodemask_t.
  */
 struct bitmask *
-numa_allocate_nodemask()
+numa_allocate_nodemask(void)
 {
 	struct bitmask *bmp;
 	int nnodes = numa_max_possible_node_v2_int() + 1;
@@ -1177,7 +1173,7 @@ numa_parse_bitmap_v2(char *line, struct bitmask *mask)
 __asm__(".symver numa_parse_bitmap_v2,numa_parse_bitmap@@libnuma_1.2");
 
 void
-init_node_cpu_mask_v2()
+init_node_cpu_mask_v2(void)
 {
 	int nnodes = numa_max_possible_node_v2_int() + 1;
 	node_cpu_mask_v2 = calloc (nnodes, sizeof(struct bitmask *));
