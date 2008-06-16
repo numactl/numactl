@@ -390,8 +390,8 @@ void test(enum test type)
 void usage(void)
 {
 	int i;
-	printf("usage: numademo [-S] [-f] [-c] msize[kmg] {tests}\nNo tests means run all.\n"); 
-	printf("-c output CSV data. -f run even without NUMA API. -S run stupid tests\n");  
+	printf("usage: numademo [-S] [-f] [-c] [-e] msize[kmg] {tests}\nNo tests means run all.\n");
+	printf("-c output CSV data. -f run even without NUMA API. -S run stupid tests. -e exit on error\n");
 	printf("valid tests:"); 
 	for (i = 0; testname[i]; i++) 
 		printf(" %s", testname[i]); 
@@ -426,6 +426,10 @@ int main(int ac, char **av)
 			break;
 		case 'S':
 			simple_tests = 1;
+			break;
+		case 'e':
+			numa_exit_on_error = 1;
+			numa_exit_on_warn = 1;
 			break;
 		default:
 			usage(); 

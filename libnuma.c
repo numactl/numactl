@@ -71,6 +71,7 @@ static int nodemask_sz = 0;
 static int cpumask_sz = 0;
 
 int numa_exit_on_error = 0;
+int numa_exit_on_warn = 0;
 static void set_sizes(void);
 
 static inline void

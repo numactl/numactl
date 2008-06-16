@@ -230,6 +230,9 @@ extern int numa_exit_on_error;
    once. */
 void numa_warn(int num, char *fmt, ...);
 
+/* When true exit the program on a numa_warn() call */
+extern int numa_exit_on_warn;
+
 int numa_migrate_pages(int pid, struct bitmask *from, struct bitmask *to);
 
 int numa_move_pages(int pid, unsigned long count, void **pages,
