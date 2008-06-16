@@ -43,11 +43,6 @@ struct bitmask {
 	unsigned long *maskp;
 };
 
-#define howmany(x,y) (((x)+((y)-1))/(y))
-#define bitsperlong (8 * sizeof(unsigned long))
-#define longsperbits(n) howmany(n, bitsperlong)
-#define bytesperbits(x) ((x+7)/8)
-
 /* operations on struct bitmask */
 int numa_bitmask_isbitset(const struct bitmask *, unsigned int);
 struct bitmask *numa_bitmask_setall(struct bitmask *);

@@ -39,3 +39,8 @@ enum numa_warn {
 	W_distance,
 	W_memory,
 }; 
+
+#define howmany(x,y) (((x)+((y)-1))/(y))
+#define bitsperlong (8 * sizeof(unsigned long))
+#define longsperbits(n) howmany(n, bitsperlong)
+#define bytesperbits(x) ((x+7)/8)
