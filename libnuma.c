@@ -54,6 +54,8 @@ struct bitmask *numa_all_cpus_ptr = NULL;
 static unsigned long *node_cpu_mask_v1[NUMA_NUM_NODES];
 struct bitmask **node_cpu_mask_v2;
 
+WEAK void numa_error(char *where);
+
 #ifdef __thread
 #warning "not threadsafe"
 #endif
@@ -186,8 +188,8 @@ numa_bitmask_alloc(unsigned int n)
 	struct bitmask *bmp;
 
 	if (n < 1) {
-		printf ("request to allocate mask for %d bits; abort\n", n);
-		exit(1);
+		numa_error("request to allocate mask for invalid number; abort\n");
+		return NULL;
 	}
 	bmp = malloc(sizeof(*bmp));
 	if (bmp == 0)
@@ -1248,8 +1250,8 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 	if (node_cpu_mask_v2[node]) {
 		/* have already constructed a mask for this node */
 		if (buffer->size != node_cpu_mask_v2[node]->size) {
-			printf ("map size mismatch; abort\n");
-			exit(1);
+			numa_error("map size mismatch; abort\n");
+			return -1;
 		}
 		memcpy(buffer->maskp, node_cpu_mask_v2[node]->maskp, bufferlen);
 		return 0;
@@ -1383,8 +1385,8 @@ numa_run_on_node_mask_v2(struct bitmask *bmp)
 
 	/* used to have to consider that this could fail - it shouldn't now */
 	if (err < 0) {
-		printf ("numa_sched_setaffinity_v2_int() failed; abort\n");
-		exit(1);
+		numa_error("numa_sched_setaffinity_v2_int() failed; abort\n");
+		return -1;
 	}
 	numa_bitmask_free(cpus);
 	numa_bitmask_free(nodecpus);
@@ -1553,16 +1555,6 @@ void numa_set_strict(int flag)
 		mbind_flags &= ~MPOL_MF_STRICT;
 }
 
-static void grumble(char *fmt, ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	fprintf(stderr, "numactl: ");
-	vfprintf(stderr,fmt,ap);
-	putchar('\n');
-	va_end(ap);
-	exit(1);
-}
 /*
  * Extract a node or processor number from the given string.
  * Allow a relative node / processor specification within the allowed
@@ -1629,10 +1621,14 @@ numa_parse_nodestring(char *s)
 			break;
 		}
 		arg = get_nr(s, &end, numa_all_nodes_ptr, relative);
-		if (end == s)
-			grumble("unparseable node description `%s'\n", s);
-		if (arg > maxnode)
-			grumble("node argument %d is out of range\n", arg);
+		if (end == s) {
+			numa_warn(W_nodeparse, "unparseable node description `%s'\n", s);
+			goto err;
+		}
+		if (arg > maxnode) {
+			numa_warn(W_nodeparse, "node argument %d is out of range\n", arg);
+			goto err;
+		}
 		i = arg;
 		numa_bitmask_setbit(mask, i);
 		s = end;
@@ -1640,10 +1636,14 @@ numa_parse_nodestring(char *s)
 			char *end2;
 			unsigned long arg2;
 			arg2 = get_nr(++s, &end2, numa_all_nodes_ptr, relative);
-			if (end2 == s)
-				grumble("missing node argument %s\n", s);
-			if (arg2 >= thread_nodes)
-				grumble("node argument %d out of range\n", arg2);
+			if (end2 == s) {
+				numa_warn(W_nodeparse, "missing node argument %s\n", s);
+				goto err;
+			}
+			if (arg2 >= thread_nodes) {
+				numa_warn(W_nodeparse, "node argument %d out of range\n", arg2);
+				goto err;
+			}
 			while (arg <= arg2) {
 				i = arg;
 				if (numa_bitmask_isbitset(numa_all_nodes_ptr,i))
@@ -1665,6 +1665,10 @@ numa_parse_nodestring(char *s)
 		}
 	}
 	return mask;
+
+err:
+	numa_bitmask_free(mask);
+	return NULL;
 }
 
 /*
@@ -1712,10 +1716,14 @@ numa_parse_cpustring(char *s)
 			break;
 		}
 		arg = get_nr(s, &end, numa_all_cpus_ptr, relative);
-		if (end == s)
-			grumble("unparseable cpu description `%s'\n", s);
-		if (arg >= thread_cpus)
-			grumble("cpu argument %s is out of range\n", s);
+		if (end == s) {
+			numa_warn(W_cpuparse, "unparseable cpu description `%s'\n", s);
+			goto err;
+		}
+		if (arg >= thread_cpus) {
+			numa_warn(W_cpuparse, "cpu argument %s is out of range\n", s);
+			goto err;
+		}
 		i = arg;
 		numa_bitmask_setbit(mask, i);
 		s = end;
@@ -1724,10 +1732,14 @@ numa_parse_cpustring(char *s)
 			unsigned long arg2;
 			int i;
 			arg2 = get_nr(++s, &end2, numa_all_cpus_ptr, relative);
-			if (end2 == s)
-				grumble("missing cpu argument %s\n", s);
-			if (arg2 >= thread_cpus)
-				grumble("cpu argument %s out of range\n", s);
+			if (end2 == s) {
+				numa_warn(W_cpuparse, "missing cpu argument %s\n", s);
+				goto err;
+			}
+			if (arg2 >= thread_cpus) {
+				numa_warn(W_cpuparse, "cpu argument %s out of range\n", s);
+				goto err;
+			}
 			while (arg <= arg2) {
 				i = arg;
 				if (numa_bitmask_isbitset(numa_all_cpus_ptr, i))
@@ -1749,4 +1761,8 @@ numa_parse_cpustring(char *s)
 		}
 	}
 	return mask;
+
+err:
+	numa_bitmask_free(mask);
+	return NULL;
 }

@@ -38,6 +38,8 @@ enum numa_warn {
 	W_noderunmask,
 	W_distance,
 	W_memory,
+	W_cpuparse,
+	W_nodeparse,
 }; 
 
 #define howmany(x,y) (((x)+((y)-1))/(y))
