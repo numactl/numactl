@@ -44,7 +44,7 @@ enum test {
 	FORWARD,
 	BACKWARD,
 	STREAM,
-	RANDOM,
+	RANDOM2,
 } thistest;
 
 char *delim = " ";
@@ -59,7 +59,7 @@ char *testname[] = {
 	"stream",
 #endif
 #ifdef HAVE_MT
-	"random",
+	"random2",
 #endif
 	NULL,
 }; 
@@ -105,9 +105,6 @@ static inline unsigned long long timerfold(struct timeval *tv)
 void memtest(char *name, unsigned char *mem)
 { 
 	long k;
-#ifdef HAVE_MT
-	long w;
-#endif
 	struct timeval start, end, res;
 	unsigned long long max, min, sum, r; 
 	int i;
@@ -154,21 +151,32 @@ void memtest(char *name, unsigned char *mem)
 			break;
 
 #ifdef HAVE_MT
-		case RANDOM: 
-			mt_init(); 
-			/* only use power of two msize to avoid division */
-			for (w = 1; w < msize; w <<= 1)
-				;
-			if (w > msize) 
-				w >>= 1;
-			w--;
-			gettimeofday(&start,NULL);
-			for (k = msize; k > 0; k -= 8) 
-				mem[mt_random() & w]++;
-			gettimeofday(&end,NULL);
-			break;
-#endif
+		case RANDOM2:
+		{
+			unsigned * __restrict m = (unsigned *)mem;
+			unsigned max = msize / sizeof(unsigned);
+			unsigned mask;
 
+			mt_init(); 
+			mask = 1;
+			while (mask < max)
+				mask = (mask << 1) | 1;
+			/*
+			 * There's no guarantee all memory is touched, but
+			 * we assume (hope) that the distribution of the MT
+			 * is good enough to touch most.
+			 */
+			gettimeofday(&start,NULL);
+			for (k = 0; k < max; k++) {
+				unsigned idx = mt_random() & mask;
+				if (idx >= max)
+					idx -= max;
+				m[idx]++;
+			}
+			gettimeofday(&end,NULL);
+		}
+
+#endif
 		default:
 			break;
 		} 
@@ -324,7 +332,6 @@ void usage(void)
 	int i;
 	printf("usage: numademo [-S] [-f] [-c] msize[kmg] {tests}\nNo tests means run all.\n"); 
 	printf("-c output CSV data. -f run even without NUMA API. -S run stupid tests\n");  
-	printf("power of two msizes prefered\n"); 
 	printf("valid tests:"); 
 	for (i = 0; testname[i]; i++) 
 		printf(" %s", testname[i]); 
@@ -396,7 +403,7 @@ int main(int ac, char **av)
 			test(BACKWARD);
 		}
 #ifdef HAVE_MT
-		test(RANDOM);
+		test(RANDOM2);
 #endif
 #ifdef HAVE_STREAM_LIB
 		test(STREAM); 
