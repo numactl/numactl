@@ -253,65 +253,6 @@ struct bitmask *numa_parse_cpustring(char *);
  * Such codes should be compiled with VERSION1_COMPATIBILITY defined.
  */
 
-static inline void nodemask_zero_compat(nodemask_t *mask)
-{
-	struct bitmask tmp;
-
-	tmp.maskp = (unsigned long *)mask;
-	tmp.size = sizeof(nodemask_t) * 8;
-	numa_bitmask_clearall(&tmp);
-}
-
-static inline void nodemask_set(struct bitmask *mask, int node)
-{
-	numa_bitmask_setbit(mask, node);
-}
-
-static inline void nodemask_set_compat(nodemask_t *mask, int node)
-{
-	struct bitmask tmp;
-
-	tmp.maskp = (unsigned long *)mask;
-	tmp.size = sizeof(nodemask_t) * 8;
-	numa_bitmask_setbit(&tmp, node);
-}
-
-static inline void nodemask_clr(struct bitmask *mask, int node)
-{
-	numa_bitmask_clearbit(mask, node);
-}
-
-static inline void nodemask_clr_compat(nodemask_t *mask, int node)
-{
-        mask->n[node / (8*sizeof(unsigned long))] &=
-                ~(1UL<<(node%(8*sizeof(unsigned long))));
-}
-
-static inline int nodemask_isset(struct bitmask *mask, int node)
-{
-	return numa_bitmask_isbitset(mask, node);
-}
-
-static inline int nodemask_isset_compat(nodemask_t *mask, int node)
-{
-	struct bitmask tmp;
-
-	tmp.maskp = (unsigned long *)mask;
-	tmp.size = sizeof(nodemask_t) * 8;
-	return numa_bitmask_isbitset(&tmp, node);
-}
-
-static inline int nodemask_equal_compat(nodemask_t *a, nodemask_t *b)
-{
-	struct bitmask tmpa, tmpb;
-
-	tmpa.maskp = (unsigned long *)a;
-	tmpa.size = sizeof(nodemask_t) * sizeof(unsigned long);
-	tmpb.maskp = (unsigned long *)b;
-	tmpb.size = sizeof(nodemask_t) * sizeof(unsigned long);
-	return numa_bitmask_equal(&tmpa, &tmpb);
-}
-
 static inline void numa_set_interleave_mask_compat(nodemask_t *nodemask)
 {
 	struct bitmask tmp;
@@ -432,27 +373,6 @@ static inline int numa_sched_setaffinity_compat(pid_t pid, unsigned len,
 	return numa_sched_setaffinity(pid, &tmp);
 }
 
-void printcpumask(char *name, struct bitmask *mask);
-static inline void printcpumask_compat(char *name, unsigned long *mask,
-								int size)
-{
-	struct bitmask tmp;
-
-	tmp.maskp = (unsigned long *)mask;
-	tmp.size = size * 8;
-	printcpumask(name, &tmp);
-}
-
-void printmask(char *name, struct bitmask *mask);
-static inline void printmask_compat(char *name, nodemask_t *mask)
-{
-	struct bitmask tmp;
-
-	tmp.maskp = (unsigned long *)mask;
-	tmp.size = sizeof(nodemask_t) * 8;
-	printmask(name, &tmp);
-}
-
 static inline int numa_node_to_cpus_compat(int node, unsigned long *buffer,
 							int buffer_len)
 {
@@ -461,54 +381,6 @@ static inline int numa_node_to_cpus_compat(int node, unsigned long *buffer,
 	tmp.maskp = (unsigned long *)buffer;
 	tmp.size = buffer_len * 8;
 	return numa_node_to_cpus(node, &tmp);
-}
-
-void verify_shm(int policy, struct bitmask *nodes);
-static inline void verify_shm_compat(int policy, nodemask_t mask)
-{
-	struct bitmask tmp;
-
-	tmp.maskp = (unsigned long *)&mask;
-	tmp.size = sizeof(nodemask_t) * 8;
-	verify_shm(policy, &tmp);
-}
-
-static inline nodemask_t nodemask_compat(char *c)
-{
-	struct bitmask *tp;
-	nodemask_t mask;
-
-	tp = numa_parse_nodestring(c);
-	copy_bitmask_to_nodemask(tp, &mask);
-	numa_bitmask_free(tp);
-	return mask;
-}
-
-static inline unsigned long *cpumask_compat(char *c, int *ncpus)
-{
-	struct bitmask *tp;
-	unsigned long *cpubuf;
-
-	tp = numa_parse_cpustring(c);
-	*ncpus = tp->size;
-	cpubuf = calloc(tp->size,1);
-        if (!cpubuf) {
-                numa_error("Out of memory");
-		return NULL;
-	}
-	memcpy(cpubuf, tp->maskp, tp->size/8);
-	numa_bitmask_free(tp);
-	return cpubuf;
-}
-
-#include <stdio.h>
-static inline int test_bit_compat(int bit, unsigned long *mask)
-{
-	struct bitmask tmp;
-
-	tmp.maskp = mask;
-	tmp.size = sizeof(nodemask_t) * 8;
-	return numa_bitmask_isbitset(&tmp, bit);
 }
 
 /* end of version 1 compatibility functions */
