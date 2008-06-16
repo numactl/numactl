@@ -323,20 +323,6 @@ static int s2nbits(const char *s)
 	return strlen(s) * 32 / 9;
 }
 
-/*
- * Determine number of bytes in a seekable open file, without
- * assuming that stat(2) on that file has a useful size.
- * Has side affect of leaving the file rewound to the beginnning.
- */
-static int filesize(FILE *fp)
-{
-	int sz = 0;
-	rewind(fp);
-	while (fgetc(fp) != EOF)
-		sz++;
-	rewind(fp);
-	return sz;
-}
 /* Is string 'pre' a prefix of string 's'? */
 static int strprefix(const char *s, const char *pre)
 {
@@ -354,31 +340,22 @@ static const char *nodemask_prefix = "Mems_allowed:\t";
 static void
 set_nodemask_size(void)
 {
-	FILE *fp = NULL;
+	FILE *fp;
 	char *buf = NULL;
-	int fsize;
+	size_t bufsize = 0;
 
 	if ((fp = fopen(mask_size_file, "r")) == NULL)
 		goto done;
-	fsize = filesize(fp);
-	if ((buf = malloc(fsize)) == NULL)
-		goto done;
 
-	/*
-	 * Beware: mask sizing arithmetic is fussy.
-	 * The trailing newline left by fgets() is required.
-	 */
-	while (fgets(buf, fsize, fp)) {
+	while (getline(&buf, &bufsize, fp) > 0) {
 		if (strprefix(buf, nodemask_prefix)) {
 			nodemask_sz = s2nbits(buf + strlen(nodemask_prefix));
 			break;
 		}
 	}
+	free(buf);
+	fclose(fp);
 done:
-	if (buf != NULL)
-		free(buf);
-	if (fp != NULL)
-		fclose(fp);
 	if (nodemask_sz == 0) /* fall back on error */
 		nodemask_sz = maxconfigurednode+1;
 }
@@ -449,18 +426,11 @@ read_mask(char *s, struct bitmask *bmp)
 static void
 set_thread_constraints(void)
 {
-	int max_cpus = numa_num_possible_cpus();
 	int hicpu = sysconf(_SC_NPROCESSORS_CONF)-1;
-	int buflen;
 	int i;
-	char *buffer;
+	char *buffer = NULL;
+	size_t buflen = 0;
 	FILE *f;
-	/*
-	 * The maximum line size consists of the string at the beginning plus
-	 * a digit for each 4 cpus and a comma for each 64 cpus.
-	 */
-	buflen = max_cpus / 4 + max_cpus / BITS_PER_LONG + 40;
-	buffer = malloc(buflen);
 
 	numa_all_cpus_ptr = numa_allocate_cpumask();
 	numa_all_nodes_ptr = numa_allocate_nodemask();
@@ -472,8 +442,7 @@ set_thread_constraints(void)
 		return;
 	}
 
-	while (fgets(buffer, buflen, f)) {
-
+	while (getline(&buffer, &buflen, f) > 0) {
 		if (strncmp(buffer,"Cpus_allowed:",13) == 0)
 			maxproccpu = read_mask(buffer + 15, numa_all_cpus_ptr);
 
@@ -483,7 +452,7 @@ set_thread_constraints(void)
 		}
 	}
 	fclose(f);
-	free (buffer);
+	free(buffer);
 
 	/*
 	 * Cpus_allowed in the kernel can be defined to all f's
