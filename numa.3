@@ -117,8 +117,12 @@ numa \- NUMA policy library
 .BI "int numa_node_to_cpus(int " node ", unsigned long *" buffer ", int " bufferlen );
 .sp
 .BI "struct bitmask *numa_allocate_cpumask();"
+.sp
+.BI "void numa_free_cpumask();"
 .br
 .BI "struct bitmask *numa_allocate_nodemask();"
+.sp
+.BI "void numa_free_nodemask();"
 .br
 .BI "struct bitmask *numa_bitmask_alloc(unsigned int " n ");
 .br
@@ -731,12 +735,20 @@ NR_CPUS cpus.  This number of cpus can be gotten by calling
 .BR numa_num_possible_cpus().
 The bitmask is zero-filled.
 
+.BR numa_free_cpumask
+frees a cpumask previously allocate by
+.I numa_allocate_cpumask.
+
 .BR numa_allocate_nodemask()
 returns a bitmask of a size equal to the kernel's node
 mask (kernel type nodemask_t).  In other words, large enough to represent
 MAX_NUMNODES nodes.  This number of nodes can be gotten by calling
 .BR numa_num_possible_nodes().
 The bitmask is zero-filled.
+
+.BR numa_free_nodemask()
+frees a nodemask previous allocated by
+.I numa_allocate_nodemask().
 
 .BR numa_bitmask_alloc()
 allocates a bitmask structure and its associated bit mask.

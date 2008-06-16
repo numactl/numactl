@@ -113,6 +113,11 @@ struct bitmask *numa_get_interleave_mask(void);
 /* allocate a bitmask big enough for all nodes */
 struct bitmask *numa_allocate_nodemask(void);
 
+static inline void numa_free_nodemask(struct bitmask *b)
+{
+	numa_bitmask_free(b);
+}
+
 /* Some node to preferably allocate memory from for thread. */
 void numa_set_preferred(int node);
 
@@ -197,6 +202,11 @@ int numa_num_task_nodes();
 
 /* allocate a bitmask the size of the kernel cpumask_t */
 struct bitmask *numa_allocate_cpumask();
+
+static inline void numa_free_cpumask(struct bitmask *b)
+{
+	numa_bitmask_free(b);
+}
 
 /* set up to represent the cpus available to the current task */
 struct bitmask *numa_all_cpus;
