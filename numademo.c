@@ -45,6 +45,7 @@ enum test {
 	BACKWARD,
 	STREAM,
 	RANDOM2,
+	PTRCHASE,
 } thistest;
 
 char *delim = " ";
@@ -61,6 +62,7 @@ char *testname[] = {
 #ifdef HAVE_MT
 	"random2",
 #endif
+	"ptrchase",
 	NULL,
 }; 
 
@@ -94,6 +96,39 @@ void do_stream(char *name, unsigned char *mem)
 }
 #endif
 
+/* Set up a randomly distributed list to fool prefetchers */
+union node {
+	union node *next;
+	struct {
+		unsigned nexti;
+		unsigned val;
+	};
+};
+
+static int cmp_node(const void *ap, const void *bp)
+{
+	union node *a = (union node *)ap;
+	union node *b = (union node *)bp;
+	return a->val - b->val;
+}
+
+void **ptrchase_init(unsigned char *mem)
+{
+	long i;
+	union node *nodes = (union node *)mem;
+	long nmemb = msize / sizeof(union node);
+	srand(1234);
+	for (i = 0; i < nmemb; i++) {
+		nodes[i].val = rand();
+		nodes[i].nexti = i + 1;
+	}
+	qsort(nodes, nmemb, sizeof(union node), cmp_node);
+	for (i = 0; i < nmemb; i++) {
+		union node *n = &nodes[i];
+		n->next = n->nexti >= nmemb ? NULL : &nodes[n->nexti];
+	}
+	return (void **)nodes;
+}
 
 static inline unsigned long long timerfold(struct timeval *tv)
 {
@@ -122,6 +157,19 @@ void memtest(char *name, unsigned char *mem)
 	sum = 0;
 	for (i = 0; i < LOOPS; i++) { 
 		switch (thistest) { 
+		case PTRCHASE:
+		{
+			void **ptr;
+			ptr = ptrchase_init(mem);
+			gettimeofday(&start,NULL);
+			while (*ptr)
+				ptr = (void **)*ptr;
+			gettimeofday(&end,NULL);
+			/* Side effect to trick the optimizer */
+			*ptr = "bla";
+			break;
+		}
+
 		case MEMSET:
 			gettimeofday(&start,NULL);
 			memset(mem, 0xff, msize); 
@@ -408,6 +456,7 @@ int main(int ac, char **av)
 #ifdef HAVE_STREAM_LIB
 		test(STREAM); 
 #endif
+		test(PTRCHASE);
 	} else {
 		int k;
 		for (k = 2; k < ac; k++) { 
