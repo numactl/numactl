@@ -484,7 +484,6 @@ static inline nodemask_t nodemask_compat(char *c)
 	return mask;
 }
 
-void complain(char *fmt, ...);
 static inline unsigned long *cpumask_compat(char *c, int *ncpus)
 {
 	struct bitmask *tp;
@@ -493,8 +492,10 @@ static inline unsigned long *cpumask_compat(char *c, int *ncpus)
 	tp = numa_parse_cpustring(c);
 	*ncpus = tp->size;
 	cpubuf = calloc(tp->size,1);
-        if (!cpubuf)
-                complain("Out of memory");
+        if (!cpubuf) {
+                numa_error("Out of memory");
+		return NULL;
+	}
 	memcpy(cpubuf, tp->maskp, tp->size/8);
 	numa_bitmask_free(tp);
 	return cpubuf;
