@@ -183,6 +183,8 @@ numa_bitmask_nbytes(struct bitmask *bmp)
 }
 
 /* where n is the number of bits in the map */
+/* This function should not exit on failure, but right now we cannot really
+   recover from this. */
 struct bitmask *
 numa_bitmask_alloc(unsigned int n)
 {
@@ -190,18 +192,22 @@ numa_bitmask_alloc(unsigned int n)
 
 	if (n < 1) {
 		numa_error("request to allocate mask for invalid number; abort\n");
-		return NULL;
+		exit(1);
 	}
 	bmp = malloc(sizeof(*bmp));
 	if (bmp == 0)
-		return 0;
+		goto oom;
 	bmp->size = n;
 	bmp->maskp = calloc(longsperbits(n), sizeof(unsigned long));
 	if (bmp->maskp == 0) {
 		free(bmp);
-		return 0;
+		goto oom;
 	}
 	return bmp;
+
+oom:
+	numa_error("Out of memory allocating bitmask");
+	exit(1);
 }
 
 void
