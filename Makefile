@@ -65,6 +65,9 @@ mt.o: CFLAGS += ${BENCH_CFLAGS}
 mt.o: mt.c
 numademo: numademo.o stream_lib.o mt.o libnuma.so clearcache.o
 
+test_numademo: numademo
+	LD_LIBRARY_PATH=$$(pwd) ./numademo -e 10M
+
 numademo.o: numademo.c libnuma.so	
 
 numamon: numamon.o
@@ -182,4 +185,4 @@ regress1:
 regress2:
 	cd test ; ./regress2
 
-test: all regress1 regress2
+test: all regress1 regress2 test_numademo
