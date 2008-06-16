@@ -30,6 +30,11 @@
 #ifdef HAVE_MT
 #include "mt.h"
 #endif
+#ifdef HAVE_CLEAR_CACHE
+#include "clearcache.h"
+#else
+static inline void clearcache(void *a, unsigned size) {}
+#endif
 
 unsigned long msize; 
 
@@ -82,6 +87,7 @@ void do_stream(char *name, unsigned char *mem)
 	char title[100], buf[100];
 	double res[STREAM_NRESULTS];
 	stream_verbose = 0;
+	clearcache(mem, msize);
 	stream_init(mem); 
 	stream_test(res);
 	sprintf(title, "%s%s%s", name, delim, "STREAM");
@@ -93,6 +99,7 @@ void do_stream(char *name, unsigned char *mem)
 			stream_names[i], delim, res[i], delim);
 	}
 	output(title, buf);
+	clearcache(mem, msize);
 }
 #endif
 
@@ -156,6 +163,7 @@ void memtest(char *name, unsigned char *mem)
 	min = ~0UL; 
 	sum = 0;
 	for (i = 0; i < LOOPS; i++) { 
+		clearcache(mem, msize);
 		switch (thistest) { 
 		case PTRCHASE:
 		{
@@ -253,6 +261,10 @@ void memtest(char *name, unsigned char *mem)
 #ifdef HAVE_STREAM_LIB
  out:
 #endif
+	/* Just to make sure that when we switch CPUs that the old guy
+	   doesn't still keep it around. */
+	clearcache(mem, msize);
+
 	numa_free(mem, msize); 
 } 
 
