@@ -3,7 +3,7 @@ CFLAGS :=  -g -Wall -O2
 # these are used for the benchmarks in addition to the normal CFLAGS. 
 # Normally no need to overwrite unless you find a new magic flag to make
 # STREAM run faster.
-BENCH_CFLAGS := -O2 -ffast-math -funroll-loops
+BENCH_CFLAGS := -O3 -ffast-math -funroll-loops
 # for compatibility with old releases
 CFLAGS += ${OPT_CFLAGS}
 override CFLAGS += -I.
@@ -15,10 +15,17 @@ ifeq ($(THREAD_SUPPORT),no)
 	override CFLAGS += -D__thread=""
 endif
 
+# find out if compiler supports -ftree-vectorize
+THREAD_SUPPORT := $(shell touch empty.c ; if $(CC) $(CFLAGS) -c -ftree-vectorize empty.c -o empty.o \
+			>/dev/null 2>/dev/null ; then echo "yes" ; else echo "no"; fi)
+ifeq ($(THREAD_SUPPORT),yes)
+	BENCH_CFLAGS += -ftree-vectorize
+endif
+
 CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      memhog libnuma.so libnuma.so.1 numamon numamon.o syscall.o bitops.o \
 	      memhog.o util.o stream_main.o stream_lib.o shm.o stream clearcache.o \
-	      test/pagesize test/tshared test/mynode.o test/tshared.o mt.o \
+	      test/pagesize test/tshared test/mynode.o test/tshared.o mt.o empty.o empty.c \
 	      test/mynode test/ftok test/prefered test/randmap \
 	      .depend .depend.X test/nodemap test/distance test/tbitmap \
 	      test/after test/before threadtest test_move_pages \
