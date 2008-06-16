@@ -358,8 +358,19 @@ set_nodemask_size(void)
 	free(buf);
 	fclose(fp);
 done:
-	if (nodemask_sz == 0) /* fall back on error */
-		nodemask_sz = maxconfigurednode+1;
+	if (nodemask_sz == 0) {/* fall back on error */
+		int pol;
+		unsigned long *mask = NULL;
+		nodemask_sz = 16;
+		do {
+			nodemask_sz <<= 1;
+			mask = realloc(mask, nodemask_sz / 8);
+			if (!mask)
+				return;
+		} while (get_mempolicy(&pol, mask, nodemask_sz + 1, 0, 0) < 0 && errno == EINVAL &&
+				nodemask_sz < 4096*8);
+		free(mask);
+	}
 }
 
 /*
@@ -440,7 +451,7 @@ set_thread_constraints(void)
 
 	f = fopen(mask_size_file, "r");
 	if (!f) {
-		numa_warn(W_cpumap, "Cannot parse %s", mask_size_file);
+		//numa_warn(W_cpumap, "Cannot parse %s", mask_size_file);
 		return;
 	}
 
@@ -462,6 +473,12 @@ set_thread_constraints(void)
 	 * As such let's reduce maxproccpu to the number of actual
 	 * available cpus - 1.
 	 */
+	if (maxproccpu <= 0) {
+		for (i = 0; i <= hicpu; i++)
+			numa_bitmask_setbit(numa_all_cpus_ptr, i);
+		maxproccpu = hicpu;
+	}
+
 	if (maxproccpu > hicpu) {
 		maxproccpu = hicpu;
 		for (i=hicpu+1; i<numa_all_cpus_ptr->size; i++) {
@@ -469,16 +486,12 @@ set_thread_constraints(void)
 		}
 	}
 
-	/*
-	 * Sanity checks
-	 */
-	if (maxproccpu == 0)
-		numa_warn(W_cpumap, "Available cpus are empty set");
-
-	if (maxprocnode < 0) {
-		numa_warn(W_cpumap, "Cannot parse %s", mask_size_file);
-		return;
+	if (maxprocnode <= 0) {
+		for (i = 0; i <= maxconfigurednode; i++)
+			numa_bitmask_setbit(numa_all_nodes_ptr, i);
+		maxprocnode = maxconfigurednode;
 	}
+
 	return;
 }
 
