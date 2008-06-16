@@ -116,15 +116,6 @@ test/migrate_pages: test/migrate_pages.c libnuma.so
 
 .PHONY: install all clean html depend
 
-MANLINKS := \
-all_nodes alloc alloc_interleaved alloc_interleaved_subset alloc_local \
-alloc_onnode available bind error exit_on_error free get_interleave_mask \
-get_interleave_node get_membind get_run_node_mask interleave_memory max_node \
-no_nodes node_size node_to_cpus police_memory preferred run_on_node \
-run_on_node_mask set_bind_policy  set_interleave_mask set_localalloc \
-set_membind set_preferred set_strict setlocal_memory tonode_memory \
-tonodemask_memory distance
-
 MANPAGES := numa.3 numactl.8 numastat.8 migratepages.8 migspeed.8
 
 install: numactl migratepages migspeed numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numacompat1.h numastat ${MANPAGES}
@@ -137,7 +128,7 @@ install: numactl migratepages migspeed numademo.c numamon memhog libnuma.so.1 nu
 	mkdir -p ${prefix}/share/man/man2 ${prefix}/share/man/man8 ${prefix}/share/man/man3
 	cp numactl.8 ${prefix}/share/man/man8
 	cp numa.3 ${prefix}/share/man/man3
-	( cd ${prefix}/share/man/man3 ; for i in ${MANLINKS} ; do ln -sf numa.3 numa_$$i.3 ; done )
+	( cd ${prefix}/share/man/man3 ; for i in $$(./manlinks) ; do ln -sf numa.3 $$i.3 ; done )
 	cp numa_maps.5 ${prefix}/share/man/man5
 	mkdir -p ${libdir}
 	cp libnuma.so.1 ${libdir}
