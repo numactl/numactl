@@ -35,6 +35,8 @@
 #else
 static inline void clearcache(void *a, unsigned size) {}
 #endif
+#define FRACT_NODES 8
+#define FRACT_MASKS 32
 
 unsigned long msize; 
 
@@ -55,6 +57,7 @@ enum test {
 
 char *delim = " ";
 int force;
+int regression_testing=0;
 
 char *testname[] = { 
 	"memset",
@@ -291,20 +294,34 @@ void test(enum test type)
 	nodes = numa_allocate_nodemask();
 	thistest = type; 
 
+	if (regression_testing) {
+		printf("\nTest %s doing 1 of %d nodes and 1 of %d masks.\n",
+			testname[thistest], FRACT_NODES, FRACT_MASKS);
+	}
+
 	memtest("memory with no policy", numa_alloc(msize));
 	memtest("local memory", numa_alloc_local(msize));
 
 	memtest("memory interleaved on all nodes", numa_alloc_interleaved(msize)); 
 	for (i = 0; i <= max_node; i++) { 
+		if (regression_testing && (i % FRACT_NODES)) {
+		/* for regression testing (-t) do only every eighth node */
+			continue;
+		}
 		sprintf(buf, "memory on node %d", i); 
 		memtest(buf, numa_alloc_onnode(msize, i)); 
 	} 
 	
-	for (mask = 1; mask < (1UL<<(max_node+1)); mask++) { 
+	for (mask = 1, i = 0; mask < (1UL<<(max_node+1)); mask++, i++) {
 		int w;
 		char buf2[10];
 		if (popcnt(mask) == 1) 
 			continue;
+		if (regression_testing && (i % FRACT_MASKS)) {
+		/* for regression testing (-t)
+			do only every 32nd mask permutation */
+			continue;
+		}
 		numa_bitmask_clearall(nodes);
 		for (w = 0; mask >> w; w++) { 
 			if ((mask >> w) & 1)
@@ -321,6 +338,10 @@ void test(enum test type)
 	}
 
 	for (i = 0; i <= max_node; i++) { 
+		if (regression_testing && (i % FRACT_NODES)) {
+		/* for regression testing (-t) do only every eighth node */
+			continue;
+		}
 		printf("setting preferred node to %d\n", i);
 		numa_set_preferred(i); 
 		memtest("memory without policy", numa_alloc(msize)); 
@@ -345,6 +366,10 @@ void test(enum test type)
 	for (i = 0; i <= max_node; i++) { 
 		int oldhn = numa_preferred();
 
+		if (regression_testing && (i % FRACT_NODES)) {
+		/* for regression testing (-t) do only every eighth node */
+			continue;
+		}
 		numa_run_on_node(i); 
 		printf("running on node %d, preferred node %d\n",i, oldhn);
 
@@ -364,6 +389,11 @@ void test(enum test type)
 		for (k = 0; k <= max_node; k++) { 
 			if (k == i) 
 				continue;
+			if (regression_testing && (k % FRACT_NODES)) {
+			/* for regression testing (-t)
+				do only every eighth node */
+				continue;
+			}
 			sprintf(buf, "alloc on node %d", k);
 			numa_bitmask_clearall(nodes);
 			numa_bitmask_setbit(nodes, k);
@@ -390,8 +420,9 @@ void test(enum test type)
 void usage(void)
 {
 	int i;
-	printf("usage: numademo [-S] [-f] [-c] [-e] msize[kmg] {tests}\nNo tests means run all.\n");
+	printf("usage: numademo [-S] [-f] [-c] [-e] [-t] msize[kmg] {tests}\nNo tests means run all.\n");
 	printf("-c output CSV data. -f run even without NUMA API. -S run stupid tests. -e exit on error\n");
+	printf("-t regression test; do not run all node combinations\n");
 	printf("valid tests:"); 
 	for (i = 0; testname[i]; i++) 
 		printf(" %s", testname[i]); 
@@ -431,6 +462,9 @@ int main(int ac, char **av)
 			numa_exit_on_error = 1;
 			numa_exit_on_warn = 1;
 			break;
+		case 't':
+			regression_testing = 1;
+			break;
 		default:
 			usage(); 
 			break; 
@@ -449,6 +483,9 @@ int main(int ac, char **av)
 
 	max_node = numa_max_node(); 
 	printf("%d nodes available\n", max_node+1); 
+
+	if (max_node <= 2)
+		regression_testing = 0; /* set -t auto-off for small systems */
 
 	msize = memsize(av[1]); 
 

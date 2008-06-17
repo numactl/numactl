@@ -66,7 +66,7 @@ mt.o: mt.c
 numademo: numademo.o stream_lib.o mt.o libnuma.so clearcache.o
 
 test_numademo: numademo
-	LD_LIBRARY_PATH=$$(pwd) ./numademo -e 10M
+	LD_LIBRARY_PATH=$$(pwd) ./numademo -t -e 10M
 
 numademo.o: numademo.c libnuma.so	
 
