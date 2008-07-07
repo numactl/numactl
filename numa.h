@@ -17,7 +17,10 @@
 #ifndef _NUMA_H
 #define _NUMA_H 1
 
-/* Simple NUMA poliy library */
+/* allow an application to test for the current programming interface: */
+#define LIBNUMA_API_VERSION 2
+
+/* Simple NUMA policy library */
 
 #include <stddef.h>
 #include <string.h>
@@ -208,9 +211,6 @@ static inline void numa_free_cpumask(struct bitmask *b)
 	numa_bitmask_free(b);
 }
 
-/* set up to represent the cpus available to the current task */
-struct bitmask *numa_all_cpus;
-
 /* Convert node to CPU mask. -1/errno on failure, otherwise 0. */
 int numa_node_to_cpus(int, struct bitmask *);
 
@@ -250,7 +250,7 @@ struct bitmask *numa_parse_cpustring(char *);
 /*
  * The following functions are for source code compatibility
  * with releases prior to version 2.
- * Such codes should be compiled with VERSION1_COMPATIBILITY defined.
+ * Such codes should be compiled with NUMA_VERSION1_COMPATIBILITY defined.
  */
 
 static inline void numa_set_interleave_mask_compat(nodemask_t *nodemask)
@@ -387,9 +387,9 @@ static inline int numa_node_to_cpus_compat(int node, unsigned long *buffer,
 
 /*
  * To compile an application that uses libnuma version 1:
- *   add -DVERSION1_COMPATIBILITY to your Makefile's CFLAGS
+ *   add -DNUMA_VERSION1_COMPATIBILITY to your Makefile's CFLAGS
  */
-#ifdef VERSION1_COMPATIBILITY
+#ifdef NUMA_VERSION1_COMPATIBILITY
 #include <numacompat1.h>
 #endif
 
