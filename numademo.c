@@ -249,7 +249,7 @@ void memtest(char *name, unsigned char *mem)
 	sprintf(title, "%s%s%s", name, delim, testname[thistest]); 
 #define H(t) (((double)msize) / ((double)t))
 #define D3 delim,delim,delim
-	sprintf(result, "Avg%s%.2f%sMB/s%sMin%s%.2f%sMB/s%sMax%s%.2f%sMB/s",
+	sprintf(result, "Avg%s%.2f%sMB/s%sMax%s%.2f%sMB/s%sMin%s%.2f%sMB/s",
 		delim,
 		H(sum/LOOPS), 
 		D3,
@@ -448,6 +448,7 @@ int main(int ac, char **av)
 	int simple_tests = 0;
 	
 	while (av[1] && av[1][0] == '-') { 
+		ac--;
 		switch (av[1][1]) { 
 		case 'c': 
 			delim = ","; 
