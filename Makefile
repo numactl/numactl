@@ -125,26 +125,26 @@ MANPAGES := numa.3 numactl.8 numastat.8 migratepages.8 migspeed.8
 
 install: numactl migratepages migspeed numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numacompat1.h numastat ${MANPAGES}
 	mkdir -p ${prefix}/bin
-	cp numactl ${prefix}/bin
-	cp migratepages ${prefix}/bin
-	cp migspeed ${prefix}/bin
-	cp numademo ${prefix}/bin
-	cp memhog ${prefix}/bin
+	install -m 0755 numactl ${prefix}/bin
+	install -m 0755 migratepages ${prefix}/bin
+	install -m 0755 migspeed ${prefix}/bin
+	install -m 0755 numademo ${prefix}/bin
+	install -m 0755 memhog ${prefix}/bin
 	mkdir -p ${prefix}/share/man/man2 ${prefix}/share/man/man8 ${prefix}/share/man/man3
-	cp numactl.8 ${prefix}/share/man/man8
-	cp numa.3 ${prefix}/share/man/man3
+	install -m 0644 numactl.8 ${prefix}/share/man/man8
+	install -m 0644 numa.3 ${prefix}/share/man/man3
 	( cd ${prefix}/share/man/man3 ; for i in $$(./manlinks) ; do ln -sf numa.3 $$i.3 ; done )
-	cp numa_maps.5 ${prefix}/share/man/man5
+	install -m 0644 numa_maps.5 ${prefix}/share/man/man5
 	mkdir -p ${libdir}
-	cp libnuma.so.1 ${libdir}
+	install -m 0755 libnuma.so.1 ${libdir}
 	cd ${libdir} ; ln -sf libnuma.so.1 libnuma.so
-	cp libnuma.a ${libdir}
+	install -m 0644 libnuma.a ${libdir}
 	mkdir -p ${prefix}/include
-	cp numa.h numaif.h numacompat1.h ${prefix}/include
-	cp numastat ${prefix}/bin
+	install -m 0644 numa.h numaif.h numacompat1.h ${prefix}/include
+	install -m 0755 numastat ${prefix}/bin
 	if [ -d ${docdir} ] ; then \
 		mkdir -p ${docdir}/numactl/examples ; \
-		cp numademo.c ${docdir}/numactl/examples ; \
+		install -m 0644 numademo.c ${docdir}/numactl/examples ; \
 	fi	
 
 HTML := html/numactl.html html/numa.html
