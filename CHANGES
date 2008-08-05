@@ -180,7 +180,7 @@ updating in newer kernels (Mel Gorman)
 - Fix target command argument parsing for numactl (no -- needed again anymore) 
 - Clarify numa_node_to_cpus() manpage
 
-1.0.3[-rc1]
+1.0.3
 
 - Add the migspeed test program to test the speed of migrating pages from
   one node to another
@@ -242,3 +242,30 @@ updating in newer kernels (Mel Gorman)
 - Make 4 fixes from Debian: MIPS support, MIPS hppa fix for syscalls,
                             make sure -lm for numademo, build a static library 
 - Fix parsing of /proc/self/status for 2.6.25 additions to it
+
+2.0.2
+- Various numademo improvements:
+  * Fix random benchmark to use all specified memory
+  * Rename to random2 to signify it's different
+  * Optimize random benchmark by inlining random number generator fast path.
+  * Clear caches between runs for more stable results
+  * Add new random pointer chaser benchmark
+  * Compile benchmarks with gcc vectorization if available
+  * run numademo in regression test
+- Add numa_exit_on_warn
+- Fix no cpuset fallback in libnuma.c
+- Install symlinks for the manpages of all new functions
+- Make internal libnuma functions static
+- Add copy_bitmask_to_bitmask() to numa.h
+- Some cleanups
+- Fix line reading in proc
+- Add versions.ldscript to libnuma.so dependencies
+- Remove the non-"numa_" functions from numacompat1.h and numa.h
+- Add ia64 clearcache() to numademo
+- Add -t to numademo for regression testing
+- Remove "numa_all_cpus" from numa.h
+- Changed VERSION1_COMPATIBILITY to NUMA_VERSION1_COMPATIBILITY
+- Defined LIBNUMA_API_VERSION 2 in numa.h
+- Fix numaif.h and numaint.h (migrate_pages; from Masatake Yamato)
+- Fixes to numademo (min/max, and array index; from Kent Liu)
+- Fixes to Makefile and permissions; from Berhard Walle
