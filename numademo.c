@@ -30,6 +30,13 @@
 #ifdef HAVE_MT
 #include "mt.h"
 #endif
+#ifdef HAVE_CLEAR_CACHE
+#include "clearcache.h"
+#else
+static inline void clearcache(void *a, unsigned size) {}
+#endif
+#define FRACT_NODES 8
+#define FRACT_MASKS 32
 
 unsigned long msize; 
 
@@ -44,11 +51,13 @@ enum test {
 	FORWARD,
 	BACKWARD,
 	STREAM,
-	RANDOM,
+	RANDOM2,
+	PTRCHASE,
 } thistest;
 
 char *delim = " ";
 int force;
+int regression_testing=0;
 
 char *testname[] = { 
 	"memset",
@@ -59,8 +68,9 @@ char *testname[] = {
 	"stream",
 #endif
 #ifdef HAVE_MT
-	"random",
+	"random2",
 #endif
+	"ptrchase",
 	NULL,
 }; 
 
@@ -80,6 +90,7 @@ void do_stream(char *name, unsigned char *mem)
 	char title[100], buf[100];
 	double res[STREAM_NRESULTS];
 	stream_verbose = 0;
+	clearcache(mem, msize);
 	stream_init(mem); 
 	stream_test(res);
 	sprintf(title, "%s%s%s", name, delim, "STREAM");
@@ -91,9 +102,43 @@ void do_stream(char *name, unsigned char *mem)
 			stream_names[i], delim, res[i], delim);
 	}
 	output(title, buf);
+	clearcache(mem, msize);
 }
 #endif
 
+/* Set up a randomly distributed list to fool prefetchers */
+union node {
+	union node *next;
+	struct {
+		unsigned nexti;
+		unsigned val;
+	};
+};
+
+static int cmp_node(const void *ap, const void *bp)
+{
+	union node *a = (union node *)ap;
+	union node *b = (union node *)bp;
+	return a->val - b->val;
+}
+
+void **ptrchase_init(unsigned char *mem)
+{
+	long i;
+	union node *nodes = (union node *)mem;
+	long nmemb = msize / sizeof(union node);
+	srand(1234);
+	for (i = 0; i < nmemb; i++) {
+		nodes[i].val = rand();
+		nodes[i].nexti = i + 1;
+	}
+	qsort(nodes, nmemb, sizeof(union node), cmp_node);
+	for (i = 0; i < nmemb; i++) {
+		union node *n = &nodes[i];
+		n->next = n->nexti >= nmemb ? NULL : &nodes[n->nexti];
+	}
+	return (void **)nodes;
+}
 
 static inline unsigned long long timerfold(struct timeval *tv)
 {
@@ -105,9 +150,6 @@ static inline unsigned long long timerfold(struct timeval *tv)
 void memtest(char *name, unsigned char *mem)
 { 
 	long k;
-#ifdef HAVE_MT
-	long w;
-#endif
 	struct timeval start, end, res;
 	unsigned long long max, min, sum, r; 
 	int i;
@@ -124,7 +166,21 @@ void memtest(char *name, unsigned char *mem)
 	min = ~0UL; 
 	sum = 0;
 	for (i = 0; i < LOOPS; i++) { 
+		clearcache(mem, msize);
 		switch (thistest) { 
+		case PTRCHASE:
+		{
+			void **ptr;
+			ptr = ptrchase_init(mem);
+			gettimeofday(&start,NULL);
+			while (*ptr)
+				ptr = (void **)*ptr;
+			gettimeofday(&end,NULL);
+			/* Side effect to trick the optimizer */
+			*ptr = "bla";
+			break;
+		}
+
 		case MEMSET:
 			gettimeofday(&start,NULL);
 			memset(mem, 0xff, msize); 
@@ -154,21 +210,32 @@ void memtest(char *name, unsigned char *mem)
 			break;
 
 #ifdef HAVE_MT
-		case RANDOM: 
-			mt_init(); 
-			/* only use power of two msize to avoid division */
-			for (w = 1; w < msize; w <<= 1)
-				;
-			if (w > msize) 
-				w >>= 1;
-			w--;
-			gettimeofday(&start,NULL);
-			for (k = msize; k > 0; k -= 8) 
-				mem[mt_random() & w]++;
-			gettimeofday(&end,NULL);
-			break;
-#endif
+		case RANDOM2:
+		{
+			unsigned * __restrict m = (unsigned *)mem;
+			unsigned max = msize / sizeof(unsigned);
+			unsigned mask;
 
+			mt_init(); 
+			mask = 1;
+			while (mask < max)
+				mask = (mask << 1) | 1;
+			/*
+			 * There's no guarantee all memory is touched, but
+			 * we assume (hope) that the distribution of the MT
+			 * is good enough to touch most.
+			 */
+			gettimeofday(&start,NULL);
+			for (k = 0; k < max; k++) {
+				unsigned idx = mt_random() & mask;
+				if (idx >= max)
+					idx -= max;
+				m[idx]++;
+			}
+			gettimeofday(&end,NULL);
+		}
+
+#endif
 		default:
 			break;
 		} 
@@ -182,7 +249,7 @@ void memtest(char *name, unsigned char *mem)
 	sprintf(title, "%s%s%s", name, delim, testname[thistest]); 
 #define H(t) (((double)msize) / ((double)t))
 #define D3 delim,delim,delim
-	sprintf(result, "Avg%s%.2f%sMB/s%sMin%s%.2f%sMB/s%sMax%s%.2f%sMB/s",
+	sprintf(result, "Avg%s%.2f%sMB/s%sMax%s%.2f%sMB/s%sMin%s%.2f%sMB/s",
 		delim,
 		H(sum/LOOPS), 
 		D3,
@@ -197,6 +264,10 @@ void memtest(char *name, unsigned char *mem)
 #ifdef HAVE_STREAM_LIB
  out:
 #endif
+	/* Just to make sure that when we switch CPUs that the old guy
+	   doesn't still keep it around. */
+	clearcache(mem, msize);
+
 	numa_free(mem, msize); 
 } 
 
@@ -223,20 +294,34 @@ void test(enum test type)
 	nodes = numa_allocate_nodemask();
 	thistest = type; 
 
+	if (regression_testing) {
+		printf("\nTest %s doing 1 of %d nodes and 1 of %d masks.\n",
+			testname[thistest], FRACT_NODES, FRACT_MASKS);
+	}
+
 	memtest("memory with no policy", numa_alloc(msize));
 	memtest("local memory", numa_alloc_local(msize));
 
 	memtest("memory interleaved on all nodes", numa_alloc_interleaved(msize)); 
 	for (i = 0; i <= max_node; i++) { 
+		if (regression_testing && (i % FRACT_NODES)) {
+		/* for regression testing (-t) do only every eighth node */
+			continue;
+		}
 		sprintf(buf, "memory on node %d", i); 
 		memtest(buf, numa_alloc_onnode(msize, i)); 
 	} 
 	
-	for (mask = 1; mask < (1UL<<(max_node+1)); mask++) { 
+	for (mask = 1, i = 0; mask < (1UL<<(max_node+1)); mask++, i++) {
 		int w;
 		char buf2[10];
 		if (popcnt(mask) == 1) 
 			continue;
+		if (regression_testing && (i % FRACT_MASKS)) {
+		/* for regression testing (-t)
+			do only every 32nd mask permutation */
+			continue;
+		}
 		numa_bitmask_clearall(nodes);
 		for (w = 0; mask >> w; w++) { 
 			if ((mask >> w) & 1)
@@ -253,6 +338,10 @@ void test(enum test type)
 	}
 
 	for (i = 0; i <= max_node; i++) { 
+		if (regression_testing && (i % FRACT_NODES)) {
+		/* for regression testing (-t) do only every eighth node */
+			continue;
+		}
 		printf("setting preferred node to %d\n", i);
 		numa_set_preferred(i); 
 		memtest("memory without policy", numa_alloc(msize)); 
@@ -277,6 +366,10 @@ void test(enum test type)
 	for (i = 0; i <= max_node; i++) { 
 		int oldhn = numa_preferred();
 
+		if (regression_testing && (i % FRACT_NODES)) {
+		/* for regression testing (-t) do only every eighth node */
+			continue;
+		}
 		numa_run_on_node(i); 
 		printf("running on node %d, preferred node %d\n",i, oldhn);
 
@@ -296,6 +389,11 @@ void test(enum test type)
 		for (k = 0; k <= max_node; k++) { 
 			if (k == i) 
 				continue;
+			if (regression_testing && (k % FRACT_NODES)) {
+			/* for regression testing (-t)
+				do only every eighth node */
+				continue;
+			}
 			sprintf(buf, "alloc on node %d", k);
 			numa_bitmask_clearall(nodes);
 			numa_bitmask_setbit(nodes, k);
@@ -322,9 +420,9 @@ void test(enum test type)
 void usage(void)
 {
 	int i;
-	printf("usage: numademo [-S] [-f] [-c] msize[kmg] {tests}\nNo tests means run all.\n"); 
-	printf("-c output CSV data. -f run even without NUMA API. -S run stupid tests\n");  
-	printf("power of two msizes prefered\n"); 
+	printf("usage: numademo [-S] [-f] [-c] [-e] [-t] msize[kmg] {tests}\nNo tests means run all.\n");
+	printf("-c output CSV data. -f run even without NUMA API. -S run stupid tests. -e exit on error\n");
+	printf("-t regression test; do not run all node combinations\n");
 	printf("valid tests:"); 
 	for (i = 0; testname[i]; i++) 
 		printf(" %s", testname[i]); 
@@ -350,6 +448,7 @@ int main(int ac, char **av)
 	int simple_tests = 0;
 	
 	while (av[1] && av[1][0] == '-') { 
+		ac--;
 		switch (av[1][1]) { 
 		case 'c': 
 			delim = ","; 
@@ -359,6 +458,13 @@ int main(int ac, char **av)
 			break;
 		case 'S':
 			simple_tests = 1;
+			break;
+		case 'e':
+			numa_exit_on_error = 1;
+			numa_exit_on_warn = 1;
+			break;
+		case 't':
+			regression_testing = 1;
 			break;
 		default:
 			usage(); 
@@ -379,6 +485,9 @@ int main(int ac, char **av)
 	max_node = numa_max_node(); 
 	printf("%d nodes available\n", max_node+1); 
 
+	if (max_node <= 2)
+		regression_testing = 0; /* set -t auto-off for small systems */
+
 	msize = memsize(av[1]); 
 
 	if (!msize)
@@ -396,11 +505,12 @@ int main(int ac, char **av)
 			test(BACKWARD);
 		}
 #ifdef HAVE_MT
-		test(RANDOM);
+		test(RANDOM2);
 #endif
 #ifdef HAVE_STREAM_LIB
 		test(STREAM); 
 #endif
+		test(PTRCHASE);
 	} else {
 		int k;
 		for (k = 2; k < ac; k++) { 

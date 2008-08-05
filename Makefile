@@ -3,7 +3,7 @@ CFLAGS :=  -g -Wall -O2
 # these are used for the benchmarks in addition to the normal CFLAGS. 
 # Normally no need to overwrite unless you find a new magic flag to make
 # STREAM run faster.
-BENCH_CFLAGS := -O2 -ffast-math -funroll-loops
+BENCH_CFLAGS := -O3 -ffast-math -funroll-loops
 # for compatibility with old releases
 CFLAGS += ${OPT_CFLAGS}
 override CFLAGS += -I.
@@ -15,10 +15,17 @@ ifeq ($(THREAD_SUPPORT),no)
 	override CFLAGS += -D__thread=""
 endif
 
+# find out if compiler supports -ftree-vectorize
+THREAD_SUPPORT := $(shell touch empty.c ; if $(CC) $(CFLAGS) -c -ftree-vectorize empty.c -o empty.o \
+			>/dev/null 2>/dev/null ; then echo "yes" ; else echo "no"; fi)
+ifeq ($(THREAD_SUPPORT),yes)
+	BENCH_CFLAGS += -ftree-vectorize
+endif
+
 CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      memhog libnuma.so libnuma.so.1 numamon numamon.o syscall.o bitops.o \
-	      memhog.o util.o stream_main.o stream_lib.o shm.o stream \
-	      test/pagesize test/tshared test/mynode.o test/tshared.o mt.o \
+	      memhog.o util.o stream_main.o stream_lib.o shm.o stream clearcache.o \
+	      test/pagesize test/tshared test/mynode.o test/tshared.o mt.o empty.o empty.c \
 	      test/mynode test/ftok test/prefered test/randmap \
 	      .depend .depend.X test/nodemap test/distance test/tbitmap \
 	      test/after test/before threadtest test_move_pages \
@@ -26,7 +33,7 @@ CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      migratepages migspeed migspeed.o libnuma.a
 SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
 	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c mt.c \
-	test/*.c
+	clearcache.c test/*.c
 
 prefix := /usr
 libdir := ${prefix}/$(shell ./getlibdir)
@@ -52,11 +59,14 @@ numactl.o: numactl.c
 
 numademo: override LDFLAGS += -lm
 # GNU make 3.80 appends BENCH_CFLAGS twice. Bug? It's harmless though.
-numademo: CFLAGS += -DHAVE_STREAM_LIB -DHAVE_MT ${BENCH_CFLAGS} 
+numademo: CFLAGS += -DHAVE_STREAM_LIB -DHAVE_MT -DHAVE_CLEAR_CACHE ${BENCH_CFLAGS}
 stream_lib.o: CFLAGS += ${BENCH_CFLAGS}
 mt.o: CFLAGS += ${BENCH_CFLAGS} 
 mt.o: mt.c
-numademo: numademo.o stream_lib.o mt.o libnuma.so
+numademo: numademo.o stream_lib.o mt.o libnuma.so clearcache.o
+
+test_numademo: numademo
+	LD_LIBRARY_PATH=$$(pwd) ./numademo -t -e 10M
 
 numademo.o: numademo.c libnuma.so	
 
@@ -67,8 +77,10 @@ stream: stream_lib.o stream_main.o  libnuma.so util.o
 
 stream_main.o: stream_main.c
 
+libnuma.so.1: versions.ldscript
+
 libnuma.so.1: libnuma.o syscall.o distance.o
-	${CC} -shared -Wl,-soname=libnuma.so.1 -Wl,--version-script,versions.ldscript -Wl,-init,numa_init -o libnuma.so.1 $^
+	${CC} -shared -Wl,-soname=libnuma.so.1 -Wl,--version-script,versions.ldscript -Wl,-init,numa_init -o libnuma.so.1 $(filter-out versions.ldscript,$^)
 
 libnuma.so: libnuma.so.1
 	ln -sf libnuma.so.1 libnuma.so
@@ -109,39 +121,30 @@ test/migrate_pages: test/migrate_pages.c libnuma.so
 
 .PHONY: install all clean html depend
 
-MANLINKS := \
-all_nodes alloc alloc_interleaved alloc_interleaved_subset alloc_local \
-alloc_onnode available bind error exit_on_error free get_interleave_mask \
-get_interleave_node get_membind get_run_node_mask interleave_memory max_node \
-no_nodes node_size node_to_cpus police_memory preferred run_on_node \
-run_on_node_mask set_bind_policy  set_interleave_mask set_localalloc \
-set_membind set_preferred set_strict setlocal_memory tonode_memory \
-tonodemask_memory distance
-
 MANPAGES := numa.3 numactl.8 numastat.8 migratepages.8 migspeed.8
 
 install: numactl migratepages migspeed numademo.c numamon memhog libnuma.so.1 numa.h numaif.h numacompat1.h numastat ${MANPAGES}
 	mkdir -p ${prefix}/bin
-	cp numactl ${prefix}/bin
-	cp migratepages ${prefix}/bin
-	cp migspeed ${prefix}/bin
-	cp numademo ${prefix}/bin
-	cp memhog ${prefix}/bin
+	install -m 0755 numactl ${prefix}/bin
+	install -m 0755 migratepages ${prefix}/bin
+	install -m 0755 migspeed ${prefix}/bin
+	install -m 0755 numademo ${prefix}/bin
+	install -m 0755 memhog ${prefix}/bin
 	mkdir -p ${prefix}/share/man/man2 ${prefix}/share/man/man8 ${prefix}/share/man/man3
-	cp numactl.8 ${prefix}/share/man/man8
-	cp numa.3 ${prefix}/share/man/man3
-	( cd ${prefix}/share/man/man3 ; for i in ${MANLINKS} ; do ln -sf numa.3 numa_$$i.3 ; done )
-	cp numa_maps.5 ${prefix}/share/man/man5
+	install -m 0644 numactl.8 ${prefix}/share/man/man8
+	install -m 0644 numa.3 ${prefix}/share/man/man3
+	( cd ${prefix}/share/man/man3 ; for i in $$(./manlinks) ; do ln -sf numa.3 $$i.3 ; done )
+	install -m 0644 numa_maps.5 ${prefix}/share/man/man5
 	mkdir -p ${libdir}
-	cp libnuma.so.1 ${libdir}
+	install -m 0755 libnuma.so.1 ${libdir}
 	cd ${libdir} ; ln -sf libnuma.so.1 libnuma.so
-	cp libnuma.a ${libdir}
+	install -m 0644 libnuma.a ${libdir}
 	mkdir -p ${prefix}/include
-	cp numa.h numaif.h numacompat1.h ${prefix}/include
-	cp numastat ${prefix}/bin
+	install -m 0644 numa.h numaif.h numacompat1.h ${prefix}/include
+	install -m 0755 numastat ${prefix}/bin
 	if [ -d ${docdir} ] ; then \
 		mkdir -p ${docdir}/numactl/examples ; \
-		cp numademo.c ${docdir}/numactl/examples ; \
+		install -m 0644 numademo.c ${docdir}/numactl/examples ; \
 	fi	
 
 HTML := html/numactl.html html/numa.html
@@ -182,4 +185,4 @@ regress1:
 regress2:
 	cd test ; ./regress2
 
-test: all regress1 regress2
+test: all regress1 regress2 test_numademo

@@ -1,9 +1,8 @@
 /* Mersenne twister implementation from Michael Brundage. Public Domain. 
    MT is a very fast pseudo random number generator. This version works
-   on 32bit words.  Minor changes by AK. */
+   on 32bit words.  Changes by AK. */
 #include <stdlib.h>
 #include "mt.h"
-#define MT_LEN       624
 
 int mt_index;
 unsigned int mt_buffer[MT_LEN];
@@ -25,15 +24,13 @@ void mt_init(void)
 #define TWIST(b,i,j)    ((b)[i] & UPPER_MASK) | ((b)[j] & LOWER_MASK)
 #define MAGIC(s)        (((s)&1)*MATRIX_A)
 
-unsigned int mt_random(void) 
+void mt_refill(void)
 {
-    unsigned int * b = mt_buffer;
-    int idx = mt_index;
-    unsigned int s;
-    int i;
-	
-    if (idx == MT_LEN*sizeof(unsigned int)) {
-        idx = 0;
+	int i;
+	unsigned int s;
+	unsigned int * b = mt_buffer;
+
+	mt_index = 0;
         i = 0;
         for (; i < MT_IB; i++) {
             s = TWIST(b, i, i+1);
@@ -46,7 +43,5 @@ unsigned int mt_random(void)
         
         s = TWIST(b, MT_LEN-1, 0);
         b[MT_LEN-1] = b[MT_IA-1] ^ (s >> 1) ^ MAGIC(s);
-    }
-    mt_index = idx + sizeof(unsigned int);
-    return *(unsigned int *)((unsigned char *)b + idx);
 }
+

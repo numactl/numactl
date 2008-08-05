@@ -9,17 +9,6 @@ extern int numa_sched_setaffinity_v2(pid_t pid, struct bitmask *mask);
 extern int numa_sched_getaffinity_v2(pid_t pid, struct bitmask *mask);
 extern int numa_sched_setaffinity_v2_int(pid_t pid, struct bitmask *mask);
 extern int numa_sched_getaffinity_v2_int(pid_t pid, struct bitmask *mask);
-extern long get_mempolicy(int *policy, const unsigned long *nmask,
-                              unsigned long maxnode, void *addr, int flags);
-extern long mbind(void *start, unsigned long len, int mode,
-	  const unsigned long *nmask, unsigned long maxnode, unsigned flags);
-extern long set_mempolicy(int mode, const unsigned long *nmask,
-			  unsigned long maxnode);
-extern long migrate_pages(int pid, unsigned long maxnode, const unsigned long *frommask,
-	const unsigned long *tomask);
-
-extern long move_pages(int pid, unsigned long count,
-	void **pages, const int *nodes, int *status, int flags);
 
 #define SHM_HUGETLB     04000   /* segment will use huge TLB pages */
 
@@ -38,4 +27,11 @@ enum numa_warn {
 	W_noderunmask,
 	W_distance,
 	W_memory,
+	W_cpuparse,
+	W_nodeparse,
 }; 
+
+#define howmany(x,y) (((x)+((y)-1))/(y))
+#define bitsperlong (8 * sizeof(unsigned long))
+#define longsperbits(n) howmany(n, bitsperlong)
+#define bytesperbits(x) ((x+7)/8)

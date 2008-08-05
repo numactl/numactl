@@ -59,6 +59,7 @@ libnuma_1.1 {
     numa_tonode_memory;
     numa_tonodemask_memory;
     numa_warn;
+    numa_exit_on_warn;
   local:
     *;
 };
