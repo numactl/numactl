@@ -509,7 +509,7 @@ set_thread_constraints(void)
 static void
 set_numa_max_cpu(void)
 {
-	int len = 2048;
+	int len = 4096;
 	int n;
 	int olde = errno;
 	struct bitmask *buffer;
