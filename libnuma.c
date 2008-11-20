@@ -74,24 +74,6 @@ int numa_exit_on_error = 0;
 int numa_exit_on_warn = 0;
 static void set_sizes(void);
 
-static inline void
-nodemask_set_v1(nodemask_t *mask, int node)
-{
-	mask->n[node / (8*sizeof(unsigned long))] |=
-		(1UL<<(node%(8*sizeof(unsigned long))));
-}
-
-static inline int
-nodemask_isset_v1(const nodemask_t *mask, int node)
-{
-	if ((unsigned)node >= NUMA_NUM_NODES)
-		return 0;
-	if (mask->n[node / (8*sizeof(unsigned long))] &
-		(1UL<<(node%(8*sizeof(unsigned long)))))
-		return 1;
-	return 0;
-}
-
 /*
  * There are two special functions, _init(void) and _fini(void), which
  * are called automatically by the dynamic loader whenever a library is loaded.
@@ -107,7 +89,7 @@ numa_init(void)
 	/* numa_all_nodes should represent existing nodes on this system */
         max = numa_num_configured_nodes();
         for (i = 0; i < max; i++)
-                nodemask_set_v1((nodemask_t *)&numa_all_nodes, i);
+                nodemask_set_compat((nodemask_t *)&numa_all_nodes, i);
 	memset(&numa_no_nodes, 0, sizeof(numa_no_nodes));
 }
 
@@ -995,7 +977,7 @@ copy_bitmask_to_nodemask(struct bitmask *bmp, nodemask_t *nmp)
 		if (i >= max)
 			break;
 		if (numa_bitmask_isbitset(bmp, i))
-                	nodemask_set_v1((nodemask_t *)nmp, i);
+                	nodemask_set_compat((nodemask_t *)nmp, i);
 	}
 }
 
@@ -1034,7 +1016,7 @@ copy_nodemask_to_bitmask(nodemask_t *nmp, struct bitmask *bmp)
 	if (max > bmp->size)
 		max = bmp->size;
 	for (i=0; i<max; i++) {
-		if (nodemask_isset_v1(nmp, i))
+		if (nodemask_isset_compat(nmp, i))
 			numa_bitmask_setbit(bmp, i);
 	}
 }
@@ -1329,7 +1311,7 @@ numa_run_on_node_mask_v1(const nodemask_t *mask)
 	for (i = 0; i < NUMA_NUM_NODES; i++) {
 		if (mask->n[i / BITS_PER_LONG] == 0)
 			continue;
-		if (nodemask_isset_v1(mask, i)) {
+		if (nodemask_isset_compat(mask, i)) {
 			if (numa_node_to_cpus_v1_int(i, nodecpus, CPU_BYTES(ncpus)) < 0) {
 				numa_warn(W_noderunmask,
 					  "Cannot read node cpumask from sysfs");

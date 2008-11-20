@@ -61,14 +61,48 @@ void copy_bitmask_to_nodemask(struct bitmask *, nodemask_t *);
 void copy_bitmask_to_bitmask(struct bitmask *, struct bitmask *);
 
 /* compatibility for codes that used them: */
-static inline void nodemask_zero(struct bitmask *mask)
+static inline void nodemask_zero_compat(nodemask_t *mask)
 { 
-	numa_bitmask_clearall(mask);
+	struct bitmask tmp;
+
+	tmp.maskp = (unsigned long *)mask;
+	tmp.size = sizeof(nodemask_t) * 8;
+	numa_bitmask_clearall(&tmp);
 } 
 
-static inline int nodemask_equal(struct bitmask *a, struct bitmask *b)
+static inline void nodemask_set_compat(nodemask_t *mask, int node)
+{
+	mask->n[node / (8*sizeof(unsigned long))] |=
+		(1UL<<(node%(8*sizeof(unsigned long))));
+}
+
+static inline void nodemask_clr_compat(nodemask_t *mask, int node)
+{
+	mask->n[node / (8*sizeof(unsigned long))] &=
+		~(1UL<<(node%(8*sizeof(unsigned long))));
+}
+
+static inline int nodemask_isset_compat(const nodemask_t *mask, int node)
+{
+	if ((unsigned)node >= NUMA_NUM_NODES)
+		return 0;
+	if (mask->n[node / (8*sizeof(unsigned long))] &
+		(1UL<<(node%(8*sizeof(unsigned long)))))
+		return 1;
+	return 0;
+}
+
+static inline int nodemask_equal_compat(const nodemask_t *a, const nodemask_t *b)
 { 
-	return numa_bitmask_equal(a, b);
+	struct bitmask tmp_a, tmp_b;
+
+	tmp_a.maskp = (unsigned long *)a;
+	tmp_a.size = sizeof(nodemask_t) * 8;
+
+	tmp_b.maskp = (unsigned long *)b;
+	tmp_b.size = sizeof(nodemask_t) * 8;
+
+	return numa_bitmask_equal(&tmp_a, &tmp_b);
 } 
 
 /* NUMA support available. If this returns a negative value all other function
