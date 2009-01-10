@@ -6,8 +6,8 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include "../numa.h"
-#include "../numaif.h"
+#include <numa.h>
+#include <numaif.h>
 #include <unistd.h>
 #include <asm/unistd.h>
 
