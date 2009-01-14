@@ -134,7 +134,6 @@ install: numactl migratepages migspeed numademo.c numamon memhog libnuma.so.1 nu
 	install -m 0644 numactl.8 ${prefix}/share/man/man8
 	install -m 0644 numa.3 ${prefix}/share/man/man3
 	( cd ${prefix}/share/man/man3 ; for i in $$(./manlinks) ; do ln -sf numa.3 $$i.3 ; done )
-	install -m 0644 numa_maps.5 ${prefix}/share/man/man5
 	mkdir -p ${libdir}
 	install -m 0755 libnuma.so.1 ${libdir}
 	cd ${libdir} ; ln -sf libnuma.so.1 libnuma.so
