@@ -33,5 +33,6 @@ enum numa_warn {
 
 #define howmany(x,y) (((x)+((y)-1))/(y))
 #define bitsperlong (8 * sizeof(unsigned long))
+#define bitsperint (8 * sizeof(unsigned int))
 #define longsperbits(n) howmany(n, bitsperlong)
 #define bytesperbits(x) ((x+7)/8)

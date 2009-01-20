@@ -368,11 +368,10 @@ static int
 read_mask(char *s, struct bitmask *bmp)
 {
 	char *end = s;
-	unsigned int *start = (unsigned int *)bmp->maskp;
-	unsigned int *p = start;
-	unsigned int *q;
-	unsigned int i;
-	unsigned int n = 0;
+	int tmplen = (bmp->size + bitsperint - 1) / bitsperint;
+	unsigned int tmp[tmplen];
+	unsigned int *start = tmp;
+	unsigned int i, n = 0, m = 0;
 
 	i = strtoul(s, &end, 16);
 
@@ -380,7 +379,6 @@ read_mask(char *s, struct bitmask *bmp)
 	while (!i && *end++ == ',') {
 		i = strtoul(end, &end, 16);
 	}
-	end++; /* past the , */
 
 	if (!i)
 		/* End of string. No mask */
@@ -388,33 +386,39 @@ read_mask(char *s, struct bitmask *bmp)
 
 	start[n++] = i;
 	/* Read sequence of ints */
-	do {
+	while (*end++ == ',') {
 		i = strtoul(end, &end, 16);
-		if (i)
-			start[n++] = i;
-	} while (*end++ == ',');
-	n--;
+		start[n++] = i;
+
+		/* buffer overflow */
+		if (n > tmplen)
+			return -1;
+	}
 
 	/*
 	 * Invert sequence of ints if necessary since the first int
 	 * is the highest and we put it first because we read it first.
 	 */
-	for (q = start + n, p = start; p < q; q--, p++) {
-		unsigned int x = *q;
+	while (n) {
+		int w;
+		unsigned long x = 0;
+		/* read into long values in an endian-safe way */
+		for (w = 0; n && w < bitsperlong; w += bitsperint)
+			x |= ((unsigned long)start[n-- - 1] << w);
 
-		*q = *p;
-		*p = x;
+		bmp->maskp[m++] = x;
 	}
+	m--;
 
 	/* Poor mans fls() */
-	for(i = 31; i >= 0; i--)
-		if (test_bit(i, start + n))
+	for(i = bitsperlong - 1; i >= 0; i--)
+		if (test_bit(i, bmp->maskp + m))
 			break;
 
 	/*
 	 * Return the last bit set
 	 */
-	return ((sizeof(unsigned int)*8) * n) + i;
+	return bitsperlong * m + i;
 }
 
 /*
