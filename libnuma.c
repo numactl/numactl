@@ -368,7 +368,6 @@ static int
 read_mask(char *s, struct bitmask *bmp)
 {
 	char *end = s;
-	char *prevend;
 	unsigned int *start = (unsigned int *)bmp->maskp;
 	unsigned int *p = start;
 	unsigned int *q;
@@ -377,22 +376,22 @@ read_mask(char *s, struct bitmask *bmp)
 
 	i = strtoul(s, &end, 16);
 
-	prevend = end;
 	/* Skip leading zeros */
 	while (!i && *end++ == ',') {
-		prevend = end;
 		i = strtoul(end, &end, 16);
 	}
-	end = prevend;
+	end++; /* past the , */
 
 	if (!i)
 		/* End of string. No mask */
 		return -1;
 
+	start[n++] = i;
 	/* Read sequence of ints */
 	do {
-		start[n++] = i;
 		i = strtoul(end, &end, 16);
+		if (i)
+			start[n++] = i;
 	} while (*end++ == ',');
 	n--;
 
