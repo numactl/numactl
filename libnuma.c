@@ -288,9 +288,6 @@ set_configured_nodes(void)
 
 	d = opendir("/sys/devices/system/node");
 	if (!d) {
-		numa_warn(W_nosysfs,
-		   "/sys not mounted or no numa system. Assuming one node: %s",
-		  	strerror(errno));
 		maxconfigurednode = 0;
 	} else {
 		while ((de = readdir(d)) != NULL) {
