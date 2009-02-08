@@ -48,8 +48,8 @@ numactl: numactl.o util.o shm.o bitops.o libnuma.so
 
 migratepages: migratepages.c util.o bitops.o libnuma.so
 
+migspeed: LDLIBS += -lrt
 migspeed: migspeed.o util.o libnuma.so
-	${CC} migspeed.c -o migspeed util.o libnuma.so -lrt
 
 util.o: util.c
 
@@ -57,7 +57,7 @@ memhog: util.o memhog.o libnuma.so
 
 numactl.o: numactl.c
 
-numademo: override LDFLAGS += -lm
+numademo: LDLIBS += -lm
 # GNU make 3.80 appends BENCH_CFLAGS twice. Bug? It's harmless though.
 numademo: CFLAGS += -DHAVE_STREAM_LIB -DHAVE_MT -DHAVE_CLEAR_CACHE ${BENCH_CFLAGS}
 stream_lib.o: CFLAGS += ${BENCH_CFLAGS}
@@ -72,24 +72,27 @@ numademo.o: numademo.c libnuma.so
 
 numamon: numamon.o
 
+stream: LDLIBS += -lm
 stream: stream_lib.o stream_main.o  libnuma.so util.o
-	${CC} -o stream ${CFLAGS} stream_lib.o stream_main.o util.o -L. -lnuma -lm
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ $^ ${LDLIBS}
 
 stream_main.o: stream_main.c
 
 libnuma.so.1: versions.ldscript
 
 libnuma.so.1: libnuma.o syscall.o distance.o
-	${CC} -shared -Wl,-soname=libnuma.so.1 -Wl,--version-script,versions.ldscript -Wl,-init,numa_init -o libnuma.so.1 $(filter-out versions.ldscript,$^)
+	${CC} ${LDFLAGS} -shared -Wl,-soname=libnuma.so.1 -Wl,--version-script,versions.ldscript -Wl,-init,numa_init -o libnuma.so.1 $(filter-out versions.ldscript,$^)
 
 libnuma.so: libnuma.so.1
 	ln -sf libnuma.so.1 libnuma.so
 
 libnuma.o : CFLAGS += -fPIC
 
+AR ?= ar
+RANLIB ?= ranlib
 libnuma.a: libnuma.o syscall.o distance.o
-	ar rc $@ $^
-	ranlib $@
+	$(AR) rc $@ $^
+	$(RANLIB) $@
 
 distance.o : CFLAGS += -fPIC
 
