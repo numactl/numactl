@@ -26,25 +26,16 @@
 static int distance_numnodes;
 static int *distance_table; 
 
-static int count_numbers(char *s)
-{
-	int n = 0;
-	for (;;) {
-		char *end;  
-		strtoul(s, &end, 0);
-		if (s == end)
-			return n;
-		s = end;
-		n++; 
-	}
-}
-
 static void parse_numbers(char *s, int *iptr, int n)
 {
-	int i;
+	int i, d, j;
 	char *end;
-	for (i = 0; i < n; i++) { 
-		*iptr++ = strtoul(s, &end, 0);
+	for (i = 0, j = 0; i < n; i++, j++) { 
+		d = strtoul(s, &end, 0);
+		/* Skip unavailable nodes */
+		while (j<n &&  !numa_bitmask_isbitset(numa_all_nodes_ptr, j))
+			j++;
+		*(iptr+j) = d;
 		if (s == end)
 			break;
 		s = end; 
@@ -68,7 +59,10 @@ static int read_distance_table(void)
 		if (!dfh) { 
 			if (errno == ENOENT && nd > 0)
 				err = 0;
-			break;
+			if (!err && nd<numa_num_configured_nodes())
+				continue;
+			else
+				break;
 		}
 		len = getdelim(&line, &linelen, '\n', dfh);
 		fclose(dfh);
@@ -76,7 +70,7 @@ static int read_distance_table(void)
 			break;
 
 		if (!table) { 
-			numnodes = count_numbers(line); 
+			numnodes = numa_num_configured_nodes();
 			table = calloc(numnodes * numnodes, sizeof(int)); 
 			if (!table) {
 				errno = ENOMEM; 
