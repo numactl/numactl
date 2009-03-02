@@ -214,13 +214,24 @@ void print_node_cpus(int node)
 
 void hardware(void)
 { 
-	int i;
+	int i, numconfigurednodes=0;
 	int maxnode = numa_num_configured_nodes()-1;
-	printf("available: %d nodes (0-%d)\n", 1+maxnode, maxnode); 	
+
+	for (i = 0; i<=maxnode; i++)
+		if (numa_bitmask_isbitset(numa_all_nodes_ptr, i))
+			numconfigurednodes++;
+	if (nodes_allowed_list)
+		printf("available: %d nodes (%s)\n", numconfigurednodes, nodes_allowed_list);
+	else
+		printf("available: %d nodes (0-%d)\n", maxnode+1, maxnode); 	
+		
 	for (i = 0; i <= maxnode; i++) { 
 		char buf[64];
 		long long fr;
 		unsigned long long sz = numa_node_size64(i, &fr); 
+		if (!numa_bitmask_isbitset(numa_all_nodes_ptr, i))
+			continue;
+
 		printf("node %d cpus:", i);
 		print_node_cpus(i);
 		printf("node %d size: %s\n", i, fmt_mem(sz, buf));
