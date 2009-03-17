@@ -927,8 +927,10 @@ void *numa_alloc_onnode(size_t size, int node)
 	mem = mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,
 		   0, 0);  
 	if (mem == (char *)-1)
-		return NULL;		
-	dombind(mem, size, bind_policy, bmp);
+		mem = NULL;
+	else 
+		dombind(mem, size, bind_policy, bmp);
+	numa_bitmask_free(bmp);
 	return mem; 	
 } 
 
@@ -1505,6 +1507,7 @@ int numa_run_on_node(int node)
 int numa_preferred(void)
 { 
 	int policy;
+	int ret;
 	struct bitmask *bmp;
 
 	bmp = numa_allocate_nodemask();
@@ -1513,12 +1516,17 @@ int numa_preferred(void)
 		int i;
 		int max = numa_num_possible_nodes();
 		for (i = 0; i < max ; i++) 
-			if (numa_bitmask_isbitset(bmp, i))
-				return i; 
+			if (numa_bitmask_isbitset(bmp, i)){
+				ret = i;
+				goto end;
+			}
 	}
 	/* could read the current CPU from /proc/self/status. Probably 
 	   not worth it. */
-	return 0; /* or random one? */
+	ret = 0; /* or random one? */
+end:
+	numa_bitmask_free(bmp);
+	return ret;
 }
 
 void numa_set_preferred(int node)
