@@ -115,6 +115,8 @@ numa \- NUMA policy library
 .BI "int numa_sched_setaffinity(pid_t " pid ", struct bitmask *" mask );
 .br
 .BI "int numa_node_to_cpus(int " node ", unsigned long *" buffer ", int " bufferlen );
+.br
+.BI "int numa_node_of_cpu(int " cpu ");
 .sp
 .BI "struct bitmask *numa_allocate_cpumask();"
 .sp
@@ -220,6 +222,7 @@ Most functions in this library are only concerned about numa nodes and
 their memory.
 The exceptions to this are:
 .IR numa_node_to_cpus (),
+.IR numa_node_of_cpu (),
 .IR numa_bind (),
 .IR numa_run_on_node (),
 .IR numa_run_on_node_mask ()
@@ -729,6 +732,13 @@ buffer. If the buffer is not long enough
 will be set to
 .I ERANGE
 and \-1 returned. On success 0 is returned.
+
+.BR numa_node_of_cpu ()
+returns the node that a cpu belongs to. If the user supplies an invalid cpu
+.I errno
+will be set to
+.I EINVAL
+and \-1 will be returned.
 
 .BR numa_allocate_cpumask
 () returns a bitmask of a size equal to the kernel's cpu

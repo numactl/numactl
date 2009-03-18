@@ -1310,6 +1310,33 @@ __asm__(".symver numa_node_to_cpus_v2,numa_node_to_cpus@@libnuma_1.2");
 make_internal_alias(numa_node_to_cpus_v1);
 make_internal_alias(numa_node_to_cpus_v2);
 
+/* report the node of the specified cpu */
+int numa_node_of_cpu(int cpu)
+{
+	struct bitmask *bmp;
+	int ncpus, nnodes, node, ret;
+
+	ncpus = numa_num_possible_cpus();
+	if (cpu > ncpus){
+		errno = EINVAL;
+		return -1;
+	}
+	bmp = numa_bitmask_alloc(ncpus);
+	nnodes = numa_num_configured_nodes();
+	for (node = 0; node < nnodes; node++){
+		numa_node_to_cpus_v2_int(node, bmp);
+		if (numa_bitmask_isbitset(bmp, cpu)){
+			ret = node;
+			goto end;
+		}
+	}
+	ret = -1;
+	errno = EINVAL;
+end:
+	numa_bitmask_free(bmp);
+	return ret;
+}
+
 
 int
 numa_run_on_node_mask_v1(const nodemask_t *mask)

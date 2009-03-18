@@ -273,6 +273,9 @@ static inline void numa_free_cpumask(struct bitmask *b)
 /* Convert node to CPU mask. -1/errno on failure, otherwise 0. */
 int numa_node_to_cpus(int, struct bitmask *);
 
+/* report the node of the specified cpu. -1/errno on invalid cpu. */
+int numa_node_of_cpu(int cpu);
+
 /* Report distance of node1 from node2. 0 on error.*/
 int numa_distance(int node1, int node2);
 
