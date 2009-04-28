@@ -904,9 +904,9 @@ numa_get_interleave_mask_v2(void)
 
 	bmp = numa_allocate_nodemask();
 	getpol(&oldpolicy, bmp);
-	if (oldpolicy == MPOL_INTERLEAVE)
-		return bmp;
-	return numa_no_nodes_ptr;
+	if (oldpolicy != MPOL_INTERLEAVE)
+		copy_bitmask_to_bitmask(numa_no_nodes_ptr, bmp);
+	return bmp;
 } 
 __asm__(".symver numa_get_interleave_mask_v2,numa_get_interleave_mask@@libnuma_1.2");
 
@@ -1063,9 +1063,9 @@ numa_get_membind_v2(void)
 
 	bmp = numa_allocate_nodemask();
 	getpol(&oldpolicy, bmp);
-	if (oldpolicy == MPOL_BIND)
-		return bmp;
-	return numa_all_nodes_ptr;
+	if (oldpolicy != MPOL_BIND)
+		copy_bitmask_to_bitmask(numa_all_nodes_ptr, bmp);
+	return bmp;
 } 
 __asm__(".symver numa_get_membind_v2,numa_get_membind@@libnuma_1.2");
 
@@ -1667,8 +1667,10 @@ numa_parse_nodestring(char *s)
 
 	mask = numa_allocate_nodemask();
 
-	if (s[0] == 0)
-		return numa_no_nodes_ptr;
+	if (s[0] == 0){
+		copy_bitmask_to_bitmask(numa_no_nodes_ptr, mask);
+		return mask; /* return freeable mask */
+	}
 	if (*s == '!') {
 		invert = 1;
 		s++;
