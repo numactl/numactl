@@ -940,8 +940,9 @@ void *numa_alloc_local(size_t size)
 	mem = mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,
 		   0, 0); 
 	if (mem == (char *)-1)
-		return NULL;
-	dombind(mem, size, MPOL_PREFERRED, NULL);
+		mem =  NULL;
+	else
+		dombind(mem, size, MPOL_PREFERRED, NULL);
 	return mem; 	
 } 
 
