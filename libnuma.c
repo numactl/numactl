@@ -763,6 +763,7 @@ void numa_tonode_memory(void *mem, size_t size, int node)
 	nodes = numa_allocate_nodemask();
 	numa_bitmask_setbit(nodes, node);
 	dombind(mem, size, bind_policy, nodes);
+	numa_bitmask_free(nodes);
 }
 
 void
@@ -890,6 +891,7 @@ numa_get_interleave_mask_v1(void)
 		copy_bitmask_to_nodemask(bmp, &mask);
 	else
 	 	copy_bitmask_to_nodemask(numa_no_nodes_ptr, &mask);
+	numa_bitmask_free(bmp);
 	return mask;
 }
 __asm__(".symver numa_get_interleave_mask_v1,numa_get_interleave_mask@libnuma_1.1");
@@ -1423,13 +1425,13 @@ numa_run_on_node_mask_v2(struct bitmask *bmp)
 	}
 	err = numa_sched_setaffinity_v2_int(0, cpus);
 
+	numa_bitmask_free(cpus);
+	numa_bitmask_free(nodecpus);
+
 	/* used to have to consider that this could fail - it shouldn't now */
 	if (err < 0) {
 		numa_error("numa_sched_setaffinity_v2_int() failed; abort\n");
-		return -1;
 	}
-	numa_bitmask_free(cpus);
-	numa_bitmask_free(nodecpus);
 
 	return err;
 } 
@@ -1700,7 +1702,7 @@ numa_parse_nodestring(char *s)
 		}
 	} while (*s++ == ',');
 	if (s[-1] != '\0')
-		return 0;
+		goto err;
 	if (invert) {
 		int i;
 		for (i = 0; i < conf_nodes; i++) {
@@ -1796,7 +1798,7 @@ numa_parse_cpustring(char *s)
 		}
 	} while (*s++ == ',');
 	if (s[-1] != '\0')
-		return 0;
+		goto err;
 	if (invert) {
 		int i;
 		for (i = 0; i < conf_cpus; i++) {
