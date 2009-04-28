@@ -1039,17 +1039,19 @@ numa_get_membind_v1(void)
 {
 	int oldpolicy;
 	struct bitmask *bmp;
-	nodemask_t *nmp;
+	nodemask_t nmp;
 
 	bmp = allocate_nodemask_v1();
 	getpol(&oldpolicy, bmp);
 	if (oldpolicy == MPOL_BIND) {
-		nmp = (nodemask_t *)bmp->maskp;
-		return *nmp;
+		copy_bitmask_to_nodemask(bmp, &nmp);
+	} else {
+		/* copy the body of the map to numa_all_nodes */
+		copy_bitmask_to_nodemask(bmp, &numa_all_nodes);
+		nmp = numa_all_nodes;
 	}
-	/* copy the body of the map to numa_all_nodes */
-	copy_bitmask_to_nodemask(bmp, &numa_all_nodes);
-	return numa_all_nodes;
+	numa_bitmask_free(bmp);
+	return nmp;
 }
 __asm__(".symver numa_get_membind_v1,numa_get_membind@libnuma_1.1");
 
@@ -1446,14 +1448,16 @@ numa_get_run_node_mask_v1(void)
 	int i, k;
 	int max = numa_max_node_int();
 	struct bitmask *bmp, *cpus, *nodecpus;
-	nodemask_t *nmp;
+	nodemask_t nmp;
 
-	bmp = allocate_nodemask_v1(); /* the size of a nodemask_t */
 	cpus = numa_allocate_cpumask();
-	nodecpus = numa_allocate_cpumask();
-	if (numa_sched_getaffinity_v2_int(0, cpus) < 0)
-		return numa_no_nodes;
+	if (numa_sched_getaffinity_v2_int(0, cpus) < 0){
+		nmp = numa_no_nodes;
+		goto free_cpus;
+	}
 
+	nodecpus = numa_allocate_cpumask();
+	bmp = allocate_nodemask_v1(); /* the size of a nodemask_t */
 	for (i = 0; i <= max; i++) {
 		if (numa_node_to_cpus_v2_int(i, nodecpus) < 0) {
 			/* It's possible for the node to not exist */
@@ -1464,8 +1468,12 @@ numa_get_run_node_mask_v1(void)
 				numa_bitmask_setbit(bmp, i);
 		}
 	}
-	nmp = (nodemask_t *)bmp->maskp;
-	return *nmp;
+	copy_bitmask_to_nodemask(bmp, &nmp);
+	numa_bitmask_free(bmp);
+	numa_bitmask_free(nodecpus);
+free_cpus:
+	numa_bitmask_free(cpus);
+	return nmp;
 }
 __asm__(".symver numa_get_run_node_mask_v1,numa_get_run_node_mask@libnuma_1.1");
 
@@ -1477,13 +1485,15 @@ numa_get_run_node_mask_v2(void)
 	int max = numa_max_node_int();
 	struct bitmask *bmp, *cpus, *nodecpus;
 
+
 	bmp = numa_allocate_cpumask();
 	cpus = numa_allocate_cpumask();
+	if (numa_sched_getaffinity_v2_int(0, cpus) < 0){
+		copy_bitmask_to_bitmask(numa_no_nodes_ptr, bmp);
+		goto free_cpus;
+	}
+
 	nodecpus = numa_allocate_cpumask();
-
-	if (numa_sched_getaffinity_v2_int(0, cpus) < 0)
-		return numa_no_nodes_ptr;
-
 	for (i = 0; i <= max; i++) {
 		if (numa_node_to_cpus_v2_int(i, nodecpus) < 0) {
 			/* It's possible for the node to not exist */
@@ -1494,6 +1504,9 @@ numa_get_run_node_mask_v2(void)
 				numa_bitmask_setbit(bmp, i);
 		}
 	}		
+	numa_bitmask_free(nodecpus);
+free_cpus:
+	numa_bitmask_free(cpus);
 	return bmp;
 } 
 __asm__(".symver numa_get_run_node_mask_v2,numa_get_run_node_mask@@libnuma_1.2");
@@ -1516,22 +1529,28 @@ int numa_move_pages(int pid, unsigned long count,
 int numa_run_on_node(int node)
 { 
 	int numa_num_nodes = numa_num_possible_nodes();
+	int ret = -1;
 	struct bitmask *cpus;
 
-	cpus = numa_allocate_cpumask();
-	if (node == -1) {
-		numa_bitmask_setall(cpus);
-	} else if (node < numa_num_nodes) {
-		if (numa_node_to_cpus_v2_int(node, cpus) < 0) {
-			numa_warn(W_noderunmask,
-				"Cannot read node cpumask from sysfs");
-			return -1; 
-		} 		
-	} else { 
+	if (node >= numa_num_nodes){
 		errno = EINVAL;
-		return -1; 
+		goto out;
 	}
-	return numa_sched_setaffinity_v2_int(0, cpus);
+
+	cpus = numa_allocate_cpumask();
+
+	if (node == -1)
+		numa_bitmask_setall(cpus);
+	else if (numa_node_to_cpus_v2_int(node, cpus) < 0){
+		numa_warn(W_noderunmask, "Cannot read node cpumask from sysfs");
+		goto free;
+	}
+
+	ret = numa_sched_setaffinity_v2_int(0, cpus);
+free:
+	numa_bitmask_free(cpus);
+out:
+	return ret;
 } 
 
 int numa_preferred(void)
