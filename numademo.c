@@ -165,7 +165,11 @@ void memtest(char *name, unsigned char *mem)
 	max = 0; 
 	min = ~0UL; 
 	sum = 0;
-	for (i = 0; i < LOOPS; i++) { 
+
+	/*
+	 * Note:  0th pass allocates the pages, don't measure
+	 */
+	for (i = 0; i < LOOPS+1; i++) {
 		clearcache(mem, msize);
 		switch (thistest) { 
 		case PTRCHASE:
@@ -239,6 +243,9 @@ void memtest(char *name, unsigned char *mem)
 		default:
 			break;
 		} 
+
+		if (!i)
+			continue;  /* don't count allocation pass */
 
 		timersub(&end, &start, &res);
 		r = timerfold(&res); 
