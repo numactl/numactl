@@ -375,6 +375,9 @@ read_mask(char *s, struct bitmask *bmp)
 	unsigned int *start = tmp;
 	unsigned int i, n = 0, m = 0;
 
+	if (!s)
+		return 0;	/* shouldn't happen */
+
 	i = strtoul(s, &end, 16);
 
 	/* Skip leading zeros */
@@ -447,12 +450,15 @@ set_thread_constraints(void)
 	}
 
 	while (getline(&buffer, &buflen, f) > 0) {
+		/* mask starts after [last] tab */
+		char  *mask = strrchr(buffer,'\t') + 1;
+
 		if (strncmp(buffer,"Cpus_allowed:",13) == 0)
-			maxproccpu = read_mask(buffer + 15, numa_all_cpus_ptr);
+			maxproccpu = read_mask(mask, numa_all_cpus_ptr);
 
 		if (strncmp(buffer,"Mems_allowed:",13) == 0) {
 			maxprocnode =
-				read_mask(buffer + 15, numa_all_nodes_ptr);
+				read_mask(mask, numa_all_nodes_ptr);
 		}
 		if (strncmp(buffer,"Mems_allowed_list:",18) == 0) {
 			nodes_allowed_list = malloc(strlen(buffer)-18);
