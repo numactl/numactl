@@ -58,7 +58,7 @@ probe_hardware()
 
 	# find nodes with at least NEEDPAGES of free memory
 	for i in $(seq 0 $maxnode) ; do
-		free=$(numactl --hardware | fgrep "$i free" | awk '{print $4}')
+		free=$(numactl --hardware | fgrep " $i free" | awk '{print $4}')
 		free=$(( free * MB ))
 		if [[ $((free / PAGESIZE)) -ge $NEEDPAGES ]]; then
 			node[$n]=$i
