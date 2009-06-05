@@ -49,6 +49,7 @@ struct option opts[] = {
 	{"strict", 0, 0, 't'},
 	{"shmmode", 1, 0, 'M'},
 	{"dump", 0, 0, 'd'},
+	{"dump-nodes", 0, 0, 'D'},
 	{"shmid", 1, 0, 'I'},
 	{"huge", 0, 0, 'u'},
 	{"touch", 0, 0, 'T'},
@@ -67,8 +68,8 @@ void usage(void)
 		"       numactl [--length length] [--offset offset] [--shmmode shmmode]\n"
 		"               [--strict]\n"
 		"               [--shmid id] --shm shmkeyfile | --file tmpfsfile\n"
-		"               [--huge] [--touch]\n" 
-		"               memory policy\n"
+		"               [--huge] [--touch] \n"
+		"               memory policy | --dump | --dump-nodes\n"
 		"\n"
 		"memory policy is --interleave, --preferred, --membind, --localalloc\n"
 		"nodes is a comma delimited list of node numbers or A-B ranges or all.\n"
@@ -221,7 +222,8 @@ void hardware(void)
 		if (numa_bitmask_isbitset(numa_all_nodes_ptr, i))
 			numconfigurednodes++;
 	if (nodes_allowed_list)
-		printf("available: %d nodes (%s)\n", numconfigurednodes, nodes_allowed_list);
+		printf("available: %d nodes (%s)\n",
+			numconfigurednodes, nodes_allowed_list);
 	else
 		printf("available: %d nodes (0-%d)\n", maxnode+1, maxnode); 	
 		
@@ -462,8 +464,16 @@ int main(int ac, char **av)
 			break;
 		case 'd': /* --dump */
 			if (shmfd < 0)
-				complain("Cannot do --dump without shared memory.\n");
+				complain(
+				"Cannot do --dump without shared memory.\n");
 			dump_shm();
+			do_dump = 1;
+			break;
+		case 'D': /* --dump-nodes */
+			if (shmfd < 0)
+				complain(
+			    "Cannot do --dump-nodes without shared memory.\n");
+			dump_shm_nodes();
 			do_dump = 1;
 			break;
 		case 't': /* --strict */
@@ -517,10 +527,11 @@ int main(int ac, char **av)
 	}
 
 	if (did_strict)
-		fprintf(stderr,"numactl: warning. Strict flag for process ignored.\n");
+		fprintf(stderr,
+			"numactl: warning. Strict flag for process ignored.\n");
 
 	if (do_dump)
-		usage_msg("cannot do --dump for process");
+		usage_msg("cannot do --dump|--dump-shm for process");
 
 	if (shmoption)
 		usage_msg("shm related option %s for process", shmoption);

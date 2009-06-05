@@ -202,6 +202,37 @@ void dump_shm(void)
 	dumppol(start, c, prevpol, prevnodes);
 } 
 
+static void dumpnode(unsigned long long start, unsigned long long end, int node)
+{
+	printf("%016Lx-%016Lx: %d\n", shmoffset+start, shmoffset+end, node);
+}
+
+/* Dump nodes in a shared memory segment. */
+void dump_shm_nodes(void)
+{
+	int prevnode = -1, node;
+	unsigned long long c, start;
+
+	start = 0;
+	if (shmlen == 0) {
+		printf("nothing to dump\n");
+		return;
+	}
+
+	for (c = 0; c < shmlen; c += shm_pagesize) {
+		if (get_mempolicy(&node, NULL, 0, c+shmptr,
+						MPOL_F_ADDR|MPOL_F_NODE) < 0)
+			err("get_mempolicy on shm");
+		if (node == prevnode)
+			continue;
+		if (prevnode != -1)
+			dumpnode(start, c, prevnode);
+		prevnode = node;
+		start = c;
+	}
+	dumpnode(start, c, prevnode);
+}
+
 static void vwarn(char *ptr, char *fmt, ...) 
 { 
 	va_list ap;
