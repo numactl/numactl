@@ -37,6 +37,7 @@ static inline void clearcache(void *a, unsigned size) {}
 #endif
 #define FRACT_NODES 8
 #define FRACT_MASKS 32
+int fract_nodes;
 
 unsigned long msize; 
 
@@ -165,7 +166,11 @@ void memtest(char *name, unsigned char *mem)
 	max = 0; 
 	min = ~0UL; 
 	sum = 0;
-	for (i = 0; i < LOOPS; i++) { 
+
+	/*
+	 * Note:  0th pass allocates the pages, don't measure
+	 */
+	for (i = 0; i < LOOPS+1; i++) {
 		clearcache(mem, msize);
 		switch (thistest) { 
 		case PTRCHASE:
@@ -240,6 +245,9 @@ void memtest(char *name, unsigned char *mem)
 			break;
 		} 
 
+		if (!i)
+			continue;  /* don't count allocation pass */
+
 		timersub(&end, &start, &res);
 		r = timerfold(&res); 
 		if (r > max) max = r;
@@ -296,7 +304,7 @@ void test(enum test type)
 
 	if (regression_testing) {
 		printf("\nTest %s doing 1 of %d nodes and 1 of %d masks.\n",
-			testname[thistest], FRACT_NODES, FRACT_MASKS);
+			testname[thistest], fract_nodes, FRACT_MASKS);
 	}
 
 	memtest("memory with no policy", numa_alloc(msize));
@@ -304,7 +312,7 @@ void test(enum test type)
 
 	memtest("memory interleaved on all nodes", numa_alloc_interleaved(msize)); 
 	for (i = 0; i <= max_node; i++) { 
-		if (regression_testing && (i % FRACT_NODES)) {
+		if (regression_testing && (i % fract_nodes)) {
 		/* for regression testing (-t) do only every eighth node */
 			continue;
 		}
@@ -317,6 +325,9 @@ void test(enum test type)
 		char buf2[10];
 		if (popcnt(mask) == 1) 
 			continue;
+		if (regression_testing && (i > 50)) {
+			break;
+		}
 		if (regression_testing && (i % FRACT_MASKS)) {
 		/* for regression testing (-t)
 			do only every 32nd mask permutation */
@@ -338,7 +349,7 @@ void test(enum test type)
 	}
 
 	for (i = 0; i <= max_node; i++) { 
-		if (regression_testing && (i % FRACT_NODES)) {
+		if (regression_testing && (i % fract_nodes)) {
 		/* for regression testing (-t) do only every eighth node */
 			continue;
 		}
@@ -366,7 +377,7 @@ void test(enum test type)
 	for (i = 0; i <= max_node; i++) { 
 		int oldhn = numa_preferred();
 
-		if (regression_testing && (i % FRACT_NODES)) {
+		if (regression_testing && (i % fract_nodes)) {
 		/* for regression testing (-t) do only every eighth node */
 			continue;
 		}
@@ -389,7 +400,7 @@ void test(enum test type)
 		for (k = 0; k <= max_node; k++) { 
 			if (k == i) 
 				continue;
-			if (regression_testing && (k % FRACT_NODES)) {
+			if (regression_testing && (k % fract_nodes)) {
 			/* for regression testing (-t)
 				do only every eighth node */
 				continue;
@@ -484,6 +495,7 @@ int main(int ac, char **av)
 
 	max_node = numa_max_node(); 
 	printf("%d nodes available\n", max_node+1); 
+	fract_nodes = ((max_node/8)*2) + FRACT_NODES;
 
 	if (max_node <= 2)
 		regression_testing = 0; /* set -t auto-off for small systems */

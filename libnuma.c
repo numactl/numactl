@@ -54,6 +54,8 @@ struct bitmask *numa_all_cpus_ptr = NULL;
 static unsigned long *node_cpu_mask_v1[NUMA_NUM_NODES];
 struct bitmask **node_cpu_mask_v2;
 
+char *nodes_allowed_list = NULL;
+
 WEAK void numa_error(char *where);
 
 #ifdef __thread
@@ -74,24 +76,6 @@ int numa_exit_on_error = 0;
 int numa_exit_on_warn = 0;
 static void set_sizes(void);
 
-static inline void
-nodemask_set_v1(nodemask_t *mask, int node)
-{
-	mask->n[node / (8*sizeof(unsigned long))] |=
-		(1UL<<(node%(8*sizeof(unsigned long))));
-}
-
-static inline int
-nodemask_isset_v1(const nodemask_t *mask, int node)
-{
-	if ((unsigned)node >= NUMA_NUM_NODES)
-		return 0;
-	if (mask->n[node / (8*sizeof(unsigned long))] &
-		(1UL<<(node%(8*sizeof(unsigned long)))))
-		return 1;
-	return 0;
-}
-
 /*
  * There are two special functions, _init(void) and _fini(void), which
  * are called automatically by the dynamic loader whenever a library is loaded.
@@ -107,7 +91,7 @@ numa_init(void)
 	/* numa_all_nodes should represent existing nodes on this system */
         max = numa_num_configured_nodes();
         for (i = 0; i < max; i++)
-                nodemask_set_v1((nodemask_t *)&numa_all_nodes, i);
+                nodemask_set_compat((nodemask_t *)&numa_all_nodes, i);
 	memset(&numa_no_nodes, 0, sizeof(numa_no_nodes));
 }
 
@@ -306,9 +290,6 @@ set_configured_nodes(void)
 
 	d = opendir("/sys/devices/system/node");
 	if (!d) {
-		numa_warn(W_nosysfs,
-		   "/sys not mounted or no numa system. Assuming one node: %s",
-		  	strerror(errno));
 		maxconfigurednode = 0;
 	} else {
 		while ((de = readdir(d)) != NULL) {
@@ -389,54 +370,60 @@ static int
 read_mask(char *s, struct bitmask *bmp)
 {
 	char *end = s;
-	char *prevend;
-	unsigned int *start = (unsigned int *)bmp->maskp;
-	unsigned int *p = start;
-	unsigned int *q;
-	unsigned int i;
-	unsigned int n = 0;
+	int tmplen = (bmp->size + bitsperint - 1) / bitsperint;
+	unsigned int tmp[tmplen];
+	unsigned int *start = tmp;
+	unsigned int i, n = 0, m = 0;
+
+	if (!s)
+		return 0;	/* shouldn't happen */
 
 	i = strtoul(s, &end, 16);
 
-	prevend = end;
 	/* Skip leading zeros */
 	while (!i && *end++ == ',') {
-		prevend = end;
 		i = strtoul(end, &end, 16);
 	}
-	end = prevend;
 
 	if (!i)
 		/* End of string. No mask */
 		return -1;
 
+	start[n++] = i;
 	/* Read sequence of ints */
-	do {
-		start[n++] = i;
+	while (*end++ == ',') {
 		i = strtoul(end, &end, 16);
-	} while (*end++ == ',');
-	n--;
+		start[n++] = i;
+
+		/* buffer overflow */
+		if (n > tmplen)
+			return -1;
+	}
 
 	/*
 	 * Invert sequence of ints if necessary since the first int
 	 * is the highest and we put it first because we read it first.
 	 */
-	for (q = start + n, p = start; p < q; q--, p++) {
-		unsigned int x = *q;
+	while (n) {
+		int w;
+		unsigned long x = 0;
+		/* read into long values in an endian-safe way */
+		for (w = 0; n && w < bitsperlong; w += bitsperint)
+			x |= ((unsigned long)start[n-- - 1] << w);
 
-		*q = *p;
-		*p = x;
+		bmp->maskp[m++] = x;
 	}
+	m--;
 
 	/* Poor mans fls() */
-	for(i = 31; i >= 0; i--)
-		if (test_bit(i, start + n))
+	for(i = bitsperlong - 1; i >= 0; i--)
+		if (test_bit(i, bmp->maskp + m))
 			break;
 
 	/*
 	 * Return the last bit set
 	 */
-	return ((sizeof(unsigned int)*8) * n) + i;
+	return bitsperlong * m + i;
 }
 
 /*
@@ -463,12 +450,21 @@ set_thread_constraints(void)
 	}
 
 	while (getline(&buffer, &buflen, f) > 0) {
+		/* mask starts after [last] tab */
+		char  *mask = strrchr(buffer,'\t') + 1;
+
 		if (strncmp(buffer,"Cpus_allowed:",13) == 0)
-			maxproccpu = read_mask(buffer + 15, numa_all_cpus_ptr);
+			maxproccpu = read_mask(mask, numa_all_cpus_ptr);
 
 		if (strncmp(buffer,"Mems_allowed:",13) == 0) {
 			maxprocnode =
-				read_mask(buffer + 15, numa_all_nodes_ptr);
+				read_mask(mask, numa_all_nodes_ptr);
+		}
+		if (strncmp(buffer,"Mems_allowed_list:",18) == 0) {
+			nodes_allowed_list = malloc(strlen(buffer)-18);
+			strncpy(nodes_allowed_list, buffer + 19,
+				strlen(buffer) - 19);
+			nodes_allowed_list[strlen(nodes_allowed_list)-1] = '\0';
 		}
 	}
 	fclose(f);
@@ -509,7 +505,7 @@ set_thread_constraints(void)
 static void
 set_numa_max_cpu(void)
 {
-	int len = 2048;
+	int len = 4096;
 	int n;
 	int olde = errno;
 	struct bitmask *buffer;
@@ -773,6 +769,7 @@ void numa_tonode_memory(void *mem, size_t size, int node)
 	nodes = numa_allocate_nodemask();
 	numa_bitmask_setbit(nodes, node);
 	dombind(mem, size, bind_policy, nodes);
+	numa_bitmask_free(nodes);
 }
 
 void
@@ -900,6 +897,7 @@ numa_get_interleave_mask_v1(void)
 		copy_bitmask_to_nodemask(bmp, &mask);
 	else
 	 	copy_bitmask_to_nodemask(numa_no_nodes_ptr, &mask);
+	numa_bitmask_free(bmp);
 	return mask;
 }
 __asm__(".symver numa_get_interleave_mask_v1,numa_get_interleave_mask@libnuma_1.1");
@@ -912,9 +910,9 @@ numa_get_interleave_mask_v2(void)
 
 	bmp = numa_allocate_nodemask();
 	getpol(&oldpolicy, bmp);
-	if (oldpolicy == MPOL_INTERLEAVE)
-		return bmp;
-	return numa_no_nodes_ptr;
+	if (oldpolicy != MPOL_INTERLEAVE)
+		copy_bitmask_to_bitmask(numa_no_nodes_ptr, bmp);
+	return bmp;
 } 
 __asm__(".symver numa_get_interleave_mask_v2,numa_get_interleave_mask@@libnuma_1.2");
 
@@ -937,8 +935,10 @@ void *numa_alloc_onnode(size_t size, int node)
 	mem = mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,
 		   0, 0);  
 	if (mem == (char *)-1)
-		return NULL;		
-	dombind(mem, size, bind_policy, bmp);
+		mem = NULL;
+	else 
+		dombind(mem, size, bind_policy, bmp);
+	numa_bitmask_free(bmp);
 	return mem; 	
 } 
 
@@ -948,8 +948,9 @@ void *numa_alloc_local(size_t size)
 	mem = mmap(0, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,
 		   0, 0); 
 	if (mem == (char *)-1)
-		return NULL;
-	dombind(mem, size, MPOL_PREFERRED, NULL);
+		mem =  NULL;
+	else
+		dombind(mem, size, MPOL_PREFERRED, NULL);
 	return mem; 	
 } 
 
@@ -995,7 +996,7 @@ copy_bitmask_to_nodemask(struct bitmask *bmp, nodemask_t *nmp)
 		if (i >= max)
 			break;
 		if (numa_bitmask_isbitset(bmp, i))
-                	nodemask_set_v1((nodemask_t *)nmp, i);
+                	nodemask_set_compat((nodemask_t *)nmp, i);
 	}
 }
 
@@ -1034,7 +1035,7 @@ copy_nodemask_to_bitmask(nodemask_t *nmp, struct bitmask *bmp)
 	if (max > bmp->size)
 		max = bmp->size;
 	for (i=0; i<max; i++) {
-		if (nodemask_isset_v1(nmp, i))
+		if (nodemask_isset_compat(nmp, i))
 			numa_bitmask_setbit(bmp, i);
 	}
 }
@@ -1044,17 +1045,19 @@ numa_get_membind_v1(void)
 {
 	int oldpolicy;
 	struct bitmask *bmp;
-	nodemask_t *nmp;
+	nodemask_t nmp;
 
 	bmp = allocate_nodemask_v1();
 	getpol(&oldpolicy, bmp);
 	if (oldpolicy == MPOL_BIND) {
-		nmp = (nodemask_t *)bmp->maskp;
-		return *nmp;
+		copy_bitmask_to_nodemask(bmp, &nmp);
+	} else {
+		/* copy the body of the map to numa_all_nodes */
+		copy_bitmask_to_nodemask(bmp, &numa_all_nodes);
+		nmp = numa_all_nodes;
 	}
-	/* copy the body of the map to numa_all_nodes */
-	copy_bitmask_to_nodemask(bmp, &numa_all_nodes);
-	return numa_all_nodes;
+	numa_bitmask_free(bmp);
+	return nmp;
 }
 __asm__(".symver numa_get_membind_v1,numa_get_membind@libnuma_1.1");
 
@@ -1066,9 +1069,9 @@ numa_get_membind_v2(void)
 
 	bmp = numa_allocate_nodemask();
 	getpol(&oldpolicy, bmp);
-	if (oldpolicy == MPOL_BIND)
-		return bmp;
-	return numa_all_nodes_ptr;
+	if (oldpolicy != MPOL_BIND)
+		copy_bitmask_to_bitmask(numa_all_nodes_ptr, bmp);
+	return bmp;
 } 
 __asm__(".symver numa_get_membind_v2,numa_get_membind@@libnuma_1.2");
 
@@ -1318,6 +1321,33 @@ __asm__(".symver numa_node_to_cpus_v2,numa_node_to_cpus@@libnuma_1.2");
 make_internal_alias(numa_node_to_cpus_v1);
 make_internal_alias(numa_node_to_cpus_v2);
 
+/* report the node of the specified cpu */
+int numa_node_of_cpu(int cpu)
+{
+	struct bitmask *bmp;
+	int ncpus, nnodes, node, ret;
+
+	ncpus = numa_num_possible_cpus();
+	if (cpu > ncpus){
+		errno = EINVAL;
+		return -1;
+	}
+	bmp = numa_bitmask_alloc(ncpus);
+	nnodes = numa_num_configured_nodes();
+	for (node = 0; node < nnodes; node++){
+		numa_node_to_cpus_v2_int(node, bmp);
+		if (numa_bitmask_isbitset(bmp, cpu)){
+			ret = node;
+			goto end;
+		}
+	}
+	ret = -1;
+	errno = EINVAL;
+end:
+	numa_bitmask_free(bmp);
+	return ret;
+}
+
 
 int
 numa_run_on_node_mask_v1(const nodemask_t *mask)
@@ -1329,7 +1359,7 @@ numa_run_on_node_mask_v1(const nodemask_t *mask)
 	for (i = 0; i < NUMA_NUM_NODES; i++) {
 		if (mask->n[i / BITS_PER_LONG] == 0)
 			continue;
-		if (nodemask_isset_v1(mask, i)) {
+		if (nodemask_isset_compat(mask, i)) {
 			if (numa_node_to_cpus_v1_int(i, nodecpus, CPU_BYTES(ncpus)) < 0) {
 				numa_warn(W_noderunmask,
 					  "Cannot read node cpumask from sysfs");
@@ -1403,13 +1433,13 @@ numa_run_on_node_mask_v2(struct bitmask *bmp)
 	}
 	err = numa_sched_setaffinity_v2_int(0, cpus);
 
+	numa_bitmask_free(cpus);
+	numa_bitmask_free(nodecpus);
+
 	/* used to have to consider that this could fail - it shouldn't now */
 	if (err < 0) {
 		numa_error("numa_sched_setaffinity_v2_int() failed; abort\n");
-		return -1;
 	}
-	numa_bitmask_free(cpus);
-	numa_bitmask_free(nodecpus);
 
 	return err;
 } 
@@ -1424,14 +1454,16 @@ numa_get_run_node_mask_v1(void)
 	int i, k;
 	int max = numa_max_node_int();
 	struct bitmask *bmp, *cpus, *nodecpus;
-	nodemask_t *nmp;
+	nodemask_t nmp;
 
-	bmp = allocate_nodemask_v1(); /* the size of a nodemask_t */
 	cpus = numa_allocate_cpumask();
-	nodecpus = numa_allocate_cpumask();
-	if (numa_sched_getaffinity_v2_int(0, cpus) < 0)
-		return numa_no_nodes;
+	if (numa_sched_getaffinity_v2_int(0, cpus) < 0){
+		nmp = numa_no_nodes;
+		goto free_cpus;
+	}
 
+	nodecpus = numa_allocate_cpumask();
+	bmp = allocate_nodemask_v1(); /* the size of a nodemask_t */
 	for (i = 0; i <= max; i++) {
 		if (numa_node_to_cpus_v2_int(i, nodecpus) < 0) {
 			/* It's possible for the node to not exist */
@@ -1442,8 +1474,12 @@ numa_get_run_node_mask_v1(void)
 				numa_bitmask_setbit(bmp, i);
 		}
 	}
-	nmp = (nodemask_t *)bmp->maskp;
-	return *nmp;
+	copy_bitmask_to_nodemask(bmp, &nmp);
+	numa_bitmask_free(bmp);
+	numa_bitmask_free(nodecpus);
+free_cpus:
+	numa_bitmask_free(cpus);
+	return nmp;
 }
 __asm__(".symver numa_get_run_node_mask_v1,numa_get_run_node_mask@libnuma_1.1");
 
@@ -1455,13 +1491,15 @@ numa_get_run_node_mask_v2(void)
 	int max = numa_max_node_int();
 	struct bitmask *bmp, *cpus, *nodecpus;
 
+
 	bmp = numa_allocate_cpumask();
 	cpus = numa_allocate_cpumask();
+	if (numa_sched_getaffinity_v2_int(0, cpus) < 0){
+		copy_bitmask_to_bitmask(numa_no_nodes_ptr, bmp);
+		goto free_cpus;
+	}
+
 	nodecpus = numa_allocate_cpumask();
-
-	if (numa_sched_getaffinity_v2_int(0, cpus) < 0)
-		return numa_no_nodes_ptr;
-
 	for (i = 0; i <= max; i++) {
 		if (numa_node_to_cpus_v2_int(i, nodecpus) < 0) {
 			/* It's possible for the node to not exist */
@@ -1472,6 +1510,9 @@ numa_get_run_node_mask_v2(void)
 				numa_bitmask_setbit(bmp, i);
 		}
 	}		
+	numa_bitmask_free(nodecpus);
+free_cpus:
+	numa_bitmask_free(cpus);
 	return bmp;
 } 
 __asm__(".symver numa_get_run_node_mask_v2,numa_get_run_node_mask@@libnuma_1.2");
@@ -1494,27 +1535,34 @@ int numa_move_pages(int pid, unsigned long count,
 int numa_run_on_node(int node)
 { 
 	int numa_num_nodes = numa_num_possible_nodes();
+	int ret = -1;
 	struct bitmask *cpus;
 
-	cpus = numa_allocate_cpumask();
-	if (node == -1) {
-		numa_bitmask_setall(cpus);
-	} else if (node < numa_num_nodes) {
-		if (numa_node_to_cpus_v2_int(node, cpus) < 0) {
-			numa_warn(W_noderunmask,
-				"Cannot read node cpumask from sysfs");
-			return -1; 
-		} 		
-	} else { 
+	if (node >= numa_num_nodes){
 		errno = EINVAL;
-		return -1; 
+		goto out;
 	}
-	return numa_sched_setaffinity_v2_int(0, cpus);
+
+	cpus = numa_allocate_cpumask();
+
+	if (node == -1)
+		numa_bitmask_setall(cpus);
+	else if (numa_node_to_cpus_v2_int(node, cpus) < 0){
+		numa_warn(W_noderunmask, "Cannot read node cpumask from sysfs");
+		goto free;
+	}
+
+	ret = numa_sched_setaffinity_v2_int(0, cpus);
+free:
+	numa_bitmask_free(cpus);
+out:
+	return ret;
 } 
 
 int numa_preferred(void)
 { 
 	int policy;
+	int ret;
 	struct bitmask *bmp;
 
 	bmp = numa_allocate_nodemask();
@@ -1523,12 +1571,17 @@ int numa_preferred(void)
 		int i;
 		int max = numa_num_possible_nodes();
 		for (i = 0; i < max ; i++) 
-			if (numa_bitmask_isbitset(bmp, i))
-				return i; 
+			if (numa_bitmask_isbitset(bmp, i)){
+				ret = i;
+				goto end;
+			}
 	}
 	/* could read the current CPU from /proc/self/status. Probably 
 	   not worth it. */
-	return 0; /* or random one? */
+	ret = 0; /* or random one? */
+end:
+	numa_bitmask_free(bmp);
+	return ret;
 }
 
 void numa_set_preferred(int node)
@@ -1620,8 +1673,10 @@ numa_parse_nodestring(char *s)
 
 	mask = numa_allocate_nodemask();
 
-	if (s[0] == 0)
-		return numa_no_nodes_ptr;
+	if (s[0] == 0){
+		copy_bitmask_to_bitmask(numa_no_nodes_ptr, mask);
+		return mask; /* return freeable mask */
+	}
 	if (*s == '!') {
 		invert = 1;
 		s++;
@@ -1674,7 +1729,7 @@ numa_parse_nodestring(char *s)
 		}
 	} while (*s++ == ',');
 	if (s[-1] != '\0')
-		return 0;
+		goto err;
 	if (invert) {
 		int i;
 		for (i = 0; i < conf_nodes; i++) {
@@ -1770,7 +1825,7 @@ numa_parse_cpustring(char *s)
 		}
 	} while (*s++ == ',');
 	if (s[-1] != '\0')
-		return 0;
+		goto err;
 	if (invert) {
 		int i;
 		for (i = 0; i < conf_cpus; i++) {

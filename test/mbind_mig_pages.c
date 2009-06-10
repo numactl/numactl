@@ -6,8 +6,8 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include "../numa.h"
-#include "../numaif.h"
+#include <numa.h>
+#include <numaif.h>
 #include <unistd.h>
 #include <asm/unistd.h>
 
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 	/* Move to node zero */
 	printf("\nMoving pages via mbind to node 0 ...\n");
 	rc = mbind(pages, page_count * pagesize, MPOL_BIND, old_nodes->maskp,
-		old_nodes->size, MPOL_MF_MOVE | MPOL_MF_STRICT);
+		old_nodes->size + 1, MPOL_MF_MOVE | MPOL_MF_STRICT);
 	if (rc < 0) {
 		perror("mbind");
 		errors++;
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 
 	printf("\nMoving pages via mbind from node 0 to 1 ...\n");
 	rc = mbind(pages, page_count * pagesize, MPOL_BIND, new_nodes->maskp,
-		new_nodes->size, MPOL_MF_MOVE | MPOL_MF_STRICT);
+		new_nodes->size + 1, MPOL_MF_MOVE | MPOL_MF_STRICT);
 	if (rc < 0) {
 		perror("mbind");
 		errors++;

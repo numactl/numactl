@@ -6,7 +6,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include "../numa.h"
+#include "numa.h"
 #include <unistd.h>
 #include <asm/unistd.h>
 

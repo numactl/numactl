@@ -269,3 +269,31 @@ updating in newer kernels (Mel Gorman)
 - Fix numaif.h and numaint.h (migrate_pages; from Masatake Yamato)
 - Fixes to numademo (min/max, and array index; from Kent Liu)
 - Fixes to Makefile and permissions; from Berhard Walle
+
+2.0.3-rc1 - rc3
+- Fixes to libnuma.c numa.h numacompat1.h by Daniel Gollub to fix v1 compatiblity
+- Restore nodemask_zero() and nodemask_equal()
+- Drops a warning message about this not being a NUMA system
+- Remove the numa_maps.5 man page (it's in Linux now) (by Bernhard Walle)
+- Fix makefiles in tests (Andi)
+- Fix off-by-ones in test mbind_mig_pages (Andi)
+- Fix test/prefered.c (Andi)
+- Fix to print_node_cpus() (Arnd/Bill Buros)
+- Fixes to read_mask()  (Arnd's on top of cpw's)
+- Fix to makefile (LDFLAGS/LDLIBS/AR/RANLIB) (Mike Frysinger)
+- Fix numactl for noncontiguous nodes (Amit Arora)
+- Fix bitmask memory leaks, numa_alloc_onnode/numa_preferred (Kornilios Kourtis)
+- Add numa_node_of_cpu() to retrieve local node of a cpu (Kornilios Kourtis)
+- Fix parsing of /proc/self/status (Brice Goglin/Lee Shermerhorn)
+- Small reorganization of numa_alloc_local() (L.S.)
+- Fixes of bitmask memory leaks in about eight functions (L.S.)
+- Make library always return allocated masks that user can free (L.S.)
+- Fix to numademo memtest (allocation overhead) (L.S.)
+- Fix to checkaffinity test (possible shell errors) (L.S.)
+- Fix a printf in migspeed.c (Frederik Himpe)
+- Fix test/regress grep of node nummber (Cliff W.)
+- Change numademo to finish in a timely manner on large machines (Cliff W.)
+- tested on 96p 48nodes
+
+2.0.3-rc1 - rc4
+- Add --dump-nodes option to numactl (Andi)

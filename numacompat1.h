@@ -11,3 +11,8 @@
 #define numa_sched_getaffinity(p,l,m)   numa_sched_getaffinity_compat(p,l,m)
 #define numa_sched_setaffinity(p,l,m)   numa_sched_setaffinity_compat(p,l,m)
 #define numa_node_to_cpus(n,b,bl)       numa_node_to_cpus_compat(n,b,bl)
+#define nodemask_zero(m)		nodemask_zero_compat(m)
+#define nodemask_set(m, n)		nodemask_set_compat(m, n)
+#define nodemask_clr(m, n)		nodemask_clr_compat(m, n)
+#define nodemask_isset(m, n)		nodemask_isset_compat(m, n)
+#define nodemask_equal(a, b)		nodemask_equal_compat(a, b)

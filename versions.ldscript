@@ -118,6 +118,7 @@ libnuma_1.2 {
     numa_node_size64;
     numa_node_size;
     numa_node_to_cpus;
+    numa_node_of_cpu;
     numa_num_configured_cpus;
     numa_num_configured_nodes;
     numa_num_possible_nodes;
@@ -143,6 +144,7 @@ libnuma_1.2 {
     numa_tonode_memory;
     numa_tonodemask_memory;
     numa_warn;
+    nodes_allowed_list;
   local:
     *;
 } libnuma_1.1;

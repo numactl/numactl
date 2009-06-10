@@ -64,6 +64,8 @@ numactl \- Control NUMA policy for processes or shared memory
 .B \-\-touch
 ] [
 .B \-\-dump
+] [
+.B \-\-dump-nodes
 ]
 memory policy
 .SH DESCRIPTION
@@ -224,6 +226,9 @@ is applied when an applications maps and accesses a page.
 .TP
 .B \-\-dump
 Dump policy in the specified range.
+.TP
+.B \-\-dump-nodes
+Dump all nodes of the specific range (very verbose!)
 .TP
 Valid node specifiers
 .TS

@@ -9,11 +9,11 @@ numcpus=$(grep -c processor /proc/cpuinfo)
 numnodes=$(ls -1d /sys/devices/system/node/node[0-9]* | wc -l )
 
 for i in $(seq 0 $[$numcpus - 1]) ; do
-    if [ $(numactl --physcpubind=$i ./printcpu) != $i ] ; then
+    if [ "$(numactl --physcpubind=$i ./printcpu)" != "$i" ] ; then
        echo "--physcpubind for $i doesn't work"
        exit 1
     fi
-    if [ $(numactl --physcpubind=$i numactl --show | awk '/^physcpubind/ { print $2 }' ) != $i ] ; then
+    if [ "$(numactl --physcpubind=$i numactl --show | awk '/^physcpubind/ { print $2 }' )" != "$i" ] ; then
 	echo "--show doesn't agree with physcpubind for cpu $i"
 	exit 1
     fi

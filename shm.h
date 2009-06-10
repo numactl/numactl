@@ -8,6 +8,7 @@ extern unsigned long long shmoffset;
 extern int shmflags;
 
 extern void dump_shm(void);
+extern void dump_shm_nodes(void);
 extern void attach_shared(char *);
 extern void attach_sysvshm(char *);
 extern void verify_shm(int policy, struct bitmask *);
