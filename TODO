@@ -1,3 +1,5 @@
+last update Aug 16 2007:
+
 need to fix hugetlbfs to allow holey files (for numactl)
 numademo numbers seem to be unstable. investigate.
 need more test programs

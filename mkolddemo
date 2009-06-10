@@ -1,0 +1,9 @@
+# test the numacompat1.h stuff by compiling an old version of numademo.c
+
+cc -L. -lnuma -I. -DNUMA_VERSION1_COMPATIBILITY -o olddemo olddemo.c
+
+
+export LD_LIBRARY_PATH=.
+echo "executing olddemo:"
+./olddemo
+
