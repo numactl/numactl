@@ -144,7 +144,6 @@ libnuma_1.2 {
     numa_tonode_memory;
     numa_tonodemask_memory;
     numa_warn;
-    nodes_allowed_list;
   local:
     *;
 } libnuma_1.1;

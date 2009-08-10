@@ -82,7 +82,7 @@ stream_main.o: stream_main.c
 libnuma.so.1: versions.ldscript
 
 libnuma.so.1: libnuma.o syscall.o distance.o
-	${CC} ${LDFLAGS} -shared -Wl,-soname=libnuma.so.1 -Wl,--version-script,versions.ldscript -Wl,-init,numa_init -o libnuma.so.1 $(filter-out versions.ldscript,$^)
+	${CC} ${LDFLAGS} -shared -Wl,-soname=libnuma.so.1 -Wl,--version-script,versions.ldscript -Wl,-init,numa_init -Wl,-fini,numa_fini -o libnuma.so.1 $(filter-out versions.ldscript,$^)
 
 libnuma.so: libnuma.so.1
 	ln -sf libnuma.so.1 libnuma.so

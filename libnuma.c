@@ -93,6 +93,17 @@ numa_init(void)
 	memset(&numa_no_nodes, 0, sizeof(numa_no_nodes));
 }
 
+void
+numa_fini(void)
+{
+	if (numa_all_cpus_ptr)
+		numa_bitmask_free(numa_all_cpus_ptr);
+	if (numa_all_nodes_ptr)
+		numa_bitmask_free(numa_all_nodes_ptr);
+	if (numa_no_nodes_ptr)
+		numa_bitmask_free(numa_no_nodes_ptr);
+}
+
 /*
  * The following bitmask declarations, bitmask_*() routines, and associated
  * _setbit() and _getbit() routines are:

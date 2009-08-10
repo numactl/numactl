@@ -161,8 +161,6 @@ extern struct bitmask *numa_no_nodes_ptr;
 /* Source compatibility */
 extern nodemask_t numa_no_nodes;
 
-extern char *nodes_allowed_list;
-
 /* Only run and allocate memory from a specific set of nodes. */
 void numa_bind(struct bitmask *nodes);
 
