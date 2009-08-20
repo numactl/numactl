@@ -200,14 +200,13 @@ static void print_distances(int maxnode)
 
 void print_node_cpus(int node)
 {
-	int conf_cpus = numa_num_configured_cpus();
 	int i, err;
 	struct bitmask *cpus;
 
-	cpus = numa_bitmask_alloc(conf_cpus);
+	cpus = numa_allocate_cpumask();
 	err = numa_node_to_cpus(node, cpus);
 	if (err >= 0) 
-		for (i = 0; i < conf_cpus; i++) 
+		for (i = 0; i < cpus->size; i++) 
 			if (numa_bitmask_isbitset(cpus, i))
 				printf(" %d", i);
 	putchar('\n');
