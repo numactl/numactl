@@ -1016,9 +1016,6 @@ copy_bitmask_to_bitmask(struct bitmask *bmpfrom, struct bitmask *bmpto)
 		memcpy(bmpto->maskp, bmpfrom->maskp, bytes);
 		memset(((char *)bmpto->maskp)+bytes, 0,
 					CPU_BYTES(bmpto->size)-bytes);
-	} else {
-		bytes = CPU_BYTES(bmpfrom->size);
-		memcpy(bmpto->maskp, bmpfrom->maskp, bytes);
 	}
 }
 
@@ -1272,11 +1269,11 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 
 	if (node_cpu_mask_v2[node]) {
 		/* have already constructed a mask for this node */
-		if (buffer->size != node_cpu_mask_v2[node]->size) {
+		if (buffer->size < node_cpu_mask_v2[node]->size) {
 			numa_error("map size mismatch; abort\n");
 			return -1;
 		}
-		memcpy(buffer->maskp, node_cpu_mask_v2[node]->maskp, bufferlen);
+		copy_bitmask_to_bitmask(node_cpu_mask_v2[node], buffer);
 		return 0;
 	}
 
