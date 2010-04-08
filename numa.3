@@ -44,9 +44,9 @@ numa \- NUMA policy library
 .br
 .BI "struct bitmask *numa_all_cpus_ptr;"
 .sp
-.BI "int numa_num_thread_cpus();"
+.BI "int numa_num_task_cpus();"
 .br
-.BI "int numa_num_thread_nodes();"
+.BI "int numa_num_task_nodes();"
 .sp
 .BI "int numa_parse_bitmap(char *" line " , struct bitmask *" mask ");
 .br
@@ -177,16 +177,16 @@ page interleaving (i.e., allocate in a round-robin fashion from all,
 or a subset, of the nodes on the system),
 preferred node allocation (i.e., preferably allocate on a particular node),
 local allocation (i.e., allocate on the node on which
-the thread is currently executing),
+the task is currently executing),
 or allocation only on specific nodes (i.e., allocate on
 some subset of the available nodes).
-It is also possible to bind threads to specific nodes.
+It is also possible to bind tasks to specific nodes.
 
-Numa memory allocation policy may be specified as a per-thread attribute,
-that is inherited by children threads and processes, or as an attribute
+Numa memory allocation policy may be specified as a per-task attribute,
+that is inherited by children tasks and processes, or as an attribute
 of a range of process virtual address space.
 Numa memory policies specified for a range of virtual address space are
-shared by all threads in the process.
+shared by all tasks in the process.
 Further more, memory policies specified for a range of a shared memory
 attached using
 .I shmat(2)
@@ -195,7 +195,7 @@ or
 from shmfs/hugetlbfs are shared by all processes that attach to that region.
 Memory policies for shared disk backed file mappings are currently ignored.
 
-The default memory allocation policy for threads and all memory range
+The default memory allocation policy for tasks and all memory range
 is local allocation.
 This assumes that no ancestor has installed a non-default policy.
 
@@ -282,7 +282,7 @@ numbers in /sys/devices/system/cpu. If the kernel is configured without
 
 .BR numa_all_nodes_ptr
 points to a bitmask that is allocated by the library with bits
-representing all nodes on which the calling thread may allocate memory.
+representing all nodes on which the calling task may allocate memory.
 This set may be up to all nodes on the system, or up to the nodes in
 the current cpuset.
 The bitmask is allocated by a call to
@@ -302,7 +302,7 @@ The user should not alter this bitmask.
 
 .BR numa_all_cpus_ptr
 points to a bitmask that is allocated by the library with bits
-representing all cpus on which the calling thread may execute.
+representing all cpus on which the calling task may execute.
 This set may be up to all cpus on the system, or up to the cpus in
 the current cpuset.
 The bitmask is allocated by a call to
@@ -312,14 +312,14 @@ using size
 The set of cpus to record is derived from /proc/self/status, field
 "Cpus_allowed".  The user should not alter this bitmask.
 
-.BR numa_num_thread_cpus()
-returns the number of cpus that the calling thread is allowed
+.BR numa_num_task_cpus()
+returns the number of cpus that the calling task is allowed
 to use.  This count is derived from the map /proc/self/status, field
 "Cpus_allowed". Also see the bitmask
 .BR numa_all_cpus_ptr.
 
-.BR numa_num_thread_nodes()
-returns the number of nodes on which the calling thread is
+.BR numa_num_task_nodes()
+returns the number of nodes on which the calling task is
 allowed to allocate memory.  This count is derived from the map
 /proc/self/status, field "Mems_allowed".
 Also see the bitmask
@@ -346,9 +346,9 @@ The bit mask is allocated by
 The string is a comma-separated list of node numbers or node ranges.
 A leading ! can be used to indicate "not" this list (in other words, all
 nodes except this list), and a leading + can be used to indicate that the
-node numbers in the list are relative to the thread's cpuset.  The string can
+node numbers in the list are relative to the task's cpuset.  The string can
 be "all" to specify all (
-.BR numa_num_thread_nodes()
+.BR numa_num_task_nodes()
 ) nodes.  Node numbers are limited by the number in the system.  See
 .BR numa_max_node()
 and
@@ -367,12 +367,12 @@ The bit mask is allocated by
 The string is a comma-separated list of cpu numbers or cpu ranges.
 A leading ! can be used to indicate "not" this list (in other words, all
 cpus except this list), and a leading + can be used to indicate that the cpu
-numbers in the list are relative to the thread's cpuset.  The string can be
+numbers in the list are relative to the task's cpuset.  The string can be
 "all" to specify all (
-.BR numa_num_thread_cpus()
+.BR numa_num_task_cpus()
 ) cpus.
 Cpu numbers are limited by the number in the system.  See
-.BR numa_num_thread_cpus()
+.BR numa_num_task_cpus()
 and
 .BR numa_num_configured_cpus().
 .br
@@ -396,7 +396,7 @@ instead of
 This is useful on 32-bit architectures with large nodes.
 
 .BR numa_preferred ()
-returns the preferred node of the current thread.
+returns the preferred node of the current task.
 This is the node on which the kernel preferably
 allocates memory, unless some other policy overrides this.
 .\" TODO:   results are misleading for MPOL_PREFERRED and may
@@ -406,7 +406,7 @@ allocates memory, unless some other policy overrides this.
 .\" node.  Need to tighten this up with the syscall results.
 
 .BR numa_set_preferred ()
-sets the preferred node for the current thread to
+sets the preferred node for the current task to
 .IR node .
 The system will attempt to allocate memory from the preferred node,
 but will fall back to other nodes if no memory is available on the
@@ -418,12 +418,12 @@ calling
 .BR numa_set_localalloc ().
 
 .BR numa_get_interleave_mask ()
-returns the current interleave mask if the thread's memory allocation policy
+returns the current interleave mask if the task's memory allocation policy
 is page interleaved.
 Otherwise, this function returns an empty mask.
 
 .BR numa_set_interleave_mask ()
-sets the memory interleave mask for the current thread to
+sets the memory interleave mask for the current task to
 .IR nodemask .
 All new memory allocations
 are page interleaved over all nodes in the interleave mask. Interleaving
@@ -434,7 +434,7 @@ page into the current address space. It is also only a hint: the kernel
 will fall back to other nodes if no memory is available on the interleave
 target.
 .\" NOTE:  the following is not really the case.  this function sets the
-.\" thread policy for all future allocations, including stack,  bss, ...
+.\" task policy for all future allocations, including stack,  bss, ...
 .\" The functions specified in this sentence actually allocate a new memory
 .\" range [via mmap()].  This is quite a different thing.  Suggest we drop
 .\" this.
@@ -477,7 +477,7 @@ flag is true then the operation will cause a numa_error if there were already
 pages in the mapping that do not follow the policy.
 
 .BR numa_bind ()
-binds the current thread and its children to the nodes
+binds the current task and its children to the nodes
 specified in
 .IR nodemask .
 They will only run on the CPUs of the specified nodes and only be able to allocate
@@ -488,7 +488,7 @@ This function is equivalent to calling
 .I numa_run_on_node_mask(nodemask)
 followed by
 .IR numa_set_membind(nodemask) .
-If threads should be bound to individual CPUs inside nodes
+If tasks should be bound to individual CPUs inside nodes
 consider using
 .I numa_node_to_cpus
 and the
@@ -496,15 +496,15 @@ and the
 syscall.
 
 .BR numa_set_localalloc ()
-sets the memory allocation policy for the calling thread to
+sets the memory allocation policy for the calling task to
 local allocation.
 In this mode, the preferred node for memory allocation is
-effectively the node where the thread is executing at the
+effectively the node where the task is executing at the
 time of a page allocation.
 
 .BR numa_set_membind ()
 sets the memory allocation mask.
-The thread will only allocate memory from the nodes set in
+The task will only allocate memory from the nodes set in
 .IR nodemask .
 Passing an empty
 .I nodemask
@@ -610,7 +610,7 @@ The
 argument will be rounded up to a multiple of the system page size.
 
 .BR numa_run_on_node ()
-runs the current thread and its children
+runs the current task and its children
 on a specific node. They will not migrate to CPUs of
 other nodes until the node affinity is reset with a new call to
 .BR numa_run_on_node_mask ().
@@ -621,7 +621,7 @@ On success, 0 is returned; on error \-1 is returned, and
 is set to indicate the error.
 
 .BR numa_run_on_node_mask ()
-runs the current thread and its children only on nodes specified in
+runs the current task and its children only on nodes specified in
 .IR nodemask .
 They will not migrate to CPUs of
 other nodes until the node affinity is reset with a new call to
@@ -636,7 +636,7 @@ On success, 0 is returned; on error \-1 is returned, and
 is set to indicate the error.
 
 .BR numa_get_run_node_mask ()
-returns the mask of nodes that the current thread is allowed to run on.
+returns the mask of nodes that the current task is allowed to run on.
 
 .BR numa_tonode_memory ()
 put memory on a specific node. The constraints described for
@@ -698,7 +698,7 @@ alternative to repeated calls to the getpagesize system call.
 See getpagesize(2).
 
 .BR numa_sched_getaffinity()
-retrieves a bitmask of the cpus on which a thread may run.  The thread is
+retrieves a bitmask of the cpus on which a task may run.  The task is
 specified by
 .I pid.
 Returns the return value of the sched_getaffinity
@@ -710,9 +710,9 @@ Test the bits in the mask by calling
 .BR numa_bitmask_isbitset().
 
 .BR numa_sched_setaffinity()
-sets a thread's allowed cpu's to those cpu's specified in
+sets a task's allowed cpu's to those cpu's specified in
 .I mask.
-The thread is specified by
+The task is specified by
 .I pid.
 Returns the return value of the sched_setaffinity system call.
 See sched_setaffinity(2).  You may allocate the bitmask with
@@ -866,7 +866,7 @@ executing or current process.
 It simply uses the move_pages system call.
 .br
 .I pid
-- ID of thread.  If not valid, use the current thread.
+- ID of task.  If not valid, use the current task.
 .br
 .I count
 - Number of pages.
@@ -887,7 +887,7 @@ See move_pages(2).
 
 .BR numa_migrate_pages()
 simply uses the migrate_pages system call to cause the pages of the calling
-thread, or a specified thread, to be migated from one set of nodes to another.
+task, or a specified task, to be migated from one set of nodes to another.
 See migrate_pages(2).
 The bit masks representing the nodes should be allocated with
 .BR numa_allocate_nodemask()
@@ -897,7 +897,7 @@ using an
 .I n
 value returned from
 .BR numa_num_possible_nodes().
-A thread's current node set can be gotten by calling
+A task's current node set can be gotten by calling
 .BR numa_get_membind().
 Bits in the
 .I tonodes
