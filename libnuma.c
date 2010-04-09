@@ -1072,7 +1072,7 @@ numa_get_membind_v2(void)
 } 
 __asm__(".symver numa_get_membind_v2,numa_get_membind@@libnuma_1.2");
 
-//TODO:  Cliff:  do I need a v1 nodemask_t version?
+//TODO:  do we need a v1 nodemask_t version?
 struct bitmask *numa_get_mems_allowed(void)
 {
 	struct bitmask *bmp;

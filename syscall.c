@@ -11,7 +11,7 @@
    Lesser General Public License for more details.
 
    You should find a copy of v2.1 of the GNU Lesser General Public License
-   somewhere on your Linux system; if not, write to the Free Software 
+   somewhere on your Linux system; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
 #include <unistd.h>
 #include <sys/types.h>
@@ -119,23 +119,23 @@
 /* 6 argument calls on x86-64 are often buggy in both glibc and
    asm/unistd.h. Add a working version here. */
 long syscall6(long call, long a, long b, long c, long d, long e, long f)
-{ 
+{
        long res;
-       asm volatile ("movq %[d],%%r10 ; movq %[e],%%r8 ; movq %[f],%%r9 ; syscall" 
+       asm volatile ("movq %[d],%%r10 ; movq %[e],%%r8 ; movq %[f],%%r9 ; syscall"
 		     : "=a" (res)
-		     : "0" (call),"D" (a),"S" (b), "d" (c), 
+		     : "0" (call),"D" (a),"S" (b), "d" (c),
 		       [d] "g" (d), [e] "g" (e), [f] "g" (f) :
 		     "r11","rcx","r8","r10","r9","memory" );
-       if (res < 0) { 
-	       errno = -res; 
-	       res = -1; 
-       } 
+       if (res < 0) {
+	       errno = -res;
+	       res = -1;
+       }
        return res;
-} 
+}
 #elif defined(__i386__)
 
-/* i386 has buggy syscall6 in glibc too. This is tricky to do 
-   in inline assembly because it clobbers so many registers. Do it 
+/* i386 has buggy syscall6 in glibc too. This is tricky to do
+   in inline assembly because it clobbers so many registers. Do it
    out of line. */
 asm(
 "__syscall6:\n"
@@ -160,14 +160,14 @@ asm(
 extern long __syscall6(long n, long a, long b, long c, long d, long e, long f);
 
 long syscall6(long call, long a, long b, long c, long d, long e, long f)
-{ 
+{
        long res = __syscall6(call,a,b,c,d,e,f);
-       if (res < 0) { 
-	       errno = -res; 
-	       res = -1; 
-       } 
+       if (res < 0) {
+	       errno = -res;
+	       res = -1;
+       }
        return res;
-} 
+}
 
 #else
 #define syscall6 syscall
@@ -180,14 +180,14 @@ long WEAK get_mempolicy(int *policy, const unsigned long *nmask,
 					maxnode, addr, flags);
 }
 
-long WEAK mbind(void *start, unsigned long len, int mode, 
+long WEAK mbind(void *start, unsigned long len, int mode,
 	const unsigned long *nmask, unsigned long maxnode, unsigned flags)
 {
 	return syscall6(__NR_mbind, (long)start, len, mode, (long)nmask,
 				maxnode, flags);
 }
 
-long WEAK set_mempolicy(int mode, const unsigned long *nmask, 
+long WEAK set_mempolicy(int mode, const unsigned long *nmask,
                                    unsigned long maxnode)
 {
 	long i;

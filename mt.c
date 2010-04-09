@@ -1,4 +1,4 @@
-/* Mersenne twister implementation from Michael Brundage. Public Domain. 
+/* Mersenne twister implementation from Michael Brundage. Public Domain.
    MT is a very fast pseudo random number generator. This version works
    on 32bit words.  Changes by AK. */
 #include <stdlib.h>
@@ -7,7 +7,7 @@
 int mt_index;
 unsigned int mt_buffer[MT_LEN];
 
-void mt_init(void) 
+void mt_init(void)
 {
     int i;
     srand(1);
@@ -40,7 +40,7 @@ void mt_refill(void)
             s = TWIST(b, i, i+1);
             b[i] = b[i - MT_IB] ^ (s >> 1) ^ MAGIC(s);
         }
-        
+
         s = TWIST(b, MT_LEN-1, 0);
         b[MT_LEN-1] = b[MT_IA-1] ^ (s >> 1) ^ MAGIC(s);
 }

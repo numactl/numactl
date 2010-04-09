@@ -12,12 +12,12 @@
    General Public License for more details.
 
    You should find a copy of v2 of the GNU General Public License somewhere
-   on your Linux system; if not, write to the Free Software Foundation, 
+   on your Linux system; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
 #define _GNU_SOURCE
 #include <getopt.h>
 #include <errno.h>
-#include <stdio.h> 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -31,14 +31,14 @@
 
 int exitcode;
 
-struct option opts[] = { 
+struct option opts[] = {
 	{"interleave", 1, 0, 'i' },
 	{"preferred", 1, 0, 'p' },
-	{"cpubind", 1, 0, 'c' }, 
-	{"cpunodebind", 1, 0, 'N' }, 
-	{"physcpubind", 1, 0, 'C' }, 
+	{"cpubind", 1, 0, 'c' },
+	{"cpunodebind", 1, 0, 'N' },
+	{"physcpubind", 1, 0, 'C' },
 	{"membind", 1, 0, 'm'},
-	{"show", 0, 0, 's' }, 
+	{"show", 0, 0, 's' },
 	{"localalloc", 0,0, 'l'},
 	{"hardware", 0,0,'H' },
 
@@ -80,30 +80,30 @@ void usage(void)
 		"use --cpunodebind or --physcpubind instead\n"
 		"length can have g (GB), m (MB) or k (KB) suffixes\n");
 	exit(1);
-} 
+}
 
-void usage_msg(char *msg, ...) 
-{ 
+void usage_msg(char *msg, ...)
+{
 	va_list ap;
 	va_start(ap,msg);
-	fprintf(stderr, "numactl: "); 
+	fprintf(stderr, "numactl: ");
 	vfprintf(stderr, msg, ap);
 	putchar('\n');
 	usage();
-} 
+}
 
 void show_physcpubind(void)
 {
 	int ncpus = numa_num_configured_cpus();
 	
-	for (;;) { 
+	for (;;) {
 		struct bitmask *cpubuf;
 
 		cpubuf = numa_bitmask_alloc(ncpus);
 
 		if (numa_sched_getaffinity(0, cpubuf) < 0) {
 			if (errno == EINVAL && ncpus < 1024*1024) {
-				ncpus *= 2; 
+				ncpus *= 2;
 				continue;
 			}
 			err("sched_get_affinity");
@@ -121,7 +121,7 @@ void show(void)
 	int policy;
 	int numa_num_nodes = numa_num_possible_nodes();
 	
-	if (numa_available() < 0) { 
+	if (numa_available() < 0) {
 		show_physcpubind();
 		printf("No NUMA support available on this system.\n");
 		exit(1);
@@ -135,15 +135,15 @@ void show(void)
 	cur = numa_get_interleave_node();
 
 	policy = 0;
-	if (get_mempolicy(&policy, NULL, 0, 0, 0) < 0) 
-		perror("get_mempolicy"); 
-	 
+	if (get_mempolicy(&policy, NULL, 0, 0, 0) < 0)
+		perror("get_mempolicy");
+
 	printf("policy: %s\n", policy_name(policy));
 		
 	printf("preferred node: ");
-	switch (policy) { 
+	switch (policy) {
 	case MPOL_PREFERRED:
-		if (prefnode != -1) { 
+		if (prefnode != -1) {
 			printf("%ld\n", prefnode);
 			break;
 		}
@@ -152,15 +152,15 @@ void show(void)
 		printf("current\n");
 		break;
 	case MPOL_INTERLEAVE:
-		printf("%ld (interleave next)\n",cur); 
-		break; 
+		printf("%ld (interleave next)\n",cur);
+		break;
 	case MPOL_BIND:
 		printf("%d\n", find_first_bit(&membind, numa_num_nodes));
 		break;
-	} 
+	}
 	if (policy == MPOL_INTERLEAVE) {
 		printmask("interleavemask", interleave);
-		printf("interleavenode: %ld\n", cur); 
+		printf("interleavenode: %ld\n", cur);
 	}
 	show_physcpubind();
 	printmask("cpubind", cpubind);  // for compatibility
@@ -168,14 +168,14 @@ void show(void)
 	printmask("membind", membind);
 }
 
-char *fmt_mem(unsigned long long mem, char *buf) 
-{ 
+char *fmt_mem(unsigned long long mem, char *buf)
+{
 	if (mem == -1L)
-		sprintf(buf, "<not available>"); 
+		sprintf(buf, "<not available>");
 	else
-		sprintf(buf, "%Lu MB", mem >> 20); 
+		sprintf(buf, "%Lu MB", mem >> 20);
 	return buf;
-} 
+}
 
 static void print_distances(int maxnode)
 {
@@ -185,15 +185,15 @@ static void print_distances(int maxnode)
 		printf("No distance information available.\n");
 		return;
 	}
-	printf("node distances:\n"); 
+	printf("node distances:\n");
 	printf("node ");
-	for (i = 0; i <= maxnode; i++) 
+	for (i = 0; i <= maxnode; i++)
 		printf("% 3d ", i);
 	printf("\n");
 	for (i = 0; i <= maxnode; i++) {
 		printf("% 3d: ", i);
-		for (k = 0; k <= maxnode; k++) 
-			printf("% 3d ", numa_distance(i,k)); 
+		for (k = 0; k <= maxnode; k++)
+			printf("% 3d ", numa_distance(i,k));
 		printf("\n");
 	}			
 }
@@ -205,15 +205,15 @@ void print_node_cpus(int node)
 
 	cpus = numa_allocate_cpumask();
 	err = numa_node_to_cpus(node, cpus);
-	if (err >= 0) 
-		for (i = 0; i < cpus->size; i++) 
+	if (err >= 0)
+		for (i = 0; i < cpus->size; i++)
 			if (numa_bitmask_isbitset(cpus, i))
 				printf(" %d", i);
 	putchar('\n');
 }
 
 void hardware(void)
-{ 
+{
 	int i, numconfigurednodes=0;
 	int maxnode = numa_num_configured_nodes()-1;
 
@@ -226,10 +226,10 @@ void hardware(void)
 	else
 		printf("available: %d nodes (0-%d)\n", maxnode+1, maxnode); 	
 		
-	for (i = 0; i <= maxnode; i++) { 
+	for (i = 0; i <= maxnode; i++) {
 		char buf[64];
 		long long fr;
-		unsigned long long sz = numa_node_size64(i, &fr); 
+		unsigned long long sz = numa_node_size64(i, &fr);
 		if (!numa_bitmask_isbitset(numa_all_nodes_ptr, i))
 			continue;
 
@@ -239,7 +239,7 @@ void hardware(void)
 		printf("node %d free: %s\n", i, fmt_mem(fr, buf));
 	}
 	print_distances(maxnode);
-} 
+}
 
 void checkerror(char *s)
 {
@@ -247,17 +247,17 @@ void checkerror(char *s)
 		perror(s);
 		exit(1);
 	}
-} 
+}
 
 void checknuma(void)
-{ 
+{
 	static int numa = -1;
 	if (numa < 0) {
 		if (numa_available() < 0)
 			complain("This system does not support NUMA policy");
 	}
 	numa = 0;
-} 
+}
 
 int set_policy = -1;
 
@@ -269,10 +269,10 @@ void setpolicy(int pol)
 }
 
 void nopolicy(void)
-{ 
+{
 	if (set_policy >= 0)
 		usage_msg("specify policy after --shm/--file");
-} 
+}
 
 int did_cpubind = 0;
 int did_strict = 0;
@@ -288,31 +288,31 @@ void check_cpubind(int flag)
 }
 
 void noshm(char *opt)
-{ 
+{
 	if (shmattached)
 		usage_msg("%s must be before shared memory specification", opt);
 	shmoption = opt;		
-} 
+}
 
-void dontshm(char *opt) 
+void dontshm(char *opt)
 {
 	if (shmoption)
 		usage_msg("%s shm option is not allowed before %s", shmoption, opt);
 }
 
 void needshm(char *opt)
-{ 
+{
 	if (!shmattached)
 		usage_msg("%s must be after shared memory specification", opt);
-} 
+}
 
 void get_short_opts(struct option *o, char *s)
 {
 	*s++ = '+';
-	while (o->name) { 
+	while (o->name) {
 		if (isprint(o->val)) {
 			*s++ = o->val;
-			if (o->has_arg) 
+			if (o->has_arg)
 				*s++ = ':';
 		}
 		o++;
@@ -333,7 +333,7 @@ int main(int ac, char **av)
 		switch (c) {
 		case 's': /* --show */
 			show();
-			exit(0);  
+			exit(0);
 		case 'H': /* --hardware */
 			nopolicy();
 			hardware();
@@ -396,7 +396,7 @@ int main(int ac, char **av)
 			}
 			errno = 0;
 			numa_set_bind_policy(1);
-			if (shmfd >= 0) { 
+			if (shmfd >= 0) {
 				numa_tonodemask_memory(shmptr, shmlen, mask);
 			} else {
 				numa_set_membind(mask);
@@ -423,7 +423,7 @@ int main(int ac, char **av)
 			numa_bitmask_free(mask);
 			errno = 0;
 			numa_set_bind_policy(0);
-			if (shmfd >= 0) 
+			if (shmfd >= 0)
 				numa_tonode_memory(shmptr, shmlen, node);
 			else
 				numa_set_preferred(node);
@@ -433,7 +433,7 @@ int main(int ac, char **av)
 			checknuma();
 			setpolicy(MPOL_DEFAULT);
 			errno = 0;
-			if (shmfd >= 0) 
+			if (shmfd >= 0)
 				numa_setlocal_memory(shmptr, shmlen);
 			else
 				numa_set_localalloc();
@@ -442,7 +442,7 @@ int main(int ac, char **av)
 		case 'S': /* --shm */
 			check_cpubind(did_cpubind);
 			nopolicy();
-			attach_sysvshm(optarg); 
+			attach_sysvshm(optarg);
 			shmattached = 1;
 			break;
 		case 'f': /* --file */
@@ -458,7 +458,7 @@ int main(int ac, char **av)
 		case 'M': /* --shmmode */
 			noshm("--shmmode");
 			shmmode = strtoul(optarg, &end, 8);
-			if (end == optarg || *end) 
+			if (end == optarg || *end)
 				usage();
 			break;
 		case 'd': /* --dump */
@@ -481,7 +481,7 @@ int main(int ac, char **av)
 			break;
 		case 'I': /* --shmid */
 			shmid = strtoul(optarg, &end, 0);
-			if (end == optarg || *end) 
+			if (end == optarg || *end)
 				usage();
 			break;
 
@@ -502,9 +502,9 @@ int main(int ac, char **av)
 
 		case 'V': /* --verify */
 			needshm("--verify");
-			if (set_policy < 0) 
+			if (set_policy < 0)
 				complain("Need a policy first to verify");
-			numa_police_memory(shmptr, shmlen); 
+			numa_police_memory(shmptr, shmlen);
 			if (!mask)
 				complain("Need a mask to verify");
 			else
@@ -513,13 +513,13 @@ int main(int ac, char **av)
 
 		default:
 			usage();
-		} 
+		}
 	}
 	
 	av += optind;
-	ac -= optind; 
+	ac -= optind;
 
-	if (shmfd >= 0) { 
+	if (shmfd >= 0) {
 		if (*av)
 			usage();
 		exit(exitcode);
@@ -538,6 +538,6 @@ int main(int ac, char **av)
 	if (*av == NULL)
 		usage();
 	execvp(*av, av);
-	complain("execution of `%s': %s\n", av[0], strerror(errno)); 
+	complain("execution of `%s': %s\n", av[0], strerror(errno));
 	return 0; /* not reached */
 }
