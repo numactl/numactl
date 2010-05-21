@@ -205,27 +205,20 @@ void print_node_cpus(int node)
 
 	cpus = numa_allocate_cpumask();
 	err = numa_node_to_cpus(node, cpus);
-	if (err >= 0)
+	if (err >= 0) {
 		for (i = 0; i < cpus->size; i++)
 			if (numa_bitmask_isbitset(cpus, i))
 				printf(" %d", i);
+	}
 	putchar('\n');
 }
 
 void hardware(void)
 {
-	int i, numconfigurednodes=0;
+	int i;
 	int maxnode = numa_num_configured_nodes()-1;
 
-	for (i = 0; i<=maxnode; i++)
-		if (numa_bitmask_isbitset(numa_all_nodes_ptr, i))
-			numconfigurednodes++;
-	if (nodes_allowed_list)
-		printf("available: %d nodes (%s)\n",
-			numconfigurednodes, nodes_allowed_list);
-	else
-		printf("available: %d nodes (0-%d)\n", maxnode+1, maxnode); 	
-		
+	printf("available: %d nodes (0-%d)\n", 1+maxnode, maxnode);
 	for (i = 0; i <= maxnode; i++) {
 		char buf[64];
 		long long fr;

@@ -54,8 +54,6 @@ struct bitmask *numa_all_cpus_ptr = NULL;
 static unsigned long *node_cpu_mask_v1[NUMA_NUM_NODES];
 struct bitmask **node_cpu_mask_v2;
 
-char *nodes_allowed_list = NULL;
-
 WEAK void numa_error(char *where);
 
 #ifdef __thread
@@ -459,15 +457,6 @@ set_task_constraints(void)
 		if (strncmp(buffer,"Mems_allowed:",13) == 0) {
 			maxprocnode =
 				read_mask(mask, numa_all_nodes_ptr);
-		}
-		if (strncmp(buffer,"Mems_allowed_list:",18) == 0) {
-			size_t len = strlen(mask);
-
-			nodes_allowed_list = malloc(len);
-			if (nodes_allowed_list) {
-				memcpy(nodes_allowed_list, mask, len-1);
-				nodes_allowed_list[len-1] = '\0';
-			}
 		}
 	}
 	fclose(f);
