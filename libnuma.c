@@ -533,7 +533,6 @@ set_numa_max_cpu(void)
 static void
 set_configured_cpus(void)
 {
-	int		filecount=0;
 	char		*dirnamep = "/sys/devices/system/cpu";
 	struct dirent	*dirent;
 	DIR		*dir;
@@ -545,15 +544,19 @@ set_configured_cpus(void)
 		return;
 	}
 	while ((dirent = readdir(dir)) != 0) {
-		if (!strncmp("cpu", dirent->d_name, 3)) {
-			filecount++;
-		} else {
-			continue;
+		if (dirent->d_type == DT_DIR
+		    && !strncmp("cpu", dirent->d_name, 3)) {
+			long cpu = strtol(dirent->d_name + 3, NULL, 10);
+
+			if (cpu < INT_MAX && cpu > maxconfiguredcpu)
+				maxconfiguredcpu = cpu;
 		}
 	}
 	closedir(dir);
-	maxconfiguredcpu = filecount-1; /* high cpu number */
-	return;
+	if (maxconfiguredcpu < 0) {
+		/* fall back to using the online cpu count */
+		maxconfiguredcpu = sysconf(_SC_NPROCESSORS_CONF) - 1;
+	}
 }
 
 /*
