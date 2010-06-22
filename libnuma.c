@@ -461,10 +461,13 @@ set_task_constraints(void)
 				read_mask(mask, numa_all_nodes_ptr);
 		}
 		if (strncmp(buffer,"Mems_allowed_list:",18) == 0) {
-			nodes_allowed_list = malloc(strlen(buffer)-18);
-			strncpy(nodes_allowed_list, buffer + 19,
-				strlen(buffer) - 19);
-			nodes_allowed_list[strlen(nodes_allowed_list)-1] = '\0';
+			size_t len = strlen(mask);
+
+			nodes_allowed_list = malloc(len);
+			if (nodes_allowed_list) {
+				memcpy(nodes_allowed_list, mask, len-1);
+				nodes_allowed_list[len-1] = '\0';
+			}
 		}
 	}
 	fclose(f);
