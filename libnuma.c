@@ -394,6 +394,7 @@ int
 read_mask(char *s, struct bitmask *bmp)
 {
 	char *end = s;
+	char *prevend;
 	unsigned int *start = (unsigned int *)bmp->maskp;
 	unsigned int *p = start;
 	unsigned int *q;
@@ -402,9 +403,13 @@ read_mask(char *s, struct bitmask *bmp)
 
 	i = strtoul(s, &end, 16);
 
+	prevend = end;
 	/* Skip leading zeros */
-	while (!i && *end++ == ',')
+	while (!i && *end++ == ',') {
+		prevend = end;
 		i = strtoul(end, &end, 16);
+	}
+	end = prevend;
 
 	if (!i)
 		/* End of string. No mask */
@@ -436,7 +441,7 @@ read_mask(char *s, struct bitmask *bmp)
 	/*
 	 * Return the last bit set
 	 */
-	return sizeof(unsigned int) * n + i;
+	return ((sizeof(unsigned int)*8) * n) + i;
 }
 
 /*
@@ -447,7 +452,9 @@ void
 set_thread_constraints(void)
 {
 	int max_cpus = numa_num_possible_cpus();
+	int hicpu = sysconf(_SC_NPROCESSORS_CONF)-1;
 	int buflen;
+	int i;
 	char *buffer;
 	FILE *f;
 	/*
@@ -479,6 +486,25 @@ set_thread_constraints(void)
 	}
 	fclose(f);
 	free (buffer);
+
+	/*
+	 * Cpus_allowed in the kernel can be defined to all f's
+	 * i.e. it may be a superset of the actual available processors.
+	 * As such let's reduce maxproccpu to the number of actual
+	 * available cpus - 1.
+	 */
+	if (maxproccpu > hicpu) {
+		maxproccpu = hicpu;
+		for (i=hicpu+1; i<numa_all_cpus_ptr->size; i++) {
+			numa_bitmask_clearbit(numa_all_cpus_ptr, i);
+		}
+	}
+
+	/*
+	 * Sanity checks
+	 */
+	if (maxproccpu == 0)
+		numa_warn(W_cpumap, "Available cpus are empty set");
 
 	if (maxprocnode < 0) {
 		numa_warn(W_cpumap, "Cannot parse %s", mask_size_file);
