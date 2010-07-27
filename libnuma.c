@@ -258,19 +258,19 @@ WEAK void numa_warn(int num, char *fmt, ...)
 
 static void setpol(int policy, struct bitmask *bmp)
 { 
-	if (set_mempolicy(policy, bmp->maskp, bmp->size) < 0)
+	if (set_mempolicy(policy, bmp->maskp, bmp->size + 1) < 0)
 		numa_error("set_mempolicy");
 } 
 
 static void getpol(int *oldpolicy, struct bitmask *bmp)
 { 
-	if (get_mempolicy(oldpolicy, bmp->maskp, bmp->size, 0, 0) < 0)
+	if (get_mempolicy(oldpolicy, bmp->maskp, bmp->size + 1, 0, 0) < 0)
 		numa_error("get_mempolicy");
 } 
 
 static void dombind(void *mem, size_t size, int pol, struct bitmask *bmp)
 { 
-	if (mbind(mem, size, pol, bmp ? bmp->maskp : NULL, bmp ? bmp->size : 0, 
+	if (mbind(mem, size, pol, bmp ? bmp->maskp : NULL, bmp ? bmp->size + 1 : 0,
 		  mbind_flags) < 0)
 		numa_error("mbind"); 
 } 
