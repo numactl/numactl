@@ -2,7 +2,7 @@
 #define NUMAIF_H 1
 
 #ifdef __cplusplus
-extern "C" { 
+extern "C" {
 #endif
 
 /* Kernel interface for NUMA API */
@@ -10,9 +10,9 @@ extern "C" {
 /* System calls */
 extern long get_mempolicy(int *policy, const unsigned long *nmask,
 			unsigned long maxnode, void *addr, int flags);
-extern long mbind(void *start, unsigned long len, int mode, 
+extern long mbind(void *start, unsigned long len, int mode,
 	const unsigned long *nmask, unsigned long maxnode, unsigned flags);
-extern long set_mempolicy(int mode, const unsigned long *nmask, 
+extern long set_mempolicy(int mode, const unsigned long *nmask,
 			  unsigned long maxnode);
 extern long migrate_pages(int pid, unsigned long maxnode,
 			  const unsigned long *frommask,
@@ -31,7 +31,7 @@ extern long move_pages(int pid, unsigned long count,
 
 /* Flags for get_mem_policy */
 #define MPOL_F_NODE    (1<<0)   /* return next il node or node of address */
-				/* Warning: MPOL_F_NODE is unsupported and 
+				/* Warning: MPOL_F_NODE is unsupported and
 				   subject to change. Don't use. */
 #define MPOL_F_ADDR     (1<<1)  /* look up vma using address */
 #define MPOL_F_MEMS_ALLOWED (1<<2) /* query nodes allowed in cpuset */

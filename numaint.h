@@ -17,7 +17,7 @@ extern int numa_sched_getaffinity_v2_int(pid_t pid, struct bitmask *mask);
 
 #define make_internal_alias(x) extern __typeof (x) x##_int __attribute((alias(#x), visibility("hidden")))
 
-enum numa_warn { 
+enum numa_warn {
 	W_nosysfs,
 	W_noproc,
 	W_badmeminfo,
@@ -29,7 +29,7 @@ enum numa_warn {
 	W_memory,
 	W_cpuparse,
 	W_nodeparse,
-}; 
+};
 
 #define howmany(x,y) (((x)+((y)-1))/(y))
 #define bitsperlong (8 * sizeof(unsigned long))

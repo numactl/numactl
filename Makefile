@@ -30,7 +30,8 @@ CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      .depend .depend.X test/nodemap test/distance test/tbitmap \
 	      test/after test/before threadtest test_move_pages \
 	      test/mbind_mig_pages test/migrate_pages \
-	      migratepages migspeed migspeed.o libnuma.a
+	      migratepages migspeed migspeed.o libnuma.a \
+	      test/move_pages
 SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
 	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c mt.c \
 	clearcache.c test/*.c
@@ -81,7 +82,7 @@ stream_main.o: stream_main.c
 libnuma.so.1: versions.ldscript
 
 libnuma.so.1: libnuma.o syscall.o distance.o
-	${CC} ${LDFLAGS} -shared -Wl,-soname=libnuma.so.1 -Wl,--version-script,versions.ldscript -Wl,-init,numa_init -o libnuma.so.1 $(filter-out versions.ldscript,$^)
+	${CC} ${LDFLAGS} -shared -Wl,-soname=libnuma.so.1 -Wl,--version-script,versions.ldscript -Wl,-init,numa_init -Wl,-fini,numa_fini -o libnuma.so.1 $(filter-out versions.ldscript,$^)
 
 libnuma.so: libnuma.so.1
 	ln -sf libnuma.so.1 libnuma.so

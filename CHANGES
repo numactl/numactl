@@ -291,9 +291,26 @@ updating in newer kernels (Mel Gorman)
 - Fix to numademo memtest (allocation overhead) (L.S.)
 - Fix to checkaffinity test (possible shell errors) (L.S.)
 - Fix a printf in migspeed.c (Frederik Himpe)
-- Fix test/regress grep of node nummber (Cliff W.)
+- Fix test/regress grep of node number (Cliff W.)
 - Change numademo to finish in a timely manner on large machines (Cliff W.)
 - tested on 96p 48nodes
 
 2.0.3-rc1 - rc4
 - Add --dump-nodes option to numactl (Andi)
+
+2.0.3 released in June, 2009
+
+2.0.4-rc3
+- Fix numactl for a machine with sparse cpu ids (Anton Blanchard)
+- Fix makefile to remove move_pages on make clean (Andi)
+- Fix numa_node_to_cpus() (Sharyathi Nagesh)
+- Rename 'thread' to 'task' (L.S.)
+- Remove other trailing spaces (Cliff)
+- Man page correction/clarification for numa_node_to_cpus() (Ian Wienand)
+- Man page clarification for numactl (Mike MacCana)
+- Fix numactl --hardware for cpu-less nodes (Thomas Renninger)
+- Fix set_configured_cpus() (Jan Beulich)
+- Fix memory corrupting use of strlen (Jan Beulich)
+- Add a DSO destructor for memory deallocation (Neil Horman)
+
+2.0.4 released in July, 2010

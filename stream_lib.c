@@ -20,7 +20,7 @@ static inline double mysecond()
  * Revision: 4.0-BETA, October 24, 1995
  * Original code developed by John D. McCalpin
  *
- * This program measures memory transfer rates in MB/s for simple 
+ * This program measures memory transfer rates in MB/s for simple
  * computational kernels coded in C.  These numbers reveal the quality
  * of code generation for simple uncacheable kernels as well as showing
  * the cost of floating-point operations relative to memory accesses.
@@ -28,10 +28,10 @@ static inline double mysecond()
  * INSTRUCTIONS:
  *
  *	1) Stream requires a good bit of memory to run.  Adjust the
- *          value of 'N' (below) to give a 'timing calibration' of 
+ *          value of 'N' (below) to give a 'timing calibration' of
  *          at least 20 clock-ticks.  This will provide rate estimates
  *          that should be good to about 5% precision.
- * 
+ *
  * Hacked by AK to be a library
  */
 
@@ -235,20 +235,20 @@ int checktick()
 }
 
 void stream_setmem(unsigned long size)
-{ 
+{
 	N = (size - OFFSET) / (3*sizeof(double));
-} 
+}
 
 long stream_memsize(void)
-{ 
+{
 	return 3*(sizeof(double) * (N+OFFSET)) ;
-} 
+}
 
-long stream_init(void *mem) 
-{ 
+long stream_init(void *mem)
+{
 	int i;
 
-	for (i = 0; i < 4; i++) { 
+	for (i = 0; i < 4; i++) {
 		rmstime[i] = 0;
 		maxtime[i] = 0;
 		mintime[i] = FLT_MAX;
@@ -264,4 +264,4 @@ long stream_init(void *mem)
 	c = (double *)mem + 2*(N+OFFSET);
 	stream_check();
 	return 0;
-} 
+}
