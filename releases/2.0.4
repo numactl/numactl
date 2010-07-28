@@ -1,0 +1,25 @@
+patches in this release:
+
+0908_ab_numactl
+Anton Blanchard  libnuma: Fix issue with numactl --hardware on sparse cpumaps
+0912_ak_patch
+Andi Kleen       Fix make clean for tests in numactl-2.0.4-rc1
+1001_sn_nodetocpus
+Sharyathi Nagesh Fix to numa_node_to_cpus_v2
+1004_ls_tasknaming
+Lee Schermerhorn Fix libnuma numa_num_{task vs thread}_{cpu|node}s() naming disc
+repancy
+1004_cw_spaces
+Cliff Wickman    removed trailing spaces
+1002_iw_nodetocpus
+Ian Wienand      correct and clarify the numa_node_to_cpus() man page
+1002_mm_cputerms
+Mike MacCana     Correct terminology. ('physical cpus')
+1006_jb_configured_cpus
+Jan Beulich      libnuma: enumerate CPUs correctly
+1006_jb_strlen
+Jan Beulich      libnuma: fix memory corruption
+1005_tr_numactl_hardware
+Thomas Renninger Fix CPUless nodes numactl --hardware output
+0908_nh_dsodestructor
+Neil Horman      libnuma: introduce DSO destructor to free allocated memory
