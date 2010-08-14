@@ -25,6 +25,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/fcntl.h>
+#include <sys/stat.h>
 #include <stdarg.h>
 #include <errno.h>
 #include <unistd.h>
