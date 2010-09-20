@@ -619,7 +619,7 @@ numa_num_task_cpus(void)
 int
 numa_max_node(void)
 {
-	return numa_num_configured_nodes()-1;
+	return maxconfigurednode;
 }
 
 make_internal_alias(numa_max_node);
