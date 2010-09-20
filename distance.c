@@ -59,7 +59,7 @@ static int read_distance_table(void)
 		if (!dfh) {
 			if (errno == ENOENT && nd > 0)
 				err = 0;
-			if (!err && nd<numa_num_configured_nodes())
+			if (!err && nd<=numa_max_node())
 				continue;
 			else
 				break;

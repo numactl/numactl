@@ -1257,7 +1257,7 @@ int
 numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 {
 	int err = 0, bufferlen;
-	int nnodes = numa_num_configured_nodes();
+	int nnodes = numa_max_node();
 	char fn[64], *line = NULL;
 	FILE *f; 
 	size_t len = 0; 
@@ -1267,7 +1267,7 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 		init_node_cpu_mask_v2();
 
 	bufferlen = numa_bitmask_nbytes(buffer);
-	if (node > nnodes-1) {
+	if (node > nnodes) {
 		errno = ERANGE;
 		return -1;
 	}
@@ -1336,8 +1336,8 @@ int numa_node_of_cpu(int cpu)
 		return -1;
 	}
 	bmp = numa_bitmask_alloc(ncpus);
-	nnodes = numa_num_configured_nodes();
-	for (node = 0; node < nnodes; node++){
+	nnodes = numa_max_node();
+	for (node = 0; node <= nnodes; node++){
 		numa_node_to_cpus_v2_int(node, bmp);
 		if (numa_bitmask_isbitset(bmp, cpu)){
 			ret = node;

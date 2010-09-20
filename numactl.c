@@ -216,7 +216,7 @@ void print_node_cpus(int node)
 void hardware(void)
 {
 	int i;
-	int maxnode = numa_num_configured_nodes()-1;
+	int maxnode = numa_max_node();
 
 	printf("available: %d nodes (0-%d)\n", 1+maxnode, maxnode);
 	for (i = 0; i <= maxnode; i++) {
