@@ -150,6 +150,9 @@ int numa_pagesize(void);
    Only valid after numa_available. */
 extern struct bitmask *numa_all_nodes_ptr;
 
+/* Set with all nodes the kernel has exposed to userspace */
+extern struct bitmask *numa_nodes_ptr;
+
 /* For source compatibility */
 extern nodemask_t numa_all_nodes;
 

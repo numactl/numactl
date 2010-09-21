@@ -51,6 +51,7 @@ struct bitmask *numa_all_cpus_ptr = NULL;
    of numa_no_nodes and numa_all_nodes, but the loader does not correctly
    handle versioning of BSS versus small data items */
 
+struct bitmask *numa_nodes_ptr = NULL;
 static struct bitmask *numa_memnode_ptr = NULL;
 static unsigned long *node_cpu_mask_v1[NUMA_NUM_NODES];
 struct bitmask **node_cpu_mask_v2;
@@ -105,6 +106,8 @@ numa_fini(void)
 		numa_bitmask_free(numa_no_nodes_ptr);
 	if (numa_memnode_ptr)
 		numa_bitmask_free(numa_memnode_ptr);
+	if (numa_nodes_ptr)
+		numa_bitmask_free(numa_nodes_ptr);
 }
 
 /*
@@ -292,8 +295,8 @@ int numa_pagesize(void)
 make_internal_alias(numa_pagesize);
 
 /*
- * Find nodes with memory (numa_memnode_ptr) and the highest numbered
- * existing node (maxconfigurednode).
+ * Find nodes (numa_nodes_ptr), nodes with memory (numa_memnode_ptr)
+ * and the highest numbered existing node (maxconfigurednode).
  */
 static void
 set_configured_nodes(void)
@@ -303,6 +306,7 @@ set_configured_nodes(void)
 	long long freep;
 
 	numa_memnode_ptr = numa_allocate_nodemask();
+	numa_nodes_ptr = numa_allocate_nodemask();
 
 	d = opendir("/sys/devices/system/node");
 	if (!d) {
@@ -313,6 +317,7 @@ set_configured_nodes(void)
 			if (strncmp(de->d_name, "node", 4))
 				continue;
 			nd = strtoul(de->d_name+4, NULL, 0);
+			numa_bitmask_setbit(numa_nodes_ptr, nd);
 			if (numa_node_size64(nd, &freep) > 0)
 				numa_bitmask_setbit(numa_memnode_ptr, nd);
 			if (maxconfigurednode < nd)
