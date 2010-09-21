@@ -146,7 +146,8 @@ long numa_node_size(int node, long *freep);
 
 int numa_pagesize(void);
 
-/* Set with all nodes. Only valid after numa_available. */
+/* Set with all nodes from which the calling process may allocate memory.
+   Only valid after numa_available. */
 extern struct bitmask *numa_all_nodes_ptr;
 
 /* For source compatibility */
