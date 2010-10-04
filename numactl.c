@@ -188,12 +188,17 @@ static void print_distances(int maxnode)
 	printf("node distances:\n");
 	printf("node ");
 	for (i = 0; i <= maxnode; i++)
-		printf("% 3d ", i);
+		if (numa_bitmask_isbitset(numa_nodes_ptr, i))
+			printf("% 3d ", i);
 	printf("\n");
 	for (i = 0; i <= maxnode; i++) {
+		if (!numa_bitmask_isbitset(numa_nodes_ptr, i))
+			continue;
 		printf("% 3d: ", i);
 		for (k = 0; k <= maxnode; k++)
-			printf("% 3d ", numa_distance(i,k));
+			if (numa_bitmask_isbitset(numa_nodes_ptr, i) &&
+			    numa_bitmask_isbitset(numa_nodes_ptr, k))
+				printf("% 3d ", numa_distance(i,k));
 		printf("\n");
 	}			
 }
@@ -216,14 +221,52 @@ void print_node_cpus(int node)
 void hardware(void)
 {
 	int i;
-	int maxnode = numa_num_configured_nodes()-1;
+	int numnodes=0;
+	int prevnode=-1;
+	int skip=0;
+	int maxnode = numa_max_node();
 
-	printf("available: %d nodes (0-%d)\n", 1+maxnode, maxnode);
+	for (i=0; i<=maxnode; i++)
+		if (numa_bitmask_isbitset(numa_nodes_ptr, i))
+			numnodes++;
+	printf("available: %d nodes (", numnodes);
+	for (i=0; i<=maxnode; i++) {
+		if (numa_bitmask_isbitset(numa_nodes_ptr, i)) {
+			if (prevnode == -1) {
+				printf("%d", i);
+				prevnode=i;
+				continue;
+			}
+
+			if (i > prevnode + 1) {
+				if (skip) {
+					printf("%d", prevnode);
+					skip=0;
+				}
+				printf(",%d", i);
+				prevnode=i;
+				continue;
+			}
+
+			if (i == prevnode + 1) {
+				if (!skip) {
+					printf("-");
+					skip=1;
+				}
+				prevnode=i;
+			}
+
+			if ((i == maxnode) && skip)
+				printf("%d", prevnode);
+		}
+	}
+	printf(")\n");
+
 	for (i = 0; i <= maxnode; i++) {
 		char buf[64];
 		long long fr;
 		unsigned long long sz = numa_node_size64(i, &fr);
-		if (!numa_bitmask_isbitset(numa_all_nodes_ptr, i))
+		if (!numa_bitmask_isbitset(numa_nodes_ptr, i))
 			continue;
 
 		printf("node %d cpus:", i);

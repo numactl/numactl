@@ -26,14 +26,21 @@
 static int distance_numnodes;
 static int *distance_table;
 
-static void parse_numbers(char *s, int *iptr, int n)
+static void parse_numbers(char *s, int *iptr)
 {
 	int i, d, j;
 	char *end;
-	for (i = 0, j = 0; i < n; i++, j++) {
+	int maxnode = numa_max_node();
+	int numnodes = 0;
+
+	for (i = 0; i <= maxnode; i++)
+		if (numa_bitmask_isbitset(numa_nodes_ptr, i))
+			numnodes++;
+
+	for (i = 0, j = 0; i <= maxnode; i++, j++) {
 		d = strtoul(s, &end, 0);
 		/* Skip unavailable nodes */
-		while (j<n &&  !numa_bitmask_isbitset(numa_all_nodes_ptr, j))
+		while (j<=maxnode && !numa_bitmask_isbitset(numa_nodes_ptr, j))
 			j++;
 		*(iptr+j) = d;
 		if (s == end)
@@ -47,10 +54,10 @@ static int read_distance_table(void)
 	int nd, len;
 	char *line = NULL;
 	size_t linelen = 0;
-	int numnodes = 0;
+	int maxnode = numa_max_node() + 1;
 	int *table = NULL;
 	int err = -1;
-	
+
 	for (nd = 0;; nd++) {
 		char fn[100];
 		FILE *dfh;
@@ -59,7 +66,7 @@ static int read_distance_table(void)
 		if (!dfh) {
 			if (errno == ENOENT && nd > 0)
 				err = 0;
-			if (!err && nd<numa_num_configured_nodes())
+			if (!err && nd<maxnode)
 				continue;
 			else
 				break;
@@ -70,15 +77,14 @@ static int read_distance_table(void)
 			break;
 
 		if (!table) {
-			numnodes = numa_num_configured_nodes();
-			table = calloc(numnodes * numnodes, sizeof(int));
+			table = calloc(maxnode * maxnode, sizeof(int));
 			if (!table) {
 				errno = ENOMEM;
 				break;
 			}
 		}
 
-		parse_numbers(line, table + nd * numnodes, numnodes);
+		parse_numbers(line, table + nd * maxnode);
 	}
 	free(line);
 	if (err)  {
@@ -96,7 +102,7 @@ static int read_distance_table(void)
 		free(table);
 		return 0;
 	}
-	distance_numnodes = numnodes;
+	distance_numnodes = maxnode;
 	distance_table = table;
 	return 0;		
 }

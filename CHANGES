@@ -314,3 +314,9 @@ updating in newer kernels (Mel Gorman)
 - Add a DSO destructor for memory deallocation (Neil Horman)
 
 2.0.4 released in July, 2010
+
+2.0.5 released in July, 2010 (about 2 days after 2.0.4)
+- Fix numactl calls to set_mempolicy, get_mempolicy and mbind
+
+newer:
+- include stat.h in shm.c (Mike Frysinger)

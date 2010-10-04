@@ -51,6 +51,8 @@ struct bitmask *numa_all_cpus_ptr = NULL;
    of numa_no_nodes and numa_all_nodes, but the loader does not correctly
    handle versioning of BSS versus small data items */
 
+struct bitmask *numa_nodes_ptr = NULL;
+static struct bitmask *numa_memnode_ptr = NULL;
 static unsigned long *node_cpu_mask_v1[NUMA_NUM_NODES];
 struct bitmask **node_cpu_mask_v2;
 
@@ -102,6 +104,10 @@ numa_fini(void)
 		numa_bitmask_free(numa_all_nodes_ptr);
 	if (numa_no_nodes_ptr)
 		numa_bitmask_free(numa_no_nodes_ptr);
+	if (numa_memnode_ptr)
+		numa_bitmask_free(numa_memnode_ptr);
+	if (numa_nodes_ptr)
+		numa_bitmask_free(numa_nodes_ptr);
 }
 
 /*
@@ -289,13 +295,18 @@ int numa_pagesize(void)
 make_internal_alias(numa_pagesize);
 
 /*
- * Find the highest numbered existing memory node: maxconfigurednode.
+ * Find nodes (numa_nodes_ptr), nodes with memory (numa_memnode_ptr)
+ * and the highest numbered existing node (maxconfigurednode).
  */
 static void
 set_configured_nodes(void)
 {
 	DIR *d;
 	struct dirent *de;
+	long long freep;
+
+	numa_memnode_ptr = numa_allocate_nodemask();
+	numa_nodes_ptr = numa_allocate_nodemask();
 
 	d = opendir("/sys/devices/system/node");
 	if (!d) {
@@ -306,6 +317,9 @@ set_configured_nodes(void)
 			if (strncmp(de->d_name, "node", 4))
 				continue;
 			nd = strtoul(de->d_name+4, NULL, 0);
+			numa_bitmask_setbit(numa_nodes_ptr, nd);
+			if (numa_node_size64(nd, &freep) > 0)
+				numa_bitmask_setbit(numa_memnode_ptr, nd);
 			if (maxconfigurednode < nd)
 				maxconfigurednode = nd;
 		}
@@ -569,8 +583,8 @@ static void
 set_sizes(void)
 {
 	sizes_set++;
-	set_configured_nodes();	/* configured nodes listed in /sys */
 	set_nodemask_size();	/* size of kernel nodemask_t */
+	set_configured_nodes();	/* configured nodes listed in /sys */
 	set_numa_max_cpu();	/* size of kernel cpumask_t */
 	set_configured_cpus();	/* cpus listed in /sys/devices/system/cpu */
 	set_task_constraints(); /* cpus and nodes for current task */
@@ -579,7 +593,21 @@ set_sizes(void)
 int
 numa_num_configured_nodes(void)
 {
-	return maxconfigurednode+1;
+	/*
+	* NOTE: this function's behavior matches the documentation (ie: it
+	* returns a count of nodes with memory) despite the poor function
+	* naming.  We also cannot use the similarly poorly named
+	* numa_all_nodes_ptr as it only tracks nodes with memory from which
+	* the calling process can allocate.  Think sparse nodes, memory-less
+	* nodes, cpusets...
+	*/
+	int memnodecount=0, i;
+
+	for (i=0; i <= maxconfigurednode; i++) {
+		if (numa_bitmask_isbitset(numa_memnode_ptr, i))
+			memnodecount++;
+	}
+	return memnodecount;
 }
 
 int
@@ -619,7 +647,7 @@ numa_num_task_cpus(void)
 int
 numa_max_node(void)
 {
-	return numa_num_configured_nodes()-1;
+	return maxconfigurednode;
 }
 
 make_internal_alias(numa_max_node);
@@ -1257,7 +1285,7 @@ int
 numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 {
 	int err = 0, bufferlen;
-	int nnodes = numa_num_configured_nodes();
+	int nnodes = numa_max_node();
 	char fn[64], *line = NULL;
 	FILE *f; 
 	size_t len = 0; 
@@ -1267,7 +1295,7 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 		init_node_cpu_mask_v2();
 
 	bufferlen = numa_bitmask_nbytes(buffer);
-	if (node > nnodes-1) {
+	if (node > nnodes) {
 		errno = ERANGE;
 		return -1;
 	}
@@ -1336,8 +1364,8 @@ int numa_node_of_cpu(int cpu)
 		return -1;
 	}
 	bmp = numa_bitmask_alloc(ncpus);
-	nnodes = numa_num_configured_nodes();
-	for (node = 0; node < nnodes; node++){
+	nnodes = numa_max_node();
+	for (node = 0; node <= nnodes; node++){
 		numa_node_to_cpus_v2_int(node, bmp);
 		if (numa_bitmask_isbitset(bmp, cpu)){
 			ret = node;
