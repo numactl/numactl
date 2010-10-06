@@ -635,10 +635,28 @@ numa_num_task_nodes(void)
 	return maxprocnode+1;
 }
 
+/*
+ * for backward compatibility
+ */
+int
+numa_num_thread_nodes(void)
+{
+	return numa_num_task_nodes();
+}
+
 int
 numa_num_task_cpus(void)
 {
 	return maxproccpu+1;
+}
+
+/*
+ * for backward compatibility
+ */
+int
+numa_num_thread_cpus(void)
+{
+	return numa_num_task_cpus();
 }
 
 /*

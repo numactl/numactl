@@ -125,6 +125,8 @@ libnuma_1.2 {
     numa_num_possible_nodes;
     numa_num_task_cpus;
     numa_num_task_nodes;
+    numa_num_thread_cpus;
+    numa_num_thread_nodes;
     numa_pagesize;
     numa_parse_bitmap;
     numa_parse_cpustring;
