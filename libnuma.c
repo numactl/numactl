@@ -1136,7 +1136,9 @@ struct bitmask *numa_get_mems_allowed(void)
 	 * can change, so query on each call.
 	 */
 	bmp = numa_allocate_nodemask();
-	getpol(NULL,  bmp);
+	if (get_mempolicy(NULL, bmp->maskp, bmp->size + 1, 0,
+				MPOL_F_MEMS_ALLOWED) < 0)
+		numa_error("get_mempolicy");
 	return bmp;
 }
 make_internal_alias(numa_get_mems_allowed);
