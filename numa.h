@@ -260,9 +260,11 @@ int numa_num_configured_cpus();
 
 /* maximum cpus allowed to current task */
 int numa_num_task_cpus();
+int numa_num_thread_cpus(); /* backward compatibility */
 
 /* maximum nodes allowed to current task */
 int numa_num_task_nodes();
+int numa_num_thread_nodes(); /* backward compatibility */
 
 /* allocate a bitmask the size of the kernel cpumask_t */
 struct bitmask *numa_allocate_cpumask();

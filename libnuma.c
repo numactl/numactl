@@ -67,8 +67,8 @@ static __thread unsigned int mbind_flags = 0;
 static int sizes_set=0;
 static int maxconfigurednode = -1;
 static int maxconfiguredcpu = -1;
-static int maxprocnode = -1;
-static int maxproccpu = -1;
+static int numprocnode = -1;
+static int numproccpu = -1;
 static int nodemask_sz = 0;
 static int cpumask_sz = 0;
 
@@ -230,6 +230,18 @@ numa_bitmask_equal(const struct bitmask *bmp1, const struct bitmask *bmp2)
 			return 0;
 	return 1;
 }
+
+/* Hamming Weight: number of set bits */
+unsigned int numa_bitmask_weight(const struct bitmask *bmp)
+{
+	unsigned int i;
+	unsigned int w = 0;
+	for (i = 0; i < bmp->size; i++)
+		if (_getbit(bmp, i))
+			w++;
+	return w;
+}
+
 /* *****end of bitmask_  routines ************ */
 
 /* Next two can be overwritten by the application for different error handling */
@@ -386,8 +398,7 @@ done:
 
 /*
  * Read a mask consisting of a sequence of hexadecimal longs separated by
- * commas. Order them correctly and return the number of the last bit
- * set.
+ * commas. Order them correctly and return the number of bits set.
  */
 static int
 read_mask(char *s, struct bitmask *bmp)
@@ -436,17 +447,10 @@ read_mask(char *s, struct bitmask *bmp)
 
 		bmp->maskp[m++] = x;
 	}
-	m--;
-
-	/* Poor mans fls() */
-	for(i = bitsperlong - 1; i >= 0; i--)
-		if (test_bit(i, bmp->maskp + m))
-			break;
-
 	/*
-	 * Return the last bit set
+	 * Return the number of bits set
 	 */
-	return bitsperlong * m + i;
+	return numa_bitmask_weight(bmp);
 }
 
 /*
@@ -477,11 +481,10 @@ set_task_constraints(void)
 		char  *mask = strrchr(buffer,'\t') + 1;
 
 		if (strncmp(buffer,"Cpus_allowed:",13) == 0)
-			maxproccpu = read_mask(mask, numa_all_cpus_ptr);
+			numproccpu = read_mask(mask, numa_all_cpus_ptr);
 
 		if (strncmp(buffer,"Mems_allowed:",13) == 0) {
-			maxprocnode =
-				read_mask(mask, numa_all_nodes_ptr);
+			numprocnode = read_mask(mask, numa_all_nodes_ptr);
 		}
 	}
 	fclose(f);
@@ -490,26 +493,26 @@ set_task_constraints(void)
 	/*
 	 * Cpus_allowed in the kernel can be defined to all f's
 	 * i.e. it may be a superset of the actual available processors.
-	 * As such let's reduce maxproccpu to the number of actual
-	 * available cpus - 1.
+	 * As such let's reduce numproccpu to the number of actual
+	 * available cpus.
 	 */
-	if (maxproccpu <= 0) {
+	if (numproccpu <= 0) {
 		for (i = 0; i <= hicpu; i++)
 			numa_bitmask_setbit(numa_all_cpus_ptr, i);
-		maxproccpu = hicpu;
+		numproccpu = hicpu+1;
 	}
 
-	if (maxproccpu > hicpu) {
-		maxproccpu = hicpu;
+	if (numproccpu > hicpu+1) {
+		numproccpu = hicpu+1;
 		for (i=hicpu+1; i<numa_all_cpus_ptr->size; i++) {
 			numa_bitmask_clearbit(numa_all_cpus_ptr, i);
 		}
 	}
 
-	if (maxprocnode <= 0) {
+	if (numprocnode <= 0) {
 		for (i = 0; i <= maxconfigurednode; i++)
 			numa_bitmask_setbit(numa_all_nodes_ptr, i);
-		maxprocnode = maxconfigurednode;
+		numprocnode = maxconfigurednode + 1;
 	}
 
 	return;
@@ -632,13 +635,31 @@ numa_num_possible_cpus(void)
 int
 numa_num_task_nodes(void)
 {
-	return maxprocnode+1;
+	return numprocnode;
+}
+
+/*
+ * for backward compatibility
+ */
+int
+numa_num_thread_nodes(void)
+{
+	return numa_num_task_nodes();
 }
 
 int
 numa_num_task_cpus(void)
 {
-	return maxproccpu+1;
+	return numproccpu;
+}
+
+/*
+ * for backward compatibility
+ */
+int
+numa_num_thread_cpus(void)
+{
+	return numa_num_task_cpus();
 }
 
 /*
@@ -1115,7 +1136,9 @@ struct bitmask *numa_get_mems_allowed(void)
 	 * can change, so query on each call.
 	 */
 	bmp = numa_allocate_nodemask();
-	getpol(NULL,  bmp);
+	if (get_mempolicy(NULL, bmp->maskp, bmp->size + 1, 0,
+				MPOL_F_MEMS_ALLOWED) < 0)
+		numa_error("get_mempolicy");
 	return bmp;
 }
 make_internal_alias(numa_get_mems_allowed);
@@ -1321,6 +1344,8 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 		numa_warn(W_nosysfs2,
 		   "/sys not mounted or invalid. Assuming one node: %s",
 			  strerror(errno)); 
+		numa_warn(W_nosysfs2,
+		   "(cannot open or correctly parse %s)", fn);
 		numa_bitmask_setall(mask);
 		err = -1;
 	} 
@@ -1517,33 +1542,8 @@ __asm__(".symver numa_get_run_node_mask_v1,numa_get_run_node_mask@libnuma_1.1");
 struct bitmask *
 numa_get_run_node_mask_v2(void)
 { 
-	int i, k;
-	int ncpus = numa_num_configured_cpus();
-	int max = numa_max_node_int();
-	struct bitmask *bmp, *cpus, *nodecpus;
-
-
-	bmp = numa_allocate_cpumask();
-	cpus = numa_allocate_cpumask();
-	if (numa_sched_getaffinity_v2_int(0, cpus) < 0){
-		copy_bitmask_to_bitmask(numa_no_nodes_ptr, bmp);
-		goto free_cpus;
-	}
-
-	nodecpus = numa_allocate_cpumask();
-	for (i = 0; i <= max; i++) {
-		if (numa_node_to_cpus_v2_int(i, nodecpus) < 0) {
-			/* It's possible for the node to not exist */
-			continue;
-		}
-		for (k = 0; k < CPU_LONGS(ncpus); k++) {
-			if (nodecpus->maskp[k] & cpus->maskp[k])
-				numa_bitmask_setbit(bmp, i);
-		}
-	}		
-	numa_bitmask_free(nodecpus);
-free_cpus:
-	numa_bitmask_free(cpus);
+	struct bitmask *bmp = numa_allocate_nodemask();
+        copy_bitmask_to_bitmask(numa_all_nodes_ptr, bmp);
 	return bmp;
 } 
 __asm__(".symver numa_get_run_node_mask_v2,numa_get_run_node_mask@@libnuma_1.2");
