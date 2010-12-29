@@ -320,3 +320,20 @@ updating in newer kernels (Mel Gorman)
 
 newer:
 - include stat.h in shm.c (Mike Frysinger)
+
+2.0.6-rc1
+- Correct numa_max_node() use of broken numa_num_configured_nodes() (Tim Pepper)
+- Use numa_max_node() not numa_num_configured_nodes() (Tim Pepper)
+- Fix numa_num_configured_nodes() to match man page description (Tim Pepper)
+- Clarify comment for numa_all_nodes_ptr extern (Tim Pepper)
+- numactl --hardware should handle sparse node numbering (Tim Pepper)
+- Maintain compatibility with 2.0.3 numa_num_thread...()'s (Cliff W.)
+2.0.6-rc2
+- numa_num_task_cpus()/..nodes() to return actual counts (Cliff W.)
+2.0.6-rc3
+- Fix numa_get_run_node_mask() to return a cpuset-aware node mask (Cliff W.)
+- Add a better warning to numa_node_to_cpus()
+2.0.6-rc4
+- Fix numa_get_mems_allowed() to use MPOL_F_MEMS_ALLOWED (Michael Spiegel)
+
+2.0.6 released Dec, 2010
