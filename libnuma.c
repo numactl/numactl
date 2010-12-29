@@ -1542,8 +1542,33 @@ __asm__(".symver numa_get_run_node_mask_v1,numa_get_run_node_mask@libnuma_1.1");
 struct bitmask *
 numa_get_run_node_mask_v2(void)
 { 
-	struct bitmask *bmp = numa_allocate_nodemask();
-        copy_bitmask_to_bitmask(numa_all_nodes_ptr, bmp);
+	int i, k;
+	int ncpus = numa_num_configured_cpus();
+	int max = numa_max_node_int();
+	struct bitmask *bmp, *cpus, *nodecpus;
+
+
+	bmp = numa_allocate_cpumask();
+	cpus = numa_allocate_cpumask();
+	if (numa_sched_getaffinity_v2_int(0, cpus) < 0){
+		copy_bitmask_to_bitmask(numa_no_nodes_ptr, bmp);
+		goto free_cpus;
+	}
+
+	nodecpus = numa_allocate_cpumask();
+	for (i = 0; i <= max; i++) {
+		if (numa_node_to_cpus_v2_int(i, nodecpus) < 0) {
+			/* It's possible for the node to not exist */
+			continue;
+		}
+		for (k = 0; k < CPU_LONGS(ncpus); k++) {
+			if (nodecpus->maskp[k] & cpus->maskp[k])
+				numa_bitmask_setbit(bmp, i);
+		}
+	}		
+	numa_bitmask_free(nodecpus);
+free_cpus:
+	numa_bitmask_free(cpus);
 	return bmp;
 } 
 __asm__(".symver numa_get_run_node_mask_v2,numa_get_run_node_mask@@libnuma_1.2");
