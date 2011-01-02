@@ -87,6 +87,7 @@ libnuma_1.2 {
     numa_alloc_interleaved_subset;
     numa_alloc_local;
     numa_alloc_onnode;
+    numa_realloc;
     numa_allocate_cpumask;
     numa_allocate_nodemask;
     numa_available;

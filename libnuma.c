@@ -871,6 +871,23 @@ void *numa_alloc(size_t size)
 	return mem;
 } 
 
+void *numa_realloc(void *old_addr, size_t old_size, size_t new_size)
+{
+	char *mem;
+	mem = mremap(old_addr, old_size, new_size, MREMAP_MAYMOVE);
+	if (mem == (char *)-1)
+		return NULL;
+	/*
+	 *	The memory policy of the allocated pages is preserved by mremap(), so
+	 *	there is no need to (re)set it here. If the policy of the original
+	 *	allocation is not set, the new pages will be allocated according to the
+	 *	process' mempolicy. Trying to allocate explicitly the new pages on the
+	 *	same node as the original ones would require changing the policy of the
+	 *	newly allocated pages, which violates the numa_realloc() semantics.
+	 */ 
+	return mem;
+}
+
 void *numa_alloc_interleaved_subset_v1(size_t size, const nodemask_t *mask)
 {
 	char *mem;
