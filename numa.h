@@ -212,6 +212,8 @@ void *numa_alloc_onnode(size_t size, int node);
 void *numa_alloc_local(size_t size);
 /* Allocation with current policy */
 void *numa_alloc(size_t size);
+/* Change the size of a memory area preserving the memory policy */
+void *numa_realloc(void *old_addr, size_t old_size, size_t new_size);
 /* Free memory allocated by the functions above */
 void numa_free(void *mem, size_t size);
 

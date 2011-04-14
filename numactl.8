@@ -162,7 +162,7 @@ to specify the shared memory segment or file and a memory policy like described
 above (
 .I \-\-interleave, 
 .I \-\-localalloc, 
-.I \-\-prefered, 
+.I \-\-preferred,
 .I \-\-membind
 ).
 .TP
@@ -258,7 +258,7 @@ numactl \-\-preferred=1 numactl \-\-show
 Set preferred node 1 and show the resulting state.
 
 numactl --interleave=all --shmkeyfile /tmp/shmkey 
-Interleave all of the sysv shared memory regiion specified by 
+Interleave all of the sysv shared memory region specified by
 /tmp/shmkey over all nodes.
 
 numactl --offset=1G --length=1G --membind=1 --file /dev/shm/A --touch

@@ -1,0 +1,12 @@
+Date:	Wed, 2 Mar 2011 13:32:07 +0100
+From: Anton Arapov <anton@redhat.com>
+To: linux-numa@vger.kernel.org
+Subject: [PATCH] manpages
+
+Hello,
+    please, commit the following patches to the numactl tree.
+    Author: John Bradshaw <john@johnbradshaw.org>
+
+p.s. keep me in Cc.
+thanks,
+Anton
