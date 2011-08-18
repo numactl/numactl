@@ -156,6 +156,13 @@ void memtest(char *name, unsigned char *mem)
 	int i;
 	char title[128], result[128];
 
+	if (!mem) {
+		fprintf(stderr,
+		"Failed to allocate %lu bytes of memory. Test \"%s\" exits.\n",
+			msize, name);
+		return;
+	}
+
 #ifdef HAVE_STREAM_LIB
 	if (thistest == STREAM) {
 		do_stream(name, mem);
