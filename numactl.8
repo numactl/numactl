@@ -95,7 +95,9 @@ may be specifed as +N,N,N or  +N-N or +N,N-N and so forth. The + indicates that
 the node numbers are relative to the process' set of allowed nodes in its
 current cpuset.
 A !N-N notation indicates the inverse of N-N, in other words all nodes
-except N-N.  If used with + notation, specify !+N-N.
+except N-N.  If used with + notation, specify !+N-N. When
+.I same
+is specified the previous nodemask specified on the command line is used.
 .TP
 .B \-\-membind=nodes, \-m nodes
 Only allocate memory from nodes.  Allocation will fail when there

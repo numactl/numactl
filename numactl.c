@@ -366,6 +366,20 @@ void check_shmbeyond(char *msg)
 	}
 }
 
+static struct bitmask *numactl_parse_nodestring(char *s)
+{
+	static char *last;
+
+	if (s[0] == 's' && !strcmp(s, "same")) {
+		if (!last)
+			usage_msg("same needs previous node specification");
+		s = last;
+	} else {
+		last = s;
+	}
+	return numa_parse_nodestring(s);
+}
+
 int main(int ac, char **av)
 {
 	int c, i, nnodes=0;
@@ -386,7 +400,7 @@ int main(int ac, char **av)
 			exit(0);
 		case 'i': /* --interleave */
 			checknuma();
-			mask = numa_parse_nodestring(optarg);
+			mask = numactl_parse_nodestring(optarg);
 			if (!mask) {
 				printf ("<%s> is invalid\n", optarg);
 				usage();
@@ -404,7 +418,7 @@ int main(int ac, char **av)
 		case 'c': /* --cpubind */
 			dontshm("-c/--cpubind/--cpunodebind");
 			checknuma();
-			mask = numa_parse_nodestring(optarg);
+			mask = numactl_parse_nodestring(optarg);
 			if (!mask) {
 				printf ("<%s> is invalid\n", optarg);
 				usage();
@@ -435,7 +449,7 @@ int main(int ac, char **av)
 		case 'm': /* --membind */
 			checknuma();
 			setpolicy(MPOL_BIND);
-			mask = numa_parse_nodestring(optarg);
+			mask = numactl_parse_nodestring(optarg);
 			if (!mask) {
 				printf ("<%s> is invalid\n", optarg);
 				usage();
@@ -453,7 +467,7 @@ int main(int ac, char **av)
 		case 'p': /* --preferred */
 			checknuma();
 			setpolicy(MPOL_PREFERRED);
-			mask = numa_parse_nodestring(optarg);
+			mask = numactl_parse_nodestring(optarg);
 			if (!mask) {
 				printf ("<%s> is invalid\n", optarg);
 				usage();
