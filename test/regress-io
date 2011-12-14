@@ -1,0 +1,46 @@
+#!/bin/bash
+# test IO affinity parsing
+# tests may fail depending on machine setup
+
+E=0
+
+check() {
+	echo testing $@
+	if "$@" ; then
+		true
+	else
+		echo failed
+		E=1
+	fi
+
+}
+
+fail() {
+	echo testing failure of $@
+	if "$@" ; then
+		echo failed
+		E=1
+	else
+		true
+	fi
+}
+
+BASE=`(cd ..; pwd)`
+export LD_LIBRARY_PATH=$BASE
+export PATH=$BASE:$PATH
+
+check ./node-parse file:.
+check ./node-parse ip:8.8.8.8
+fail ./node-parse ip:127.0.0.1
+
+IF=$(ip link ls | grep eth | cut -d: -f2 | head -1)
+check ./node-parse "netdev:$IF"
+fail ./node-parse netdev:lo
+DEV=$(df | awk '/\/$/ { print $1 }')
+check ./node-parse file:$DEV
+check ./node-parse block:$(basename $DEV)
+check ./node-parse pci:0:0.0
+
+if [ "$E" = 0 ] ; then echo SUCCESS ; else echo FAILURE ; fi
+
+exit $E

@@ -31,10 +31,11 @@ CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      test/after test/before threadtest test_move_pages \
 	      test/mbind_mig_pages test/migrate_pages \
 	      migratepages migspeed migspeed.o libnuma.a \
-	      test/move_pages test/realloc_test
+	      test/move_pages test/realloc_test sysfs.o affinity.o \
+	      test/node-parse rtnetlink.o
 SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
 	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c mt.c \
-	clearcache.c test/*.c
+	clearcache.c test/*.c affinity.c sysfs.c rtnetlink.c
 
 prefix := /usr
 libdir := ${prefix}/$(shell ./getlibdir)
@@ -43,7 +44,8 @@ docdir := ${prefix}/share/doc
 all: numactl migratepages migspeed libnuma.so numademo numamon memhog \
      test/tshared stream test/mynode test/pagesize test/ftok test/prefered \
      test/randmap test/nodemap test/distance test/tbitmap test/move_pages \
-     test/mbind_mig_pages test/migrate_pages test/realloc_test libnuma.a
+     test/mbind_mig_pages test/migrate_pages test/realloc_test libnuma.a \
+     test/node-parse
 
 numactl: numactl.o util.o shm.o bitops.o libnuma.so
 
@@ -81,7 +83,7 @@ stream_main.o: stream_main.c
 
 libnuma.so.1: versions.ldscript
 
-libnuma.so.1: libnuma.o syscall.o distance.o
+libnuma.so.1: libnuma.o syscall.o distance.o affinity.o sysfs.o rtnetlink.o
 	${CC} ${LDFLAGS} -shared -Wl,-soname=libnuma.so.1 -Wl,--version-script,versions.ldscript -Wl,-init,numa_init -Wl,-fini,numa_fini -o libnuma.so.1 $(filter-out versions.ldscript,$^)
 
 libnuma.so: libnuma.so.1
@@ -91,13 +93,19 @@ libnuma.o : CFLAGS += -fPIC
 
 AR ?= ar
 RANLIB ?= ranlib
-libnuma.a: libnuma.o syscall.o distance.o
+libnuma.a: libnuma.o syscall.o distance.o sysfs.o affinity.o rtnetlink.o
 	$(AR) rc $@ $^
 	$(RANLIB) $@
 
 distance.o : CFLAGS += -fPIC
 
 syscall.o : CFLAGS += -fPIC
+
+affinity.o : CFLAGS += -fPIC
+
+sysfs.o : CFLAGS += -fPIC
+
+rtnetlink.o : CFLAGS += -fPIC
 
 test/tshared: test/tshared.o libnuma.so
 
@@ -124,6 +132,8 @@ test/mbind_mig_pages: test/mbind_mig_pages.c libnuma.so
 test/migrate_pages: test/migrate_pages.c libnuma.so
 
 test/realloc_test: test/realloc_test.c libnuma.so
+
+test/node-parse: test/node-parse.c libnuma.so util.o
 
 .PHONY: install all clean html depend
 
@@ -190,4 +200,7 @@ regress1:
 regress2:
 	cd test ; ./regress2
 
-test: all regress1 regress2 test_numademo
+regress3:
+	cd test ; ./regress-io
+
+test: all regress1 regress2 test_numademo regress3

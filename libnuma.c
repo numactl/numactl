@@ -35,6 +35,7 @@
 #include "numaif.h"
 #include "numaint.h"
 #include "util.h"
+#include "affinity.h"
 
 #define WEAK __attribute__((weak))
 
@@ -1776,12 +1777,23 @@ numa_parse_nodestring(char *s)
 		s++;
 	}
 	do {
-		int i;
 		unsigned long arg;
-		if (!strcmp(s,"all")) {
-			copy_bitmask_to_bitmask(numa_all_nodes_ptr, mask);
-			s+=4;
-			break;
+		int i;
+		if (isalpha(*s)) {
+			int n;
+			if (!strcmp(s,"all")) {
+				copy_bitmask_to_bitmask(numa_all_nodes_ptr,
+							mask);
+				s+=4;
+				break;
+			}
+			n = resolve_affinity(s, mask);
+			if (n != NO_IO_AFFINITY) {
+				if (n < 0)
+					goto err;
+				s += strlen(s) + 1;
+				break;
+			}
 		}
 		arg = get_nr(s, &end, numa_all_nodes_ptr, relative);
 		if (end == s) {
