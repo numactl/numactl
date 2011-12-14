@@ -20,6 +20,7 @@
 #include <sys/mman.h>
 #include <sys/fcntl.h>
 #include <string.h>
+#include <stdbool.h>
 #include "numa.h"
 #include "numaif.h"
 #include "util.h"
@@ -30,6 +31,9 @@ enum {
 	UNIT = 10*1024*1024,
 };
 
+#ifndef MADV_NOHUGEPAGE
+#define MADV_NOHUGEPAGE 15
+#endif
 
 int repeat = 1;
 
@@ -37,6 +41,7 @@ void usage(void)
 {
 	printf("memhog [-rNUM] size[kmg] [policy [nodeset]]\n");
 	printf("-rNUM repeat memset NUM times\n");
+	printf("-H disable transparent hugepages\n");
 	print_policies();
 	exit(1);
 }
@@ -66,6 +71,7 @@ int main(int ac, char **av)
 	int loose = 0;
 	int i;
 	int fd = -1;
+	bool disable_hugepage = false;
 
 	nodes = numa_allocate_nodemask();
 	gnodes = numa_allocate_nodemask();
@@ -79,6 +85,9 @@ int main(int ac, char **av)
 			break;	
 		case 'r':
 			repeat = atoi(av[1] + 2);
+			break;
+		case 'H':
+			disable_hugepage = true;
 			break;
 		default:	
 			usage();
@@ -113,6 +122,9 @@ int main(int ac, char **av)
 	
 	if (mbind(map, length, policy, nodes->maskp, nodes->size, 0) < 0)
 		terr("mbind");
+
+	if (disable_hugepage)
+		madvise(map, length, MADV_NOHUGEPAGE);
 	
 	gpolicy = -1;
 	if (get_mempolicy(&gpolicy, gnodes->maskp, gnodes->size, map, MPOL_F_ADDR) < 0)
