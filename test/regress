@@ -79,8 +79,8 @@ probe_hardware()
 
 # =========================================================================
 _test_process_state() {
-    echo '=>testing numactl' "$@" "memhog $SIZE"
-    numactl "$@" memhog $SIZE  || failed
+    echo '=>testing numactl' "$@" "memhog -H $SIZE"
+    numactl "$@" memhog -H $SIZE  || failed
 }
 
 test_process_state()
@@ -132,8 +132,8 @@ test_process_state()
 # test mbind
 
 _test_mbind() {
-	echo '=>testing memhog' "$@"
-	memhog $SIZE "$@" || failed
+	echo '=>testing memhog -H' "$@"
+	memhog -H $SIZE "$@" || failed
 }
 
 test_mbind()
