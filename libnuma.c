@@ -82,10 +82,13 @@ static void set_sizes(void);
  *
  * The v1 library depends upon nodemask_t's of all nodes and no nodes.
  */
-void
+void __attribute__((constructor))
 numa_init(void)
 {
 	int max,i;
+
+	if (sizes_set)
+		return;
 
 	set_sizes();
 	/* numa_all_nodes should represent existing nodes on this system */
@@ -95,19 +98,19 @@ numa_init(void)
 	memset(&numa_no_nodes, 0, sizeof(numa_no_nodes));
 }
 
-void
+#define FREE_AND_ZERO(x) if (x) { 	\
+		numa_bitmask_free(x); 	\
+		x = NULL;		\
+	}
+
+void __attribute__((destructor))
 numa_fini(void)
 {
-	if (numa_all_cpus_ptr)
-		numa_bitmask_free(numa_all_cpus_ptr);
-	if (numa_all_nodes_ptr)
-		numa_bitmask_free(numa_all_nodes_ptr);
-	if (numa_no_nodes_ptr)
-		numa_bitmask_free(numa_no_nodes_ptr);
-	if (numa_memnode_ptr)
-		numa_bitmask_free(numa_memnode_ptr);
-	if (numa_nodes_ptr)
-		numa_bitmask_free(numa_nodes_ptr);
+	FREE_AND_ZERO(numa_all_cpus_ptr);
+	FREE_AND_ZERO(numa_all_nodes_ptr);
+	FREE_AND_ZERO(numa_no_nodes_ptr);
+	FREE_AND_ZERO(numa_memnode_ptr);
+	FREE_AND_ZERO(numa_nodes_ptr);
 }
 
 /*
