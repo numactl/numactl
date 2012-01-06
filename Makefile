@@ -147,7 +147,10 @@ install: numactl migratepages migspeed numademo.c numamon memhog libnuma.so.1 nu
 	install -m 0755 numademo ${prefix}/bin
 	install -m 0755 memhog ${prefix}/bin
 	mkdir -p ${prefix}/share/man/man2 ${prefix}/share/man/man8 ${prefix}/share/man/man3
+	install -m 0644 migspeed.8 ${prefix}/share/man/man8
+	install -m 0644 migratepages.8 ${prefix}/share/man/man8
 	install -m 0644 numactl.8 ${prefix}/share/man/man8
+	install -m 0644 numastat.8 ${prefix}/share/man/man8
 	install -m 0644 numa.3 ${prefix}/share/man/man3
 	( cd ${prefix}/share/man/man3 ; for i in $$(./manlinks) ; do ln -sf numa.3 $$i.3 ; done )
 	mkdir -p ${libdir}
