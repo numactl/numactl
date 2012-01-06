@@ -1287,6 +1287,8 @@ numa_node_to_cpus_v1(int node, unsigned long *buffer, int bufferlen)
 		numa_warn(W_nosysfs2,
 		   "/sys not mounted or invalid. Assuming one node: %s",
 			  strerror(errno));
+		numa_warn(W_nosysfs2,
+		   "(cannot open or correctly parse %s)", fn);
 		bitmask.maskp = (unsigned long *)mask;
 		bitmask.size  = buflen_needed * 8;
 		numa_bitmask_setall(&bitmask);
