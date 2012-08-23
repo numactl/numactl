@@ -464,7 +464,7 @@ read_mask(char *s, struct bitmask *bmp)
 static void
 set_task_constraints(void)
 {
-	int hicpu = sysconf(_SC_NPROCESSORS_CONF)-1;
+	int hicpu = maxconfiguredcpu;
 	int i;
 	char *buffer = NULL;
 	size_t buflen = 0;
