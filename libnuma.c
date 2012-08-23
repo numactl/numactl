@@ -557,30 +557,9 @@ set_numa_max_cpu(void)
 static void
 set_configured_cpus(void)
 {
-	char		*dirnamep = "/sys/devices/system/cpu";
-	struct dirent	*dirent;
-	DIR		*dir;
-	dir = opendir(dirnamep);
-
-	if (dir == NULL) {
-		/* fall back to using the online cpu count */
-		maxconfiguredcpu = sysconf(_SC_NPROCESSORS_CONF) - 1;
-		return;
-	}
-	while ((dirent = readdir(dir)) != 0) {
-		if (dirent->d_type == DT_DIR
-		    && !strncmp("cpu", dirent->d_name, 3)) {
-			long cpu = strtol(dirent->d_name + 3, NULL, 10);
-
-			if (cpu < INT_MAX && cpu > maxconfiguredcpu)
-				maxconfiguredcpu = cpu;
-		}
-	}
-	closedir(dir);
-	if (maxconfiguredcpu < 0) {
-		/* fall back to using the online cpu count */
-		maxconfiguredcpu = sysconf(_SC_NPROCESSORS_CONF) - 1;
-	}
+	maxconfiguredcpu = sysconf(_SC_NPROCESSORS_CONF) - 1;
+	if (maxconfiguredcpu == -1)
+		numa_error("sysconf(NPROCESSORS_CONF) failed.\n");
 }
 
 /*
