@@ -1320,7 +1320,7 @@ __asm__(".symver numa_node_to_cpus_v1,numa_node_to_cpus@libnuma_1.1");
 int
 numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 {
-	int err = 0, bufferlen;
+	int err = 0;
 	int nnodes = numa_max_node();
 	char fn[64], *line = NULL;
 	FILE *f; 
@@ -1330,7 +1330,6 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 	if (!node_cpu_mask_v2)
 		init_node_cpu_mask_v2();
 
-	bufferlen = numa_bitmask_nbytes(buffer);
 	if (node > nnodes) {
 		errno = ERANGE;
 		return -1;
