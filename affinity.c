@@ -49,14 +49,14 @@
 #include "affinity.h"
 #include "rtnetlink.h"
 
-static int badchar(char *s)
+static int badchar(const char *s)
 {
 	if (strpbrk(s, "/."))
 		return 1;
 	return 0;
 }
 
-static int node_parse_failure(int ret, char *cls, char *dev)
+static int node_parse_failure(int ret, char *cls, const char *dev)
 {
 	if (!cls)
 		cls = "";
@@ -72,7 +72,8 @@ static int node_parse_failure(int ret, char *cls, char *dev)
 }
 
 /* Generic sysfs class lookup */
-static int affinity_class(struct bitmask *mask, char *cls, char *dev)
+static int
+affinity_class(struct bitmask *mask, char *cls, const const char *dev)
 {
 	int ret;
 	while (isspace(*dev))
@@ -121,7 +122,7 @@ static int affinity_class(struct bitmask *mask, char *cls, char *dev)
 
 
 /* Turn file (or device node) into class name */
-static int affinity_file(struct bitmask *mask, char *cls, char *file)
+static int affinity_file(struct bitmask *mask, char *cls, const char *file)
 {
 	struct stat st;
 	DIR *dir;
@@ -249,7 +250,7 @@ static int iif_to_name(int iif, struct ifreq *ifr)
    This generally only attempts to handle simple cases:
    no multi-path, no bounding etc. In these cases only
    the first interface or none is chosen. */
-static int affinity_ip(struct bitmask *mask, char *cls, char *id)
+static int affinity_ip(struct bitmask *mask, char *cls, const char *id)
 {
 	struct addrinfo *ai;
 	int n;
@@ -279,7 +280,7 @@ out_ai:
 }
 
 /* Look up affinity for a PCI device */
-static int affinity_pci(struct bitmask *mask, char *cls, char *id)
+static int affinity_pci(struct bitmask *mask, char *cls, const char *id)
 {
 	unsigned seg, bus, dev, func;
 	int n, ret;
@@ -310,7 +311,7 @@ static struct handler {
 	char first;
 	char *name;
 	char *cls;
-	int (*handler)(struct bitmask *mask, char *cls, char *desc);
+	int (*handler)(struct bitmask *mask, char *cls, const char *desc);
 } handlers[] = {
 	{ 'n', "netdev:", "net",   affinity_class },
 	{ 'i', "ip:",     NULL,    affinity_ip    },
@@ -320,7 +321,7 @@ static struct handler {
 	{}
 };
 
-hidden int resolve_affinity(char *id, struct bitmask *mask)
+hidden int resolve_affinity(const char *id, struct bitmask *mask)
 {
 	struct handler *h;
 

@@ -50,13 +50,13 @@ numa \- NUMA policy library
 .sp
 .BI "int numa_parse_bitmap(char *" line " , struct bitmask *" mask ");
 .br
-.BI "struct bitmask *numa_parse_nodestring(char *" string );
+.BI "struct bitmask *numa_parse_nodestring(const char *" string );
 .br
-.BI "struct bitmask *numa_parse_nodestring_all(char *" string );
+.BI "struct bitmask *numa_parse_nodestring_all(const char *" string );
 .br
-.BI "struct bitmask *numa_parse_cpustring(char *" string );
+.BI "struct bitmask *numa_parse_cpustring(const char *" string );
 .br
-.BI "struct bitmask *numa_parse_cpustring_all(char *" string );
+.BI "struct bitmask *numa_parse_cpustring_all(const char *" string );
 .sp
 .BI "long numa_node_size(int " node ", long *" freep );
 .br

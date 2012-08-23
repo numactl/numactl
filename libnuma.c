@@ -1718,7 +1718,7 @@ void numa_set_strict(int flag)
  * Allow a relative node / processor specification within the allowed
  * set if "relative" is nonzero
  */
-static unsigned long get_nr(char *s, char **end, struct bitmask *bmp, int relative)
+static unsigned long get_nr(const char *s, char **end, struct bitmask *bmp, int relative)
 {
 	long i, nr;
 
@@ -1747,7 +1747,7 @@ static unsigned long get_nr(char *s, char **end, struct bitmask *bmp, int relati
  * The caller must free the returned bitmask.
  */
 static struct bitmask *
-__numa_parse_nodestring(char *s, struct bitmask *allowed_nodes_ptr)
+__numa_parse_nodestring(const char *s, struct bitmask *allowed_nodes_ptr)
 {
 	int invert = 0, relative = 0;
 	int conf_nodes = numa_num_configured_nodes();
@@ -1843,7 +1843,7 @@ err:
  * for this task.
  */
 
-struct bitmask * numa_parse_nodestring(char *s)
+struct bitmask * numa_parse_nodestring(const char *s)
 {
 	return __numa_parse_nodestring(s, numa_all_nodes_ptr);
 }
@@ -1853,7 +1853,7 @@ struct bitmask * numa_parse_nodestring(char *s)
  * available.
  */
 
-struct bitmask * numa_parse_nodestring_all(char *s)
+struct bitmask * numa_parse_nodestring_all(const char *s)
 {
 	return __numa_parse_nodestring(s, numa_possible_nodes_ptr);
 }
@@ -1871,7 +1871,7 @@ struct bitmask * numa_parse_nodestring_all(char *s)
  * The caller must free the returned bitmask.
  */
 static struct bitmask *
-__numa_parse_cpustring(char *s, struct bitmask *allowed_cpus_ptr)
+__numa_parse_cpustring(const char *s, struct bitmask *allowed_cpus_ptr)
 {
 	int invert = 0, relative=0;
 	int conf_cpus = numa_num_configured_cpus();
@@ -1956,7 +1956,7 @@ err:
  * for this task.
  */
 
-struct bitmask * numa_parse_cpustring(char *s)
+struct bitmask * numa_parse_cpustring(const char *s)
 {
 	return __numa_parse_cpustring(s, numa_all_cpus_ptr);
 }
@@ -1966,7 +1966,7 @@ struct bitmask * numa_parse_cpustring(char *s)
  * available.
  */
 
-struct bitmask * numa_parse_cpustring_all(char *s)
+struct bitmask * numa_parse_cpustring_all(const char *s)
 {
 	return __numa_parse_cpustring(s, numa_possible_cpus_ptr);
 }
