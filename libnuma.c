@@ -47,7 +47,9 @@ nodemask_t numa_all_nodes;
 /* these are now the default bitmask (pointers to) (version 2) */
 struct bitmask *numa_no_nodes_ptr = NULL;
 struct bitmask *numa_all_nodes_ptr = NULL;
+struct bitmask *numa_possible_nodes_ptr = NULL;
 struct bitmask *numa_all_cpus_ptr = NULL;
+struct bitmask *numa_possible_cpus_ptr = NULL;
 /* I would prefer to use symbol versioning to create v1 and v2 versions
    of numa_no_nodes and numa_all_nodes, but the loader does not correctly
    handle versioning of BSS versus small data items */
@@ -108,7 +110,9 @@ void __attribute__((destructor))
 numa_fini(void)
 {
 	FREE_AND_ZERO(numa_all_cpus_ptr);
+	FREE_AND_ZERO(numa_possible_cpus_ptr);
 	FREE_AND_ZERO(numa_all_nodes_ptr);
+	FREE_AND_ZERO(numa_possible_nodes_ptr);
 	FREE_AND_ZERO(numa_no_nodes_ptr);
 	FREE_AND_ZERO(numa_memnode_ptr);
 	FREE_AND_ZERO(numa_nodes_ptr);
@@ -471,7 +475,9 @@ set_task_constraints(void)
 	FILE *f;
 
 	numa_all_cpus_ptr = numa_allocate_cpumask();
+	numa_possible_cpus_ptr = numa_allocate_cpumask();
 	numa_all_nodes_ptr = numa_allocate_nodemask();
+	numa_possible_nodes_ptr = numa_allocate_cpumask();
 	numa_no_nodes_ptr = numa_allocate_nodemask();
 
 	f = fopen(mask_size_file, "r");
@@ -493,6 +499,11 @@ set_task_constraints(void)
 	}
 	fclose(f);
 	free(buffer);
+
+	for (i = 0; i <= hicpu; i++)
+		numa_bitmask_setbit(numa_possible_cpus_ptr, i);
+	for (i = 0; i <= maxconfigurednode; i++)
+		numa_bitmask_setbit(numa_possible_nodes_ptr, i);
 
 	/*
 	 * Cpus_allowed in the kernel can be defined to all f's
@@ -1725,18 +1736,18 @@ static unsigned long get_nr(char *s, char **end, struct bitmask *bmp, int relati
 }
 
 /*
- * numa_parse_nodestring() is called to create a node mask, given
+ * __numa_parse_nodestring() is called to create a node mask, given
  * an ascii string such as 25 or 12-15 or 1,3,5-7 or +6-10.
- * (the + indicates that the numbers are cpuset-relative)
+ * (the + indicates that the numbers are nodeset-relative)
  *
- * The nodes may be specified as absolute, or relative to the current cpuset.
- * The list of available nodes is in a map pointed to by "numa_all_nodes_ptr",
- * which may represent all nodes or the nodes in the current cpuset.
+ * The nodes may be specified as absolute, or relative to the current nodeset.
+ * The list of available nodes is in a map pointed to by "allowed_nodes_ptr",
+ * which may represent all nodes or the nodes in the current nodeset.
  *
  * The caller must free the returned bitmask.
  */
-struct bitmask *
-numa_parse_nodestring(char *s)
+static struct bitmask *
+__numa_parse_nodestring(char *s, struct bitmask *allowed_nodes_ptr)
 {
 	int invert = 0, relative = 0;
 	int conf_nodes = numa_num_configured_nodes();
@@ -1763,7 +1774,7 @@ numa_parse_nodestring(char *s)
 		if (isalpha(*s)) {
 			int n;
 			if (!strcmp(s,"all")) {
-				copy_bitmask_to_bitmask(numa_all_nodes_ptr,
+				copy_bitmask_to_bitmask(allowed_nodes_ptr,
 							mask);
 				s+=4;
 				break;
@@ -1776,12 +1787,12 @@ numa_parse_nodestring(char *s)
 				break;
 			}
 		}
-		arg = get_nr(s, &end, numa_all_nodes_ptr, relative);
+		arg = get_nr(s, &end, allowed_nodes_ptr, relative);
 		if (end == s) {
 			numa_warn(W_nodeparse, "unparseable node description `%s'\n", s);
 			goto err;
 		}
-		if (!numa_bitmask_isbitset(numa_all_nodes_ptr, arg)) {
+		if (!numa_bitmask_isbitset(allowed_nodes_ptr, arg)) {
 			numa_warn(W_nodeparse, "node argument %d is out of range\n", arg);
 			goto err;
 		}
@@ -1791,18 +1802,18 @@ numa_parse_nodestring(char *s)
 		if (*s == '-') {
 			char *end2;
 			unsigned long arg2;
-			arg2 = get_nr(++s, &end2, numa_all_nodes_ptr, relative);
+			arg2 = get_nr(++s, &end2, allowed_nodes_ptr, relative);
 			if (end2 == s) {
 				numa_warn(W_nodeparse, "missing node argument %s\n", s);
 				goto err;
 			}
-			if (!numa_bitmask_isbitset(numa_all_nodes_ptr, arg2)) {
+			if (!numa_bitmask_isbitset(allowed_nodes_ptr, arg2)) {
 				numa_warn(W_nodeparse, "node argument %d out of range\n", arg2);
 				goto err;
 			}
 			while (arg <= arg2) {
 				i = arg;
-				if (numa_bitmask_isbitset(numa_all_nodes_ptr,i))
+				if (numa_bitmask_isbitset(allowed_nodes_ptr,i))
 					numa_bitmask_setbit(mask, i);
 				arg++;
 			}
@@ -1828,19 +1839,39 @@ err:
 }
 
 /*
- * numa_parse_cpustring() is called to create a bitmask, given
+ * numa_parse_nodestring() is called to create a bitmask from nodes available
+ * for this task.
+ */
+
+struct bitmask * numa_parse_nodestring(char *s)
+{
+	return __numa_parse_nodestring(s, numa_all_nodes_ptr);
+}
+
+/*
+ * numa_parse_nodestring_all() is called to create a bitmask from all nodes
+ * available.
+ */
+
+struct bitmask * numa_parse_nodestring_all(char *s)
+{
+	return __numa_parse_nodestring(s, numa_possible_nodes_ptr);
+}
+
+/*
+ * __numa_parse_cpustring() is called to create a bitmask, given
  * an ascii string such as 25 or 12-15 or 1,3,5-7 or +6-10.
  * (the + indicates that the numbers are cpuset-relative)
  *
  * The cpus may be specified as absolute, or relative to the current cpuset.
  * The list of available cpus for this task is in the map pointed to by
- * "numa_all_cpus_ptr", which may represent all cpus or the cpus in the
+ * "allowed_cpus_ptr", which may represent all cpus or the cpus in the
  * current cpuset.
  *
  * The caller must free the returned bitmask.
  */
-struct bitmask *
-numa_parse_cpustring(char *s)
+static struct bitmask *
+__numa_parse_cpustring(char *s, struct bitmask *allowed_cpus_ptr)
 {
 	int invert = 0, relative=0;
 	int conf_cpus = numa_num_configured_cpus();
@@ -1864,16 +1895,16 @@ numa_parse_cpustring(char *s)
 		int i;
 
 		if (!strcmp(s,"all")) {
-			copy_bitmask_to_bitmask(numa_all_cpus_ptr, mask);
+			copy_bitmask_to_bitmask(allowed_cpus_ptr, mask);
 			s+=4;
 			break;
 		}
-		arg = get_nr(s, &end, numa_all_cpus_ptr, relative);
+		arg = get_nr(s, &end, allowed_cpus_ptr, relative);
 		if (end == s) {
 			numa_warn(W_cpuparse, "unparseable cpu description `%s'\n", s);
 			goto err;
 		}
-		if (!numa_bitmask_isbitset(numa_all_cpus_ptr, arg)) {
+		if (!numa_bitmask_isbitset(allowed_cpus_ptr, arg)) {
 			numa_warn(W_cpuparse, "cpu argument %s is out of range\n", s);
 			goto err;
 		}
@@ -1884,18 +1915,18 @@ numa_parse_cpustring(char *s)
 			char *end2;
 			unsigned long arg2;
 			int i;
-			arg2 = get_nr(++s, &end2, numa_all_cpus_ptr, relative);
+			arg2 = get_nr(++s, &end2, allowed_cpus_ptr, relative);
 			if (end2 == s) {
 				numa_warn(W_cpuparse, "missing cpu argument %s\n", s);
 				goto err;
 			}
-			if (!numa_bitmask_isbitset(numa_all_cpus_ptr, arg2)) {
+			if (!numa_bitmask_isbitset(allowed_cpus_ptr, arg2)) {
 				numa_warn(W_cpuparse, "cpu argument %s out of range\n", s);
 				goto err;
 			}
 			while (arg <= arg2) {
 				i = arg;
-				if (numa_bitmask_isbitset(numa_all_cpus_ptr, i))
+				if (numa_bitmask_isbitset(allowed_cpus_ptr, i))
 					numa_bitmask_setbit(mask, i);
 				arg++;
 			}
@@ -1918,4 +1949,24 @@ numa_parse_cpustring(char *s)
 err:
 	numa_bitmask_free(mask);
 	return NULL;
+}
+
+/*
+ * numa_parse_cpustring() is called to create a bitmask from cpus available
+ * for this task.
+ */
+
+struct bitmask * numa_parse_cpustring(char *s)
+{
+	return __numa_parse_cpustring(s, numa_all_cpus_ptr);
+}
+
+/*
+ * numa_parse_cpustring_all() is called to create a bitmask from all cpus
+ * available.
+ */
+
+struct bitmask * numa_parse_cpustring_all(char *s)
+{
+	return __numa_parse_cpustring(s, numa_possible_cpus_ptr);
 }
