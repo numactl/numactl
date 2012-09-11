@@ -186,8 +186,14 @@ char *fmt_mem(unsigned long long mem, char *buf)
 static void print_distances(int maxnode)
 {
 	int i,k;
+	int fst = 0;
 
-	if (numa_distance(maxnode,0) == 0) {
+	for (i = 0; i <= maxnode; i++)
+		if (numa_bitmask_isbitset(numa_nodes_ptr, i)) {
+			fst = i;
+			break;
+		}
+	if (numa_distance(maxnode,fst) == 0) {
 		printf("No distance information available.\n");
 		return;
 	}
