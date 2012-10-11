@@ -37,7 +37,11 @@ SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
 	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c mt.c \
 	clearcache.c test/*.c affinity.c sysfs.c rtnetlink.c
 
+ifeq ($(strip $(PREFIX)),)
 prefix := /usr
+else
+prefix := $(PREFIX)
+endif
 libdir := ${prefix}/$(shell ./getlibdir)
 docdir := ${prefix}/share/doc
 
