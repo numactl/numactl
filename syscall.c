@@ -115,7 +115,15 @@
 
 #endif
 
-#if defined(__x86_64__)
+#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 11)
+
+/* glibc 2.11 seems to have working 6 argument sycall. Use the
+   glibc supplied syscall in this case.
+   The version cut-off is rather arbitary and could be probably
+   earlier. */
+
+#define syscall6 syscall
+#elif defined(__x86_64__)
 /* 6 argument calls on x86-64 are often buggy in both glibc and
    asm/unistd.h. Add a working version here. */
 long syscall6(long call, long a, long b, long c, long d, long e, long f)

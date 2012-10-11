@@ -73,6 +73,12 @@ void usage(void)
 		"\n"
 		"memory policy is --interleave, --preferred, --membind, --localalloc\n"
 		"nodes is a comma delimited list of node numbers or A-B ranges or all.\n"
+		"Instead of a number a node can also be:\n"
+		"  netdev:DEV the node connected to network device DEV\n"
+		"  file:PATH  the node the block device of path is connected to\n"
+		"  ip:HOST    the node of the network device host routes through\n"
+		"  block:PATH the node of block device path\n"
+		"  pci:[seg:]bus:dev[:func] The node of a PCI device\n"
 		"cpus is a comma delimited list of cpu numbers or A-B ranges or all\n"
 		"all ranges can be inverted with !\n"
 		"all numbers and ranges can be made cpuset-relative with +\n"
@@ -180,8 +186,14 @@ char *fmt_mem(unsigned long long mem, char *buf)
 static void print_distances(int maxnode)
 {
 	int i,k;
+	int fst = 0;
 
-	if (numa_distance(maxnode,0) == 0) {
+	for (i = 0; i <= maxnode; i++)
+		if (numa_bitmask_isbitset(numa_nodes_ptr, i)) {
+			fst = i;
+			break;
+		}
+	if (numa_distance(maxnode,fst) == 0) {
 		printf("No distance information available.\n");
 		return;
 	}
@@ -356,6 +368,30 @@ void get_short_opts(struct option *o, char *s)
 	*s = '\0';
 }
 
+void check_shmbeyond(char *msg)
+{
+	if (shmoffset >= shmlen) {
+		fprintf(stderr,
+		"numactl: region offset %#llx beyond its length %#llx at %s\n",
+				shmoffset, shmlen, msg);
+		exit(1);
+	}
+}
+
+static struct bitmask *numactl_parse_nodestring(char *s)
+{
+	static char *last;
+
+	if (s[0] == 's' && !strcmp(s, "same")) {
+		if (!last)
+			usage_msg("same needs previous node specification");
+		s = last;
+	} else {
+		last = s;
+	}
+	return numa_parse_nodestring(s);
+}
+
 int main(int ac, char **av)
 {
 	int c, i, nnodes=0;
@@ -376,7 +412,7 @@ int main(int ac, char **av)
 			exit(0);
 		case 'i': /* --interleave */
 			checknuma();
-			mask = numa_parse_nodestring(optarg);
+			mask = numactl_parse_nodestring(optarg);
 			if (!mask) {
 				printf ("<%s> is invalid\n", optarg);
 				usage();
@@ -394,7 +430,7 @@ int main(int ac, char **av)
 		case 'c': /* --cpubind */
 			dontshm("-c/--cpubind/--cpunodebind");
 			checknuma();
-			mask = numa_parse_nodestring(optarg);
+			mask = numactl_parse_nodestring(optarg);
 			if (!mask) {
 				printf ("<%s> is invalid\n", optarg);
 				usage();
@@ -425,7 +461,7 @@ int main(int ac, char **av)
 		case 'm': /* --membind */
 			checknuma();
 			setpolicy(MPOL_BIND);
-			mask = numa_parse_nodestring(optarg);
+			mask = numactl_parse_nodestring(optarg);
 			if (!mask) {
 				printf ("<%s> is invalid\n", optarg);
 				usage();
@@ -443,7 +479,7 @@ int main(int ac, char **av)
 		case 'p': /* --preferred */
 			checknuma();
 			setpolicy(MPOL_PREFERRED);
-			mask = numa_parse_nodestring(optarg);
+			mask = numactl_parse_nodestring(optarg);
 			if (!mask) {
 				printf ("<%s> is invalid\n", optarg);
 				usage();
@@ -478,13 +514,13 @@ int main(int ac, char **av)
 		case 'S': /* --shm */
 			check_cpubind(did_cpubind);
 			nopolicy();
-			attach_sysvshm(optarg);
+			attach_sysvshm(optarg, "--shm");
 			shmattached = 1;
 			break;
 		case 'f': /* --file */
 			check_cpubind(did_cpubind);
 			nopolicy();
-			attach_shared(optarg);
+			attach_shared(optarg, "--file");
 			shmattached = 1;
 			break;
 		case 'L': /* --length */
@@ -533,6 +569,7 @@ int main(int ac, char **av)
 
 		case 'T': /* --touch */
 			needshm("--touch");
+			check_shmbeyond("--touch");
 			numa_police_memory(shmptr, shmlen);
 			break;
 
@@ -540,6 +577,7 @@ int main(int ac, char **av)
 			needshm("--verify");
 			if (set_policy < 0)
 				complain("Need a policy first to verify");
+			check_shmbeyond("--verify");
 			numa_police_memory(shmptr, shmlen);
 			if (!mask)
 				complain("Need a mask to verify");
@@ -551,7 +589,7 @@ int main(int ac, char **av)
 			usage();
 		}
 	}
-	
+
 	av += optind;
 	ac -= optind;
 

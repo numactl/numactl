@@ -32,7 +32,7 @@ if the cpumask is longer than 99 characters.
 
 0.6.4
 
-- Add Coppyright headers
+- Add Copyright headers
 
 0.6.5
 
@@ -351,3 +351,35 @@ newer:
 - 110302 Fix two typos in numactl.8 (John Bradshaw)
 
 2.0.7 released Apr, 2011
+
+2.0.8-rc1
+- 110818 Checking of sucessful allocations in numademo (Petr Holasek)
+2.0.8-rc2
+- 110823 Fix of numactl (--touch) warnings and man page (Cliff W.)
+2.0.8-rc3
+- 111214 Add "same" nodemask alias to numactl (Andi Kleen)
+- 111214 Add constructors for numa_init/exit (Andi Kleen)
+- 111214 Add use of glibc syscall stub where possible (Andi Kleen)
+- 111214 Fix regress1 to show all the problems before exiting (Andi Kleen)
+- 111214 Add IO affinity support (Andi Kleen)
+- 111214 Clean regression test temp files (Andi Kleen)
+- 111214 Add an option to memhog to disable transparent huge pages (Andi Kleen)
+- 111214 Fix the test suite on systems that force THP, disable them (Andi Kleen)
+2.0.8-rc4
+- 120106 Install man pages migspeed, migratepages and numastat (Petr Holasek)
+- 120106 Warnings in numa_node_to_cpus_v1 to be more verbose (Petr Holasek)
+- 120216 Fix for numademo: msize check for ptrchase test (Petr Holasek)
+2.0.8-rc5
+- 120823 Fix calculation of maxconfiguredcpu (Petr Holasek)
+- 120823 Fix: do not recalculate maxconfiguredcpu (Petr Holasek)
+- 120823 v.1.3 numa_num_possible_cpus symbol is exported (Petr Holasek)
+- 120823 Add all versions of numa_parse_{cpu,node}string() (Petr Holasek)
+- 120823 Add numa_parse_cpustring take a const char* parameter (Petr Holasek)
+- 120823 Fix unused bufferlen variable (Petr Holasek)
+- 120823 Fix warnings when there are holes in numbering of nodes (Petr Holasek)
+2.0.8-rc6
+- 120911 Show distances on machines without a node 0 (Petr Holasek)
+- 121007 Replace perl numastat with a C command (Bill Gray)
+- 121011 Allow an install location PREFIX in the Makefile (Frank Tampe)
+
+2.0.8 released Oct, 2012

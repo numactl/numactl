@@ -64,7 +64,7 @@ static int read_distance_table(void)
 		sprintf(fn, "/sys/devices/system/node/node%d/distance", nd);
 		dfh = fopen(fn, "r");
 		if (!dfh) {
-			if (errno == ENOENT && nd > 0)
+			if (errno == ENOENT)
 				err = 0;
 			if (!err && nd<maxnode)
 				continue;

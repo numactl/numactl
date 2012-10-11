@@ -152,3 +152,16 @@ libnuma_1.2 {
   local:
     *;
 } libnuma_1.1;
+
+# New parsing interface for cpu/numastrings
+# was added into version 1.3
+
+libnuma_1.3 {
+  global:
+    numa_parse_cpustring_all;
+    numa_parse_nodestring_all;
+    numa_num_possible_cpus;
+  local:
+    *;
+} libnuma_1.2;
+

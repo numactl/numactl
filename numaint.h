@@ -16,6 +16,7 @@ extern int numa_sched_getaffinity_v2_int(pid_t pid, struct bitmask *mask);
 #define CPU_LONGS(x) (CPU_BYTES(x) / sizeof(long))
 
 #define make_internal_alias(x) extern __typeof (x) x##_int __attribute((alias(#x), visibility("hidden")))
+#define hidden __attribute__((visibility("hidden")))
 
 enum numa_warn {
 	W_nosysfs,
@@ -29,6 +30,24 @@ enum numa_warn {
 	W_memory,
 	W_cpuparse,
 	W_nodeparse,
+	W_blockdev1,
+	W_blockdev2,
+	W_blockdev3,
+	W_blockdev4,
+	W_blockdev5,
+	W_netlink1,
+	W_netlink2,
+	W_netlink3,
+	W_net1,
+	W_net2,
+	W_class1,
+	W_class2,
+	W_pci1,
+	W_pci2,
+	W_node_parse1,
+	W_node_parse2,
+	W_nonode,
+	W_badchar,
 };
 
 #define howmany(x,y) (((x)+((y)-1))/(y))

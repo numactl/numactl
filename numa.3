@@ -50,9 +50,13 @@ numa \- NUMA policy library
 .sp
 .BI "int numa_parse_bitmap(char *" line " , struct bitmask *" mask ");
 .br
-.BI "struct bitmask *numa_parse_nodestring(char *" string );
+.BI "struct bitmask *numa_parse_nodestring(const char *" string );
 .br
-.BI "struct bitmask *numa_parse_cpustring(char *" string );
+.BI "struct bitmask *numa_parse_nodestring_all(const char *" string );
+.br
+.BI "struct bitmask *numa_parse_cpustring(const char *" string );
+.br
+.BI "struct bitmask *numa_parse_cpustring_all(const char *" string );
 .sp
 .BI "long numa_node_size(int " node ", long *" freep );
 .br
@@ -364,6 +368,11 @@ If the string is of 0 length, bitmask
 .BR numa_no_nodes_ptr
 is returned.  Returns 0 if the string is invalid.
 
+.BR numa_parse_nodestring_all()
+is similar to
+.BR numa_parse_nodestring
+, but can parse all possible nodes, not only current nodeset.
+
 .BR numa_parse_cpustring()
 parses a character string list of cpus into a bit mask.
 The bit mask is allocated by
@@ -383,6 +392,11 @@ and
 Examples:  1-5,7,10   !4-5   +0-3
 .br
 Returns 0 if the string is invalid.
+
+.BR numa_parse_cpustring_all()
+is similar to
+.BR numa_parse_cpustring
+, but can parse all possible cpus, not only current cpuset.
 
 .BR numa_node_size ()
 returns the memory size of a node. If the argument

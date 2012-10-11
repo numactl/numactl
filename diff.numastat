@@ -1,0 +1,95 @@
+diff -ruN numactl-2.0.8-rc5.orig/numastat numactl-2.0.8-rc5.new/numastat
+--- numactl-2.0.8-rc5.orig/numastat	2012-08-23 15:50:37.000000000 -0400
++++ numactl-2.0.8-rc5.new/numastat	1969-12-31 19:00:00.000000000 -0500
+@@ -1,91 +0,0 @@
+-#!/usr/bin/perl
+-# Print numa statistics for all nodes
+-# Copyright (C) 2003,2004 Andi Kleen, SuSE Labs.
+-#
+-# numastat is free software; you can redistribute it and/or
+-# modify it under the terms of the GNU General Public
+-# License as published by the Free Software Foundation; version
+-# 2.
+-#
+-# numastat is distributed in the hope that it will be useful,
+-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-# General Public License for more details.
+-
+-# You should find a copy of v2 of the GNU General Public License somewhere
+-# on your Linux system; if not, write to the Free Software Foundation,
+-# Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
+-#
+-# Example: NUMASTAT_WIDTH=80 watch -n1 numastat
+-#
+-
+-# output width
+-$WIDTH=80;
+-if (defined($ENV{'NUMASTAT_WIDTH'})) {
+-	$WIDTH=$ENV{'NUMASTAT_WIDTH'};
+-} else {
+-	use POSIX;
+-	if (POSIX::isatty(fileno(STDOUT))) {
+-		if (open(R, "resize |")) {
+-			while (<R>) {
+-				$WIDTH=$1 if /COLUMNS=(\d+)/;
+-			}	
+-			close R;
+-		}
+-	} else {
+-		# don't split it up for easier parsing
+-		$WIDTH=10000000;
+-	}
+-}
+-$WIDTH = 32 if $WIDTH < 32;
+-
+-if (! -d "/sys/devices/system/node" ) {
+-	print STDERR "sysfs not mounted or system not NUMA aware\n";
+-	exit 1;
+-}
+-
+-%stat = ();
+-$title = "";
+-$mode = 0;
+-opendir(NODES, "/sys/devices/system/node") || exit 1;
+-foreach $nd (readdir(NODES)) {
+-	next unless $nd =~ /node(\d+)/;
+-	# On newer kernels, readdir may enumerate the 'node(\d+) subdirs
+-	# in opposite order from older kernels--e.g., node{0,1,2,...}
+-	# as opposed to node{N,N-1,N-2,...}.  Accomodate this by
+-	# switching to new mode so that the stats get emitted in
+-	# the same order.
+-        #print "readdir(NODES) returns $nd\n";
+-	if (!$title && $nd =~ /node0/) {
+-		$mode = 1;
+-	}
+-	open(STAT, "/sys/devices/system/node/$nd/numastat") ||
+-			die "cannot open $nd: $!\n";
+-	if (! $mode) {
+-		$title = sprintf("%16s",$nd) . $title;
+-	} else {
+-		$title = $title . sprintf("%16s",$nd);
+-	}
+-	@fields = ();
+-	while (<STAT>) {
+-		($name, $val) = split;
+-		if (! $mode) {
+-			$stat{$name} = sprintf("%16u", $val) . $stat{$name};
+-		} else {
+-			$stat{$name} = $stat{$name} . sprintf("%16u", $val);
+-		}
+-		push(@fields, $name);
+-	}
+-	close STAT;
+-}
+-closedir NODES;
+-
+-$numfields = int(($WIDTH - 16) / 16);
+-$l = 16 * $numfields;
+-for ($i = 0; $i < length($title); $i += $l) {
+-	print "\n" if $i > 0;
+-	printf "%16s%s\n","",substr($title,$i,$l);
+-	foreach (@fields) {
+-		printf "%-16s%s\n",$_,substr($stat{$_},$i,$l);
+-	}
+-}

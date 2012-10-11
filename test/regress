@@ -26,6 +26,8 @@ DOUBLEPAGES=$[ $PAGES * 2 ]
 DOUBLEPAGES=$[ $DOUBLEPAGES - 200 ]
 NEEDPAGES=$[ $DOUBLEPAGES + $DOUBLEPAGES / 5 ] # 20% spare
 
+EXIT=0
+
 declare -i maxnode
 declare -a node
 
@@ -37,7 +39,7 @@ numactl() {
 failed() {
     echo '=======FAILED'
     echo "Check if machine doesn't have background jobs and try again"
-    exit 1
+    EXIT=1
 }
 
 # nstat statname node
@@ -77,8 +79,8 @@ probe_hardware()
 
 # =========================================================================
 _test_process_state() {
-    echo '=>testing numactl' "$@" "memhog $SIZE"
-    numactl "$@" memhog $SIZE  || failed
+    echo '=>testing numactl' "$@" "memhog -H $SIZE"
+    numactl "$@" memhog -H $SIZE  || failed
 }
 
 test_process_state()
@@ -130,8 +132,8 @@ test_process_state()
 # test mbind
 
 _test_mbind() {
-	echo '=>testing memhog' "$@"
-	memhog $SIZE "$@" || failed
+	echo '=>testing memhog -H' "$@"
+	memhog -H $SIZE "$@" || failed
 }
 
 test_mbind()
@@ -203,7 +205,12 @@ main()
 	diff -u A B
 	rm A B
 
-	echo '========SUCCESS'
+	if [ "$EXIT" = 0 ] ; then
+		echo '========SUCCESS'
+	else
+		echo '========FAILURE'
+		exit 1
+	fi
 }
 
 # =========================================================================

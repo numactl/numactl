@@ -156,6 +156,13 @@ void memtest(char *name, unsigned char *mem)
 	int i;
 	char title[128], result[128];
 
+	if (!mem) {
+		fprintf(stderr,
+		"Failed to allocate %lu bytes of memory. Test \"%s\" exits.\n",
+			msize, name);
+		return;
+	}
+
 #ifdef HAVE_STREAM_LIB
 	if (thistest == STREAM) {
 		do_stream(name, mem);
@@ -522,7 +529,13 @@ int main(int ac, char **av)
 #ifdef HAVE_STREAM_LIB
 		test(STREAM);
 #endif
-		test(PTRCHASE);
+		if (msize >= sizeof(union node)) {
+			test(PTRCHASE);
+		} else {
+			fprintf(stderr, "You must set msize at least %lu bytes for ptrchase test.\n",
+				sizeof(union node));
+			exit(1);
+		}
 	} else {
 		int k;
 		for (k = 2; k < ac; k++) {

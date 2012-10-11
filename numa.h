@@ -310,10 +310,18 @@ int numa_sched_getaffinity(pid_t, struct bitmask *);
 int numa_sched_setaffinity(pid_t, struct bitmask *);
 
 /* Convert an ascii list of nodes to a bitmask */
-struct bitmask *numa_parse_nodestring(char *);
+struct bitmask *numa_parse_nodestring(const char *);
+
+/* Convert an ascii list of nodes to a bitmask without current nodeset
+ * dependency */
+struct bitmask *numa_parse_nodestring_all(const char *);
 
 /* Convert an ascii list of cpu to a bitmask */
-struct bitmask *numa_parse_cpustring(char *);
+struct bitmask *numa_parse_cpustring(const char *);
+
+/* Convert an ascii list of cpu to a bitmask without current taskset
+ * dependency */
+struct bitmask *numa_parse_cpustring_all(const char *);
 
 /*
  * The following functions are for source code compatibility
