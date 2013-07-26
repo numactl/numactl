@@ -36,26 +36,20 @@ on another node.
 .LP
 .B numa_foreign
 is memory intended for this node, but actually allocated on some different node.  Each
- .I numa_foreign
+.I numa_foreign
 has a
- .I numa_miss
-  on another node.
+.I numa_miss
+on another node.
 .LP
 .B interleave_hit
 is interleaved memory successfully allocated on this node as intended.
 .LP
-.B interleave_hit
-is the number of interleave policy allocations that were intended for a 
-specific node and succeeded there. 
-
 .B local_node
 is memory allocated on this node while a process was running on it.
 .LP
-
 .B other_node
 is memory allocated on this node while a process was running on some other node.
 .LP
-
 Any supplied options or arguments with the \fBnumastat\fP command will
 significantly change both the content and the format of the display.  Specified
 options will cause display units to change to megabytes of memory, and will
@@ -100,7 +94,10 @@ memory consumers are listed first.  With no specified <node>, the table will be
 sorted by the total column.  If the optional <node> argument is supplied, the
 data will be sorted by the <node> column.  Note that <node> must follow the
 \fB\-s\fP immediately with no intermediate white space (e.g., \fBnumastat
-\-s2\fP).
+\-s2\fP). Because \fB\-s\fP can allow an optional argument, it must always be
+the last option character in a compound option character string. For example,
+instead of \fBnumastat \-msc\fP (which probably will not work as you expect),
+use \fBnumastat \-mcs\fP
 .TP
 \fB\-v\fR
 Make some reports more verbose.  In particular, process information for
@@ -139,7 +136,6 @@ NUMASTAT_WIDTH
 \fI/sys/devices/system/node/node*/meminfo\fP
 .br
 \fI/sys/devices/system/node/node*/numastat\fP
-
 .SH "EXAMPLES"
 .I numastat \-c \-z \-m \-n
 .br
