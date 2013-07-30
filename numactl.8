@@ -272,14 +272,14 @@ numactl \-\-cpunodebind=0 \-\-membind=0,1 -- process -l
 Run process as above, but with an option (-l) that would be confused with
 a numactl option.
 
-numactl \-\-nodebind=netdev:eth0 \-\-membind=netdev:eth0 network-server
+numactl \-\-cpunodebind=netdev:eth0 \-\-membind=netdev:eth0 network-server
 Run network-server on the node of network device eth0 with its memory
 also in the same node.
 
 numactl \-\-preferred=1 numactl \-\-show
 Set preferred node 1 and show the resulting state.
 
-numactl --interleave=all --shmkeyfile /tmp/shmkey 
+numactl --interleave=all --shm /tmp/shmkey 
 Interleave all of the sysv shared memory region specified by
 /tmp/shmkey over all nodes.
 

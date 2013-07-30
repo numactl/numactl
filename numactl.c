@@ -60,31 +60,32 @@ struct option opts[] = {
 void usage(void)
 {
 	fprintf(stderr,
-		"usage: numactl [--interleave=nodes] [--preferred=node]\n"
-		"               [--physcpubind=cpus] [--cpunodebind=nodes]\n"
-		"               [--membind=nodes] [--localalloc] command args ...\n"
-		"       numactl [--show]\n"
-		"       numactl [--hardware]\n"
-		"       numactl [--length length] [--offset offset] [--shmmode shmmode]\n"
-		"               [--strict]\n"
-		"               [--shmid id] --shm shmkeyfile | --file tmpfsfile\n"
-		"               [--huge] [--touch] \n"
-		"               memory policy | --dump | --dump-nodes\n"
+		"usage: numactl [--interleave= | -i <nodes>] [--preferred= | -p <node>]\n"
+		"               [--physcpubind= | -C <cpus>] [--cpunodebind= | -N <nodes>]\n"
+		"               [--membind= | -m <nodes>] [--localalloc | -l] command args ...\n"
+		"       numactl [--show | -s]\n"
+		"       numactl [--hardware | -H]\n"
+		"       numactl [--length | -l <length>] [--offset | -o <offset>] [--shmmode | -M <shmmode>]\n"
+		"               [--strict | -t]\n"
+		"               [--shmid | -I <id>] --shm | -S <shmkeyfile>\n"
+		"               [--shmid | -I <id>] --file | -f <tmpfsfile>\n"
+		"               [--huge | -u] [--touch | -T] \n"
+		"               memory policy | --dump | -d | --dump-nodes | -D\n"
 		"\n"
-		"memory policy is --interleave, --preferred, --membind, --localalloc\n"
-		"nodes is a comma delimited list of node numbers or A-B ranges or all.\n"
+		"memory policy is --interleave | -i, --preferred | -p, --membind | -m, --localalloc | -l\n"
+		"<nodes> is a comma delimited list of node numbers or A-B ranges or all.\n"
 		"Instead of a number a node can also be:\n"
 		"  netdev:DEV the node connected to network device DEV\n"
 		"  file:PATH  the node the block device of path is connected to\n"
 		"  ip:HOST    the node of the network device host routes through\n"
 		"  block:PATH the node of block device path\n"
 		"  pci:[seg:]bus:dev[:func] The node of a PCI device\n"
-		"cpus is a comma delimited list of cpu numbers or A-B ranges or all\n"
+		"<cpus> is a comma delimited list of cpu numbers or A-B ranges or all\n"
 		"all ranges can be inverted with !\n"
 		"all numbers and ranges can be made cpuset-relative with +\n"
 		"the old --cpubind argument is deprecated.\n"
 		"use --cpunodebind or --physcpubind instead\n"
-		"length can have g (GB), m (MB) or k (KB) suffixes\n");
+		"<length> can have g (GB), m (MB) or k (KB) suffixes\n");
 	exit(1);
 }
 
