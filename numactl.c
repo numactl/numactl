@@ -29,9 +29,13 @@
 #include "util.h"
 #include "shm.h"
 
+#define CPUSET 0
+#define ALL 1
+
 int exitcode;
 
 struct option opts[] = {
+	{"all", 0, 0, 'a'},
 	{"interleave", 1, 0, 'i' },
 	{"preferred", 1, 0, 'p' },
 	{"cpubind", 1, 0, 'c' },
@@ -60,7 +64,7 @@ struct option opts[] = {
 void usage(void)
 {
 	fprintf(stderr,
-		"usage: numactl [--interleave= | -i <nodes>] [--preferred= | -p <node>]\n"
+		"usage: numactl [--all | -a] [--interleave= | -i <nodes>] [--preferred= | -p <node>]\n"
 		"               [--physcpubind= | -C <cpus>] [--cpunodebind= | -N <nodes>]\n"
 		"               [--membind= | -m <nodes>] [--localalloc | -l] command args ...\n"
 		"       numactl [--show | -s]\n"
@@ -328,6 +332,8 @@ int did_strict = 0;
 int do_shm = 0;
 int do_dump = 0;
 int shmattached = 0;
+int did_node_cpu_parse = 0;
+int parse_all = 0;
 char *shmoption;
 
 void check_cpubind(int flag)
@@ -355,6 +361,12 @@ void needshm(char *opt)
 		usage_msg("%s must be after shared memory specification", opt);
 }
 
+void check_all_parse(int flag)
+{
+	if (did_node_cpu_parse)
+		usage_msg("--all/-a option must be before all cpu/node specifications");
+}
+
 void get_short_opts(struct option *o, char *s)
 {
 	*s++ = '+';
@@ -379,7 +391,7 @@ void check_shmbeyond(char *msg)
 	}
 }
 
-static struct bitmask *numactl_parse_nodestring(char *s)
+static struct bitmask *numactl_parse_nodestring(char *s, int flag)
 {
 	static char *last;
 
@@ -390,7 +402,11 @@ static struct bitmask *numactl_parse_nodestring(char *s)
 	} else {
 		last = s;
 	}
-	return numa_parse_nodestring(s);
+
+	if (flag == ALL)
+		return numa_parse_nodestring_all(s);
+	else
+		return numa_parse_nodestring(s);
 }
 
 int main(int ac, char **av)
@@ -413,13 +429,17 @@ int main(int ac, char **av)
 			exit(0);
 		case 'i': /* --interleave */
 			checknuma();
-			mask = numactl_parse_nodestring(optarg);
+			if (parse_all)
+				mask = numactl_parse_nodestring(optarg, ALL);
+			else
+				mask = numactl_parse_nodestring(optarg, CPUSET);
 			if (!mask) {
 				printf ("<%s> is invalid\n", optarg);
 				usage();
 			}
 
 			errno = 0;
+			did_node_cpu_parse = 1;
 			setpolicy(MPOL_INTERLEAVE);
 			if (shmfd >= 0)
 				numa_interleave_memory(shmptr, shmlen, mask);
@@ -431,7 +451,10 @@ int main(int ac, char **av)
 		case 'c': /* --cpubind */
 			dontshm("-c/--cpubind/--cpunodebind");
 			checknuma();
-			mask = numactl_parse_nodestring(optarg);
+			if (parse_all)
+				mask = numactl_parse_nodestring(optarg, ALL);
+			else
+				mask = numactl_parse_nodestring(optarg, CPUSET);
 			if (!mask) {
 				printf ("<%s> is invalid\n", optarg);
 				usage();
@@ -439,14 +462,18 @@ int main(int ac, char **av)
 			errno = 0;
 			check_cpubind(do_shm);
 			did_cpubind = 1;
-			numa_run_on_node_mask(mask);
+			did_node_cpu_parse = 1;
+			numa_run_on_node_mask_all(mask);
 			checkerror("sched_setaffinity");
 			break;
 		case 'C': /* --physcpubind */
 		{
 			struct bitmask *cpubuf;
 			dontshm("-C/--physcpubind");
-			cpubuf = numa_parse_cpustring(optarg);
+			if (parse_all)
+				cpubuf = numa_parse_cpustring_all(optarg);
+			else
+				cpubuf = numa_parse_cpustring(optarg);
 			if (!cpubuf) {
 				printf ("<%s> is invalid\n", optarg);
 				usage();
@@ -454,6 +481,7 @@ int main(int ac, char **av)
 			errno = 0;
 			check_cpubind(do_shm);
 			did_cpubind = 1;
+			did_node_cpu_parse = 1;
 			numa_sched_setaffinity(0, cpubuf);
 			checkerror("sched_setaffinity");
 			free(cpubuf);
@@ -462,12 +490,16 @@ int main(int ac, char **av)
 		case 'm': /* --membind */
 			checknuma();
 			setpolicy(MPOL_BIND);
-			mask = numactl_parse_nodestring(optarg);
+			if (parse_all)
+				mask = numactl_parse_nodestring(optarg, ALL);
+			else
+				mask = numactl_parse_nodestring(optarg, CPUSET);
 			if (!mask) {
 				printf ("<%s> is invalid\n", optarg);
 				usage();
 			}
 			errno = 0;
+			did_node_cpu_parse = 1;
 			numa_set_bind_policy(1);
 			if (shmfd >= 0) {
 				numa_tonodemask_memory(shmptr, shmlen, mask);
@@ -480,7 +512,10 @@ int main(int ac, char **av)
 		case 'p': /* --preferred */
 			checknuma();
 			setpolicy(MPOL_PREFERRED);
-			mask = numactl_parse_nodestring(optarg);
+			if (parse_all)
+				mask = numactl_parse_nodestring(optarg, ALL);
+			else
+				mask = numactl_parse_nodestring(optarg, CPUSET);
 			if (!mask) {
 				printf ("<%s> is invalid\n", optarg);
 				usage();
@@ -495,6 +530,7 @@ int main(int ac, char **av)
 				usage();
 			numa_bitmask_free(mask);
 			errno = 0;
+			did_node_cpu_parse = 1;
 			numa_set_bind_policy(0);
 			if (shmfd >= 0)
 				numa_tonode_memory(shmptr, shmlen, node);
@@ -586,6 +622,10 @@ int main(int ac, char **av)
 				verify_shm(set_policy, mask);
 			break;
 
+		case 'a': /* --all */
+			check_all_parse(did_node_cpu_parse);
+			parse_all = 1;
+			break;
 		default:
 			usage();
 		}

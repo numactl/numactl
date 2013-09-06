@@ -23,6 +23,8 @@ numactl \- Control NUMA policy for processes or shared memory
 .SH SYNOPSIS
 .B numactl
 [
+.B \-\-all
+] [
 .B \-\-interleave nodes
 ] [
 .B \-\-preferred node 
@@ -106,6 +108,10 @@ for udev names in /dev use
 .I file:
 .TP
 Policy settings are:
+.TP
+.B \-\-all, \-a
+Unset default cpuset awareness, so user can use all possible CPUs/nodes
+for following policy settings.
 .TP
 .B \-\-interleave=nodes, \-i nodes
 Set a memory interleave policy. Memory will be allocated using round robin
