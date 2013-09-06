@@ -238,6 +238,8 @@ void numa_police_memory(void *start, size_t size);
 
 /* Run current task only on nodes in mask */
 int numa_run_on_node_mask(struct bitmask *mask);
+/* Run current task on nodes in mask without any cpuset awareness */
+int numa_run_on_node_mask_all(struct bitmask *mask);
 /* Run current task only on node */
 int numa_run_on_node(int node);
 /* Return current mask of nodes the task can run on */
