@@ -1,0 +1,105 @@
+#!/bin/bash
+
+# This simple script checks --all/-a option which is used for
+# supressing of default cpuset awareness of options --cpunodebind,
+# --physcpubind, --interleave, --preferred and --membind.
+
+# NOTE: Test needs two nodes and two cpus at least
+
+
+export old_mask
+
+eval_test() {
+       # echo "Running $1.."
+       $1
+       if [ $? == 1 ] ;  then
+          echo -e "$1 FAILED!"
+	  reset_mask
+          exit 1
+       fi
+       echo -e "$1 PASSED"
+}
+
+function check_arg_order
+{
+	../numactl --all --physcpubind=$HIGHESTCPU ls > /dev/null 2>&1
+	if [ $? == 1 ] ; then
+		return 1;
+	fi
+	../numactl --physcpubind=$HIGHESTCPU --all ls > /dev/null 2>&1
+	if [ $? == 0 ] ; then
+		return 1;
+	fi
+
+	return 0
+}
+
+function check_physcpubind
+{
+	reset_mask
+	set_cpu_affinity 0
+	../numactl --physcpubind=$HIGHESTCPU ls > /dev/null 2>&1
+	if [ $? == 0 ] ; then # shouldn't pass so easy
+		return 1;
+	fi
+	../numactl --all --physcpubind=$HIGHESTCPU ls > /dev/null 2>&1
+	if [ $? == 1 ] ; then # shouldn't fail
+		return 1;
+	fi
+
+	return 0
+}
+
+function check_cpunodebind
+{
+	local low_cpu_range
+	local high_cpu
+
+	reset_mask
+	low_cpu_range=$(cat /sys/devices/system/node/node$LOWESTNODE/cpulist)
+	set_cpu_affinity $low_cpu_range
+	../numactl --cpunodebind=$HIGHESTNODE ls > /dev/null 2>&1
+	if [ $? == 1 ] ; then # should pass
+		return 1;
+	fi
+	../numactl --all --cpunodebind=$HIGHESTNODE ls > /dev/null 2>&1
+	if [ $? == 1 ] ; then # should pass for sure
+		return 1;
+	fi
+
+	return 0
+}
+
+function set_cpu_affinity
+{
+	taskset -p -c $1 $$ > /dev/null
+	#echo -e "\taffinity of shell was set to" $1
+}
+
+function get_mask
+{
+	old_mask=$(taskset -p $$ | cut -f2 -d: | sed -e 's/^[ \t]*//')
+}
+
+function reset_mask
+{
+	taskset -p $old_mask $$ > /dev/null
+	#echo -e "\taffinity of shell was reset to" $old_mask
+}
+
+HIGHESTCPU=$(grep 'processor' /proc/cpuinfo | tail -n1 | cut -f2 -d':')
+HIGHESTCPU=$(echo $HIGHESTCPU | cut -f2 -d' ')
+HIGHESTNODE=$(numactl -H | grep -e 'node [0-9]* cpus' | tail -n1 | cut -f2 -d' ')
+LOWESTNODE=$(numactl -H | grep -e 'node [0-9]* cpus' | head -n1 | cut -f2 -d' ')
+
+get_mask
+
+eval_test check_arg_order
+eval_test check_physcpubind
+eval_test check_cpunodebind
+
+reset_mask
+
+exit 0
+
+
