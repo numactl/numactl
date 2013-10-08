@@ -724,7 +724,7 @@ double huge_page_size_in_bytes = 0;
 
 
 void display_version_and_exit() {
-	char *version_string = "20120821";
+	char *version_string = "20130723";
 	printf("%s version: %s: %s\n", prog_name, version_string, __DATE__);
 	exit(EXIT_SUCCESS);
 }
@@ -880,7 +880,7 @@ void show_info_from_system_file(char *file, meminfo_p meminfo, int meminfo_rows,
 				double value = (double)atol(tok[1 + tok_offset]);
 				if (!compatibility_mode) {
 					double multiplier = 1.0;
-					if (tokens < 5) {
+					if (tokens < 4) {
 						multiplier = page_size_in_bytes;
 					} else if (!strncmp("HugePages", tok[2], 9)) {
 						multiplier = huge_page_size_in_bytes;

@@ -165,3 +165,11 @@ libnuma_1.3 {
     *;
 } libnuma_1.2;
 
+# New interface with customizable cpuset awareness
+# was added into version 1.4
+libnuma_1.4 {
+  global:
+    numa_run_on_node_mask_all;
+  local:
+    *;
+} libnuma_1.3;

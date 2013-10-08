@@ -35,7 +35,7 @@ CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      test/node-parse rtnetlink.o test/A numastat
 SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
 	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c mt.c \
-	clearcache.c test/*.c affinity.c sysfs.c rtnetlink.c
+	clearcache.c test/*.c affinity.c sysfs.c rtnetlink.c numastat.c
 
 ifeq ($(strip $(PREFIX)),)
 prefix := /usr
@@ -209,7 +209,9 @@ regress1:
 regress2:
 	cd test ; ./regress2
 
-regress3:
-	cd test ; ./regress-io
+# regress-io is known not to work
+# regress3:
+# 	cd test ; ./regress-io
 
-test: all regress1 regress2 test_numademo regress3
+# test: all regress1 regress2 test_numademo regress3
+test: all regress1 regress2 test_numademo

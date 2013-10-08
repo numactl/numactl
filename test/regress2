@@ -15,6 +15,7 @@ T() {
 }
 
 # various tests
+chmod 755 bind_range
 
 # still broken
 #T ./prefered
@@ -23,4 +24,5 @@ T ./nodemap
 T ./checkaffinity
 T ./checktopology
 T ./tbitmap
+T ./bind_range
 #T ./randmap

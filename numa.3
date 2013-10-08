@@ -99,6 +99,8 @@ numa \- NUMA policy library
 .br
 .BI "int numa_run_on_node_mask(struct bitmask *" nodemask );
 .br
+.BI "int numa_run_on_node_mask_all(struct bitmask *" nodemask );
+.br
 .B struct bitmask *numa_get_run_node_mask(void);
 .sp
 .BI "void numa_tonode_memory(void *" start ", size_t " size ", int " node );
@@ -233,7 +235,8 @@ The exceptions to this are:
 .IR numa_node_of_cpu (),
 .IR numa_bind (),
 .IR numa_run_on_node (),
-.IR numa_run_on_node_mask ()
+.IR numa_run_on_node_mask (),
+.IR numa_run_on_node_mask_all (),
 and
 .IR numa_get_run_node_mask ().
 These functions deal with the CPUs associated with numa nodes.
@@ -685,6 +688,13 @@ permits the kernel to schedule on all nodes again.
 On success, 0 is returned; on error \-1 is returned, and
 .I errno
 is set to indicate the error.
+
+.BR numa_run_on_node_mask_all ()
+runs the current task and its children only on nodes specified in
+.IR nodemask
+like
+.I numa_run_on_node_mask
+but without any cpuset awareness.
 
 .BR numa_get_run_node_mask ()
 returns a mask of CPUs on which the current task is allowed to run.

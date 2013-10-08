@@ -1524,6 +1524,52 @@ __asm__(".symver numa_run_on_node_mask_v2,numa_run_on_node_mask@@libnuma_1.2");
 
 make_internal_alias(numa_run_on_node_mask_v2);
 
+/*
+ * Given a node mask (size of a kernel nodemask_t) (probably populated by
+ * a user argument list) set up a map of cpus (map "cpus") on those nodes
+ * without any cpuset awareness. Then set affinity to those cpus.
+ */
+int
+numa_run_on_node_mask_all(struct bitmask *bmp)
+{
+	int ncpus, i, k, err;
+	struct bitmask *cpus, *nodecpus;
+
+	cpus = numa_allocate_cpumask();
+	ncpus = cpus->size;
+	nodecpus = numa_allocate_cpumask();
+
+	for (i = 0; i < bmp->size; i++) {
+		if (bmp->maskp[i / BITS_PER_LONG] == 0)
+			continue;
+		if (numa_bitmask_isbitset(bmp, i)) {
+			if (!numa_bitmask_isbitset(numa_possible_nodes_ptr, i)) {
+				numa_warn(W_noderunmask,
+					"node %d not allowed", i);
+				continue;
+			}
+			if (numa_node_to_cpus_v2_int(i, nodecpus) < 0) {
+				numa_warn(W_noderunmask,
+					"Cannot read node cpumask from sysfs");
+				continue;
+			}
+			for (k = 0; k < CPU_LONGS(ncpus); k++)
+				cpus->maskp[k] |= nodecpus->maskp[k];
+		}
+	}
+	err = numa_sched_setaffinity_v2_int(0, cpus);
+
+	numa_bitmask_free(cpus);
+	numa_bitmask_free(nodecpus);
+
+	/* With possible nodes freedom it can happen easily now */
+	if (err < 0) {
+		numa_error("numa_sched_setaffinity_v2_int() failed; abort\n");
+	}
+
+	return err;
+}
+
 nodemask_t
 numa_get_run_node_mask_v1(void)
 {
