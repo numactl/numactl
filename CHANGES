@@ -307,7 +307,7 @@ updating in newer kernels (Mel Gorman)
 - Fix makefile to remove move_pages on make clean (Andi)
 - Fix numa_node_to_cpus() (Sharyathi Nagesh)
 - Rename 'thread' to 'task' (L.S.)
-- Remove other trailing spaces (Cliff)
+- Remove other trailing spaces (Cliff W.)
 - Man page correction/clarification for numa_node_to_cpus() (Ian Wienand)
 - Man page clarification for numactl (Mike MacCana)
 - Fix numactl --hardware for cpu-less nodes (Thomas Renninger)
@@ -383,3 +383,15 @@ newer:
 - 121011 Allow an install location PREFIX in the Makefile (Frank Tampe)
 
 2.0.8 released Oct, 2012
+
+2.0.9-rc1
+- 130207 Add a prototype for numa_bitmask_weight (Cliff W.)
+2.0.9-rc2
+- 130725 Fix hubstats huge pages bug, version number, man page (Bill Gray)
+- 130726 Disable the regress-io test (Cliff W.)
+- 130730 Fix typos in numactl man page; add short opts to --help (Petr Holasek)
+2.0.9-rc3
+- 130906 numactl: option --all/-a added for policy settings (Petr Holasek)
+- 130906 libnuma: new function numa_run_on_node_mask_all (Petr Holasek)
+
+2.0.9 released Oct, 2013
