@@ -1,5 +1,5 @@
 extern void printmask(char *name, struct bitmask *mask);
-extern void printcpumask(char *name, struct bitmask *mask);
+extern int find_first(struct bitmask *mask);
 extern struct bitmask *nodemask(char *s);
 extern struct bitmask *cpumask(char *s, int *ncpus);
 extern int read_sysctl(char *name);

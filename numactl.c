@@ -119,7 +119,7 @@ void show_physcpubind(void)
 			}
 			err("sched_get_affinity");
 		}
-		printcpumask("physcpubind", cpubuf);
+		printmask("physcpubind", cpubuf);
 		break;
 	}
 }
@@ -130,7 +130,6 @@ void show(void)
 	struct bitmask *membind, *interleave, *cpubind;
 	unsigned long cur;
 	int policy;
-	int numa_num_nodes = numa_num_possible_nodes();
 	
 	if (numa_available() < 0) {
 		show_physcpubind();
@@ -166,7 +165,7 @@ void show(void)
 		printf("%ld (interleave next)\n",cur);
 		break;
 	case MPOL_BIND:
-		printf("%d\n", find_first_bit(&membind, numa_num_nodes));
+		printf("%d\n", find_first(membind));
 		break;
 	}
 	if (policy == MPOL_INTERLEAVE) {
@@ -242,6 +241,11 @@ void hardware(void)
 	int prevnode=-1;
 	int skip=0;
 	int maxnode = numa_max_node();
+	
+	if (numa_available() < 0) {
+                printf("No NUMA available on this system\n");
+                exit(1);
+        }
 
 	for (i=0; i<=maxnode; i++)
 		if (numa_bitmask_isbitset(numa_nodes_ptr, i))

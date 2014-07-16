@@ -16,7 +16,6 @@
 #include "numa.h"
 #include "numaif.h"
 #include "util.h"
-#include "bitops.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -28,23 +27,20 @@
 void printmask(char *name, struct bitmask *mask)
 {
 	int i;
-
 	printf("%s: ", name);
-	for (i = 0; i <= mask->size; i++)
+	for (i = 0; i < mask->size; i++)
 		if (numa_bitmask_isbitset(mask, i))
 			printf("%d ", i);
 	putchar('\n');
 }
 
-void printcpumask(char *name, struct bitmask *mask)
+int find_first(struct bitmask *mask)
 {
 	int i;
-	printf("%s: ", name);
-	for (i = 0; i < mask->size; i++) {
+	for (i = 0; i < mask->size; i++)
 		if (numa_bitmask_isbitset(mask, i))
-			printf("%d ", i);
-	}
-	putchar('\n');
+			return i;
+	return -1;
 }
 
 void complain(char *fmt, ...)

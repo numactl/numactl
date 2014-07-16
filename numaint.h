@@ -1,5 +1,4 @@
 /* Internal interfaces of libnuma */
-#include "bitops.h"
 
 extern int numa_sched_setaffinity_v1(pid_t pid, unsigned len, const unsigned long *mask);
 extern int numa_sched_getaffinity_v1(pid_t pid, unsigned len, const unsigned long *mask);
@@ -12,6 +11,7 @@ extern int numa_sched_getaffinity_v2_int(pid_t pid, struct bitmask *mask);
 
 #define SHM_HUGETLB     04000   /* segment will use huge TLB pages */
 
+#define BITS_PER_LONG (sizeof(unsigned long) * 8)
 #define CPU_BYTES(x) (round_up(x, BITS_PER_LONG)/8)
 #define CPU_LONGS(x) (CPU_BYTES(x) / sizeof(long))
 

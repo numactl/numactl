@@ -1,5 +1,4 @@
 #include "numa.h"
-#include "bitops.h"
 #include <stdio.h>
 #include <stdlib.h>
 

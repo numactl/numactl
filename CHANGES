@@ -387,7 +387,7 @@ newer:
 2.0.9-rc1
 - 130207 Add a prototype for numa_bitmask_weight (Cliff W.)
 2.0.9-rc2
-- 130725 Fix hubstats huge pages bug, version number, man page (Bill Gray)
+- 130725 Fix numastat huge pages bug, version number, man page (Bill Gray)
 - 130726 Disable the regress-io test (Cliff W.)
 - 130730 Fix typos in numactl man page; add short opts to --help (Petr Holasek)
 2.0.9-rc3
@@ -395,3 +395,7 @@ newer:
 - 130906 libnuma: new function numa_run_on_node_mask_all (Petr Holasek)
 
 2.0.9 released Oct, 2013
+
+2.0.10-rc1
+- 131123 numactl: numactl check for NUMA available (Elena Ufimtseva)
+- 140715 numactl: fix numactl --show  and preferrred node (Bill Gray)

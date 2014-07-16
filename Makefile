@@ -23,7 +23,7 @@ ifeq ($(THREAD_SUPPORT),yes)
 endif
 
 CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
-	      memhog libnuma.so libnuma.so.1 numamon numamon.o syscall.o bitops.o \
+	      memhog libnuma.so libnuma.so.1 numamon numamon.o syscall.o \
 	      memhog.o util.o stream_main.o stream_lib.o shm.o stream clearcache.o \
 	      test/pagesize test/tshared test/mynode.o test/tshared.o mt.o empty.o empty.c \
 	      test/mynode test/ftok test/prefered test/randmap \
@@ -32,8 +32,8 @@ CLEANFILES := numactl.o libnuma.o numactl numademo numademo.o distance.o \
 	      test/mbind_mig_pages test/migrate_pages \
 	      migratepages migspeed migspeed.o libnuma.a \
 	      test/move_pages test/realloc_test sysfs.o affinity.o \
-	      test/node-parse rtnetlink.o test/A numastat
-SOURCES := bitops.c libnuma.c distance.c memhog.c numactl.c numademo.c \
+	      test/node-parse rtnetlink.o test/A numastat numastat.o
+SOURCES := libnuma.c distance.c memhog.c numactl.c numademo.c \
 	numamon.c shm.c stream_lib.c stream_main.c syscall.c util.c mt.c \
 	clearcache.c test/*.c affinity.c sysfs.c rtnetlink.c numastat.c
 
@@ -51,11 +51,11 @@ all: numactl migratepages migspeed libnuma.so numademo numamon memhog \
      test/mbind_mig_pages test/migrate_pages test/realloc_test libnuma.a \
      test/node-parse numastat
 
-numactl: numactl.o util.o shm.o bitops.o libnuma.so
+numactl: numactl.o util.o shm.o libnuma.so
 
 numastat: CFLAGS += -std=gnu99
 
-migratepages: migratepages.c util.o bitops.o libnuma.so
+migratepages: migratepages.c util.o libnuma.so
 
 migspeed: LDLIBS += -lrt
 migspeed: migspeed.o util.o libnuma.so
@@ -129,7 +129,7 @@ test/nodemap: test/nodemap.c libnuma.so
 
 test/distance: test/distance.c libnuma.so
 
-test/tbitmap: test/tbitmap.c libnuma.so
+test/tbitmap: test/tbitmap.c libnuma.so util.o
 
 test/move_pages: test/move_pages.c libnuma.so
 
