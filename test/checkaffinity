@@ -5,10 +5,13 @@ BASE=`pwd`/..
 export LD_LIBRARY_PATH=$BASE
 export PATH=$BASE:$PATH
 
-numcpus=$(grep -c processor /proc/cpuinfo)
-numnodes=$(ls -1d /sys/devices/system/node/node[0-9]* | wc -l )
+S=`numactl --show | grep nodebind:`
+NODES=`echo $S | sed -e "s/nodebind://"`
 
-for i in $(seq 0 $[$numcpus - 1]) ; do
+S=`numactl --show | grep physcpubind:`
+CPUS=`echo $S | sed -e "s/physcpubind://"`
+
+for i in $CPUS ; do
     if [ "$(numactl --physcpubind=$i ./printcpu)" != "$i" ] ; then
        echo "--physcpubind for $i doesn't work"
        exit 1
@@ -19,7 +22,7 @@ for i in $(seq 0 $[$numcpus - 1]) ; do
     fi
 done
 
-for i in $(seq 0 $[$numnodes - 1]) ; do
+for i in $NODES ; do
     if [ $(numactl --cpunodebind=$i numactl --show | awk '/nodebind/ { print $2 }' ) != $i ] ; then
 	echo "--show doesn't agree with cpunodebind for node $i"
 	exit 1
