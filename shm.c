@@ -61,10 +61,16 @@ long huge_page_size(void)
 	return getpagesize();
 }
 
-static void check_region(void)
+static void check_region(char *opt)
 {
 	if (((unsigned long)shmptr % shm_pagesize) || (shmlen % shm_pagesize)) {
 		fprintf(stderr, "numactl: policy region not page aligned\n");
+		exit(1);
+	}
+	if (!shmlen) {
+		fprintf(stderr,
+		"numactl: policy region length not specified before %s\n",
+			opt);
 		exit(1);
 	}
 }
@@ -89,7 +95,7 @@ static key_t sysvkey(char *name)
 }
 
 /* Attach a sysv style shared memory segment. */
-void attach_sysvshm(char *name)
+void attach_sysvshm(char *name, char *opt)
 {
 	struct shmid_ds s;
 	key_t key = sysvkey(name);
@@ -120,11 +126,11 @@ void attach_sysvshm(char *name)
 
 	shm_pagesize = (shmflags & SHM_HUGETLB) ? huge_page_size() : getpagesize();
 
-	check_region();
+	check_region(opt);
 }
 
 /* Attach a shared memory file. */
-void attach_shared(char *name)
+void attach_shared(char *name, char *opt)
 {
 	struct stat64 st;
 
@@ -150,7 +156,7 @@ void attach_shared(char *name)
 
 	shm_pagesize = st.st_blksize;
 
-	check_region();
+	check_region(opt);
 	
 	/* RED-PEN For shmlen > address space may need to map in pieces.
 	   Left for some poor 32bit soul. */

@@ -261,8 +261,10 @@ numactl --interleave=all --shmkeyfile /tmp/shmkey
 Interleave all of the sysv shared memory region specified by
 /tmp/shmkey over all nodes.
 
-numactl --offset=1G --length=1G --membind=1 --file /dev/shm/A --touch
-Bind the second gigabyte in the tmpfs file /dev/shm/A to node 1.
+Place a tmpfs file on 2 nodes:
+  numactl --membind=2 dd if=/dev/zero of=/dev/shm/A bs=1M count=1024
+  numactl --membind=3 dd if=/dev/zero of=/dev/shm/A seek=1024 bs=1M count=1024
+
 
 numactl --localalloc /dev/shm/file
 Reset the policy for the shared memory file 

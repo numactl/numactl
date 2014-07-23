@@ -356,6 +356,16 @@ void get_short_opts(struct option *o, char *s)
 	*s = '\0';
 }
 
+void check_shmbeyond(char *msg)
+{
+	if (shmoffset >= shmlen) {
+		fprintf(stderr,
+		"numactl: region offset %#llx beyond its length %#llx at %s\n",
+				shmoffset, shmlen, msg);
+		exit(1);
+	}
+}
+
 int main(int ac, char **av)
 {
 	int c, i, nnodes=0;
@@ -478,13 +488,13 @@ int main(int ac, char **av)
 		case 'S': /* --shm */
 			check_cpubind(did_cpubind);
 			nopolicy();
-			attach_sysvshm(optarg);
+			attach_sysvshm(optarg, "--shm");
 			shmattached = 1;
 			break;
 		case 'f': /* --file */
 			check_cpubind(did_cpubind);
 			nopolicy();
-			attach_shared(optarg);
+			attach_shared(optarg, "--file");
 			shmattached = 1;
 			break;
 		case 'L': /* --length */
@@ -533,6 +543,7 @@ int main(int ac, char **av)
 
 		case 'T': /* --touch */
 			needshm("--touch");
+			check_shmbeyond("--touch");
 			numa_police_memory(shmptr, shmlen);
 			break;
 
@@ -540,6 +551,7 @@ int main(int ac, char **av)
 			needshm("--verify");
 			if (set_policy < 0)
 				complain("Need a policy first to verify");
+			check_shmbeyond("--verify");
 			numa_police_memory(shmptr, shmlen);
 			if (!mask)
 				complain("Need a mask to verify");
@@ -551,7 +563,7 @@ int main(int ac, char **av)
 			usage();
 		}
 	}
-	
+
 	av += optind;
 	ac -= optind;
 
