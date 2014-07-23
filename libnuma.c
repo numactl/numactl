@@ -1753,10 +1753,8 @@ static unsigned long get_nr(char *s, char **end, struct bitmask *bmp, int relati
 struct bitmask *
 numa_parse_nodestring(char *s)
 {
-	int maxnode = numa_max_node();
 	int invert = 0, relative = 0;
 	int conf_nodes = numa_num_configured_nodes();
-	int task_nodes = numa_num_task_nodes();
 	char *end;
 	struct bitmask *mask;
 
@@ -1775,12 +1773,10 @@ numa_parse_nodestring(char *s)
 		s++;
 	}
 	do {
-		unsigned long arg;
 		int i;
+		unsigned long arg;
 		if (!strcmp(s,"all")) {
-			int i;
-			for (i = 0; i < task_nodes; i++)
-				numa_bitmask_setbit(mask, i);
+			copy_bitmask_to_bitmask(numa_all_nodes_ptr, mask);
 			s+=4;
 			break;
 		}
@@ -1789,7 +1785,7 @@ numa_parse_nodestring(char *s)
 			numa_warn(W_nodeparse, "unparseable node description `%s'\n", s);
 			goto err;
 		}
-		if (arg > maxnode) {
+		if (!numa_bitmask_isbitset(numa_all_nodes_ptr, arg)) {
 			numa_warn(W_nodeparse, "node argument %d is out of range\n", arg);
 			goto err;
 		}
@@ -1804,7 +1800,7 @@ numa_parse_nodestring(char *s)
 				numa_warn(W_nodeparse, "missing node argument %s\n", s);
 				goto err;
 			}
-			if (arg2 >= task_nodes) {
+			if (!numa_bitmask_isbitset(numa_all_nodes_ptr, arg2)) {
 				numa_warn(W_nodeparse, "node argument %d out of range\n", arg2);
 				goto err;
 			}
@@ -1852,7 +1848,6 @@ numa_parse_cpustring(char *s)
 {
 	int invert = 0, relative=0;
 	int conf_cpus = numa_num_configured_cpus();
-	int task_cpus = numa_num_task_cpus();
 	char *end;
 	struct bitmask *mask;
 
@@ -1873,9 +1868,7 @@ numa_parse_cpustring(char *s)
 		int i;
 
 		if (!strcmp(s,"all")) {
-			int i;
-			for (i = 0; i < task_cpus; i++)
-				numa_bitmask_setbit(mask, i);
+			copy_bitmask_to_bitmask(numa_all_cpus_ptr, mask);
 			s+=4;
 			break;
 		}
@@ -1884,7 +1877,7 @@ numa_parse_cpustring(char *s)
 			numa_warn(W_cpuparse, "unparseable cpu description `%s'\n", s);
 			goto err;
 		}
-		if (arg >= task_cpus) {
+		if (!numa_bitmask_isbitset(numa_all_cpus_ptr, arg)) {
 			numa_warn(W_cpuparse, "cpu argument %s is out of range\n", s);
 			goto err;
 		}
@@ -1900,7 +1893,7 @@ numa_parse_cpustring(char *s)
 				numa_warn(W_cpuparse, "missing cpu argument %s\n", s);
 				goto err;
 			}
-			if (arg2 >= task_cpus) {
+			if (!numa_bitmask_isbitset(numa_all_cpus_ptr, arg2)) {
 				numa_warn(W_cpuparse, "cpu argument %s out of range\n", s);
 				goto err;
 			}
