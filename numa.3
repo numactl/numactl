@@ -114,7 +114,7 @@ numa \- NUMA policy library
 .br
 .BI "int numa_sched_setaffinity(pid_t " pid ", struct bitmask *" mask );
 .br
-.BI "int numa_node_to_cpus(int " node ", unsigned long *" buffer ", int " bufferlen );
+.BI "int numa_node_to_cpus(int " node ", struct bitmask *" mask ");
 .br
 .BI "int numa_node_of_cpu(int " cpu ");
 .sp
@@ -726,8 +726,9 @@ Set the bits in the mask by calling
 .BR numa_bitmask_setbit().
 
 .BR numa_node_to_cpus ()
-converts a node number to a bitmask of CPUs. The user must pass a long enough
-buffer. If the buffer is not long enough
+converts a node number to a bitmask of CPUs. The user must pass a bitmask
+structure with a mask buffer long enough to represent all possible cpu's.
+Use numa_allocate_cpumask() to create it.  If the bitmask is not long enough
 .I errno
 will be set to
 .I ERANGE
