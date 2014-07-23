@@ -1342,6 +1342,8 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 		numa_warn(W_nosysfs2,
 		   "/sys not mounted or invalid. Assuming one node: %s",
 			  strerror(errno)); 
+		numa_warn(W_nosysfs2,
+		   "(cannot open or correctly parse %s)", fn);
 		numa_bitmask_setall(mask);
 		err = -1;
 	} 
