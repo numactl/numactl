@@ -197,7 +197,7 @@ depend: .depend
 .depend:
 	${CC} -MM -DDEPS_RUN -I. ${SOURCES} > .depend.X && mv .depend.X .depend
 
-include .depend
+-include .depend
 
 Makefile: .depend
 
