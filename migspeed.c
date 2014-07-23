@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "numa.h"
-#include <numaif.h>
+#include "numaif.h"
 #include <time.h>
 #include <errno.h>
 #include <malloc.h>
@@ -71,8 +71,8 @@ int main(int argc, char *argv[])
 	struct timespec result;
 	unsigned long bytes;
 	double duration, mbytes;
-	nodemask_t from;
-	nodemask_t to;
+	struct bitmask *from;
+	struct bitmask *to;
 
 	pagesize = getpagesize();
 
@@ -100,8 +100,7 @@ int main(int argc, char *argv[])
 		usage();
 
 	if (verbose > 1)
-		printf("numa_max_node = %d NUMA_NUM_NODES=%d\n",
-			numa_max_node(), NUMA_NUM_NODES);
+		printf("numa_max_node = %d\n", numa_max_node());
 
 	from = nodemask(argv[optind]);
 	if (errno) {
@@ -110,7 +109,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (verbose)
-		printmask("From", &from);
+		printmask("From", from);
 
 	if (!argv[optind+1])
 		usage();
@@ -122,7 +121,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (verbose)
-		printmask("To", &to);
+		printmask("To", to);
 
 	bytes = pages * pagesize;
 
@@ -137,8 +136,7 @@ int main(int argc, char *argv[])
 		exit(2);
 	}
 
-	if (mbind(memory, bytes, MPOL_BIND, (unsigned long *)&from,
-				NUMA_NUM_NODES+1, 0) < 0)
+	if (mbind(memory, bytes, MPOL_BIND, from->maskp, from->size, 0) < 0)
 		numa_error("mbind");
 
 	if (verbose)
@@ -153,8 +151,7 @@ int main(int argc, char *argv[])
 	displaymap();
 	clock_gettime(CLOCK_REALTIME, &start);
 
-	if (mbind(memory, bytes, MPOL_BIND, (unsigned long *)&to,
-			NUMA_NUM_NODES+1, MPOL_MF_MOVE)<0)
+	if (mbind(memory, bytes, MPOL_BIND, to->maskp, to->size, MPOL_MF_MOVE) <0)
 		numa_error("memory move");
 
 	clock_gettime(CLOCK_REALTIME, &end);

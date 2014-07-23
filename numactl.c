@@ -23,8 +23,8 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include "numaif.h"
 #include "numa.h"
+#include "numaif.h"
 #include "numaint.h"
 #include "util.h"
 #include "shm.h"
@@ -93,21 +93,21 @@ void usage_msg(char *msg, ...)
 
 void show_physcpubind(void)
 {
-	int ncpus = 8192;
+	int ncpus = number_of_configured_cpus();
 	
 	for (;;) { 
-		int cpubufsize = round_up(ncpus, BITS_PER_LONG) / BYTES_PER_LONG;
-		unsigned  long cpubuf[cpubufsize / sizeof(long)];
-		
-		memset(cpubuf,0,cpubufsize);
-		if (numa_sched_getaffinity(0, cpubufsize, cpubuf) < 0) { 
+		struct bitmask *cpubuf;
+
+		cpubuf = bitmask_alloc(ncpus);
+
+		if (numa_sched_getaffinity(0, cpubuf) < 0) {
 			if (errno == EINVAL && ncpus < 1024*1024) {
 				ncpus *= 2; 
 				continue;
 			}
 			err("sched_get_affinity");
 		}
-		printcpumask("physcpubind", cpubuf, cpubufsize);
+		printcpumask("physcpubind", cpubuf);
 		break;
 	}
 }
@@ -115,9 +115,10 @@ void show_physcpubind(void)
 void show(void)
 {
 	unsigned long prefnode;
-	nodemask_t membind, interleave, cpubind;
+	struct bitmask *membind, *interleave, *cpubind;
 	unsigned long cur;
 	int policy;
+	int numa_num_nodes = number_of_possible_nodes();
 	
 	if (numa_available() < 0) { 
 		show_physcpubind();
@@ -153,17 +154,17 @@ void show(void)
 		printf("%ld (interleave next)\n",cur); 
 		break; 
 	case MPOL_BIND:
-		printf("%d\n", find_first_bit(&membind, NUMA_NUM_NODES)); 
+		printf("%d\n", find_first_bit(&membind, numa_num_nodes));
 		break;
 	} 
 	if (policy == MPOL_INTERLEAVE) {
-		printmask("interleavemask", &interleave);
+		printmask("interleavemask", interleave);
 		printf("interleavenode: %ld\n", cur); 
 	}
 	show_physcpubind();
-	printmask("cpubind", &cpubind);  // for compatibility
-	printmask("nodebind", &cpubind);
-	printmask("membind", &membind);
+	printmask("cpubind", cpubind);  // for compatibility
+	printmask("nodebind", cpubind);
+	printmask("membind", membind);
 }
 
 char *fmt_mem(unsigned long long mem, char *buf) 
@@ -199,11 +200,15 @@ static void print_distances(int maxnode)
 void print_node_cpus(int node)
 {
 	int len = 1;
+	int conf_cpus = number_of_configured_cpus();
+
 	for (;;) { 
-		int i;
-		unsigned long cpus[len];
+		int i, err;
+		struct bitmask *cpus;
+
+		cpus = bitmask_alloc(conf_cpus);
 		errno = 0;
-		int err = numa_node_to_cpus(node, cpus, len * sizeof(long));
+		err = numa_node_to_cpus(node, cpus);
 		if (err < 0) {
 			if (errno == ERANGE) {
 				len *= 2; 
@@ -212,7 +217,7 @@ void print_node_cpus(int node)
 			break; 
 		}
 		for (i = 0; i < len*BITS_PER_LONG; i++) 
-			if (test_bit(i, cpus))
+			if (bitmask_isbitset(cpus, i))
 				printf(" %d", i);
 		break;
 	}
@@ -222,7 +227,7 @@ void print_node_cpus(int node)
 void hardware(void)
 { 
 	int i;
-	int maxnode = numa_max_node(); 
+	int maxnode = number_of_configured_nodes()-1;
 	printf("available: %d nodes (0-%d)\n", 1+maxnode, maxnode); 	
 	for (i = 0; i <= maxnode; i++) { 
 		char buf[64];
@@ -317,14 +322,15 @@ void get_short_opts(struct option *o, char *s)
 
 int main(int ac, char **av)
 {
-	int c, i, nnodes=0;
+	int c, ncpus, i, nnodes=0;
 	long node=-1;
 	char *end;
 	char shortopts[array_len(opts)*2 + 1];
+	struct bitmask *mask;
+
 	get_short_opts(opts,shortopts);
-	while ((c = getopt_long(ac, av, shortopts, opts, NULL)) != -1) { 
-		nodemask_t mask;
-		switch (c) { 
+	while ((c = getopt_long(ac, av, shortopts, opts, NULL)) != -1) {
+		switch (c) {
 		case 's': /* --show */
 			show();
 			exit(0);  
@@ -338,9 +344,9 @@ int main(int ac, char **av)
 			errno = 0;
 			setpolicy(MPOL_INTERLEAVE);
 			if (shmfd >= 0)
-				numa_interleave_memory(shmptr, shmlen, &mask);
+				numa_interleave_memory(shmptr, shmlen, mask);
 			else
-				numa_set_interleave_mask(&mask);
+				numa_set_interleave_mask(mask);
 			checkerror("setting interleave mask");
 			break;
 		case 'N': /* --cpunodebind */
@@ -351,20 +357,18 @@ int main(int ac, char **av)
 			errno = 0;
 			check_cpubind(do_shm);
 			did_cpubind = 1;
-			numa_run_on_node_mask(&mask);
+			numa_run_on_node_mask(mask);
 			checkerror("sched_setaffinity");
 			break;
 		case 'C': /* --physcpubind */
 		{
-			int ncpus;
-			unsigned long *cpubuf;
-			numa_max_node();
+			struct bitmask *cpubuf;
 			dontshm("-C/--physcpubind");
 			cpubuf = cpumask(optarg, &ncpus);
 			errno = 0;
 			check_cpubind(do_shm);
 			did_cpubind = 1;
-			numa_sched_setaffinity(0, CPU_BYTES(ncpus), cpubuf);
+			numa_sched_setaffinity(0, cpubuf);
 			checkerror("sched_setaffinity");
 			free(cpubuf);
 			break;
@@ -376,9 +380,9 @@ int main(int ac, char **av)
 			errno = 0;
 			numa_set_bind_policy(1);
 			if (shmfd >= 0) { 
-				numa_tonodemask_memory(shmptr, shmlen, &mask);
+				numa_tonodemask_memory(shmptr, shmlen, mask);
 			} else {
-				numa_set_membind(&mask);
+				numa_set_membind(mask);
 			}
 			numa_set_bind_policy(0);
 			checkerror("setting membind");
@@ -387,14 +391,15 @@ int main(int ac, char **av)
 			checknuma();
 			setpolicy(MPOL_PREFERRED);
 			mask = nodemask(optarg);
-			for (i=0; i<sizeof(mask); i++) {
-				if (nodemask_isset(&mask, i)) {
+			for (i=0; i<mask->size; i++) {
+				if (bitmask_isbitset(mask, i)) {
 					node = i;
 					nnodes++;
 				}
 			}
 			if (nnodes != 1)
 				usage();
+			bitmask_free(mask);
 			errno = 0;
 			numa_set_bind_policy(0);
 			if (shmfd >= 0) 
