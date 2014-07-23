@@ -1495,6 +1495,15 @@ numa_run_on_node_mask_v2(struct bitmask *bmp)
 		if (bmp->maskp[i / BITS_PER_LONG] == 0)
 			continue;
 		if (numa_bitmask_isbitset(bmp, i)) {
+			/*
+			 * numa_all_nodes_ptr is cpuset aware; use only
+			 * these nodes
+			 */
+			if (!numa_bitmask_isbitset(numa_all_nodes_ptr, i)) {
+				numa_warn(W_noderunmask,
+					"node %d not allowed", i);
+				continue;
+			}
 			if (numa_node_to_cpus_v2_int(i, nodecpus) < 0) {
 				numa_warn(W_noderunmask, 
 					"Cannot read node cpumask from sysfs");
@@ -1574,6 +1583,13 @@ numa_get_run_node_mask_v2(void)
 
 	nodecpus = numa_allocate_cpumask();
 	for (i = 0; i <= max; i++) {
+		/*
+		 * numa_all_nodes_ptr is cpuset aware; show only
+		 * these nodes
+		 */
+		if (!numa_bitmask_isbitset(numa_all_nodes_ptr, i)) {
+			continue;
+		}
 		if (numa_node_to_cpus_v2_int(i, nodecpus) < 0) {
 			/* It's possible for the node to not exist */
 			continue;
