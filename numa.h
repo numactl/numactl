@@ -53,6 +53,7 @@ struct bitmask *numa_bitmask_clearall(struct bitmask *);
 struct bitmask *numa_bitmask_setbit(struct bitmask *, unsigned int);
 struct bitmask *numa_bitmask_clearbit(struct bitmask *, unsigned int);
 unsigned int numa_bitmask_nbytes(struct bitmask *);
+unsigned int numa_bitmask_weight(const struct bitmask *);
 struct bitmask *numa_bitmask_alloc(unsigned int);
 void numa_bitmask_free(struct bitmask *);
 int numa_bitmask_equal(const struct bitmask *, const struct bitmask *);
