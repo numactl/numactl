@@ -31,7 +31,7 @@ you might need to pay attention there or filter out the STREAM results.
 It also uses a public domain Mersenne Twister implementation from
 Michael Brundage.
 
-Version 2.0.10-rc1: (C)2014 SGI
+Version 2.0.10-rc2: (C)2014 SGI
 
 Author:
 Andi Kleen, SUSE Labs
