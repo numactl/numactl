@@ -67,8 +67,8 @@ static __thread unsigned int mbind_flags = 0;
 static int sizes_set=0;
 static int maxconfigurednode = -1;
 static int maxconfiguredcpu = -1;
-static int maxprocnode = -1;
-static int maxproccpu = -1;
+static int numprocnode = -1;
+static int numproccpu = -1;
 static int nodemask_sz = 0;
 static int cpumask_sz = 0;
 
@@ -230,6 +230,18 @@ numa_bitmask_equal(const struct bitmask *bmp1, const struct bitmask *bmp2)
 			return 0;
 	return 1;
 }
+
+/* Hamming Weight: number of set bits */
+unsigned int numa_bitmask_weight(const struct bitmask *bmp)
+{
+	unsigned int i;
+	unsigned int w = 0;
+	for (i = 0; i < bmp->size; i++)
+		if (_getbit(bmp, i))
+			w++;
+	return w;
+}
+
 /* *****end of bitmask_  routines ************ */
 
 /* Next two can be overwritten by the application for different error handling */
@@ -386,8 +398,7 @@ done:
 
 /*
  * Read a mask consisting of a sequence of hexadecimal longs separated by
- * commas. Order them correctly and return the number of the last bit
- * set.
+ * commas. Order them correctly and return the number of bits set.
  */
 static int
 read_mask(char *s, struct bitmask *bmp)
@@ -436,17 +447,10 @@ read_mask(char *s, struct bitmask *bmp)
 
 		bmp->maskp[m++] = x;
 	}
-	m--;
-
-	/* Poor mans fls() */
-	for(i = bitsperlong - 1; i >= 0; i--)
-		if (test_bit(i, bmp->maskp + m))
-			break;
-
 	/*
-	 * Return the last bit set
+	 * Return the number of bits set
 	 */
-	return bitsperlong * m + i;
+	return numa_bitmask_weight(bmp);
 }
 
 /*
@@ -477,11 +481,10 @@ set_task_constraints(void)
 		char  *mask = strrchr(buffer,'\t') + 1;
 
 		if (strncmp(buffer,"Cpus_allowed:",13) == 0)
-			maxproccpu = read_mask(mask, numa_all_cpus_ptr);
+			numproccpu = read_mask(mask, numa_all_cpus_ptr);
 
 		if (strncmp(buffer,"Mems_allowed:",13) == 0) {
-			maxprocnode =
-				read_mask(mask, numa_all_nodes_ptr);
+			numprocnode = read_mask(mask, numa_all_nodes_ptr);
 		}
 	}
 	fclose(f);
@@ -490,26 +493,26 @@ set_task_constraints(void)
 	/*
 	 * Cpus_allowed in the kernel can be defined to all f's
 	 * i.e. it may be a superset of the actual available processors.
-	 * As such let's reduce maxproccpu to the number of actual
-	 * available cpus - 1.
+	 * As such let's reduce numproccpu to the number of actual
+	 * available cpus.
 	 */
-	if (maxproccpu <= 0) {
+	if (numproccpu <= 0) {
 		for (i = 0; i <= hicpu; i++)
 			numa_bitmask_setbit(numa_all_cpus_ptr, i);
-		maxproccpu = hicpu;
+		numproccpu = hicpu+1;
 	}
 
-	if (maxproccpu > hicpu) {
-		maxproccpu = hicpu;
+	if (numproccpu > hicpu+1) {
+		numproccpu = hicpu+1;
 		for (i=hicpu+1; i<numa_all_cpus_ptr->size; i++) {
 			numa_bitmask_clearbit(numa_all_cpus_ptr, i);
 		}
 	}
 
-	if (maxprocnode <= 0) {
+	if (numprocnode <= 0) {
 		for (i = 0; i <= maxconfigurednode; i++)
 			numa_bitmask_setbit(numa_all_nodes_ptr, i);
-		maxprocnode = maxconfigurednode;
+		numprocnode = maxconfigurednode + 1;
 	}
 
 	return;
@@ -632,7 +635,7 @@ numa_num_possible_cpus(void)
 int
 numa_num_task_nodes(void)
 {
-	return maxprocnode+1;
+	return numprocnode;
 }
 
 /*
@@ -647,7 +650,7 @@ numa_num_thread_nodes(void)
 int
 numa_num_task_cpus(void)
 {
-	return maxproccpu+1;
+	return numproccpu;
 }
 
 /*

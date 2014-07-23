@@ -149,6 +149,8 @@ numa \- NUMA policy library
 .BI "void copy_nodemask_to_bitmask(nodemask_t *" nodemask ", struct bitmask *" bmp )
 .br
 .BI "void copy_bitmask_to_bitmask(struct bitmask *" bmpfrom ", struct bitmask *" bmpto )
+.br
+.BI "unsigned int numa_bitmask_weight(const struct bitmask *bmp )
 .sp
 .BI "int numa_move_pages(int " pid ", unsigned long " count ", void **" pages ", const int *" nodes ", int *" status ", int " flags );
 .br
@@ -859,6 +861,12 @@ pointer to the body of the bitmask structure pointed to by the
 .I bmpto
 pointer. If the two areas differ in size, the copy is truncated to the size
 of the receiving field or zero-filled.
+
+.BR numa_bitmask_weight()
+returns a count of the bits that are set in the body of the bitmask pointed
+to by the
+.I bmp
+argument.
 
 .br
 .BR numa_move_pages()

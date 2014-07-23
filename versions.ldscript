@@ -100,6 +100,7 @@ libnuma_1.2 {
     numa_bitmask_nbytes;
     numa_bitmask_setall;
     numa_bitmask_setbit;
+    numa_bitmask_weight;
     numa_distance;
     numa_error;
     numa_exit_on_error;
