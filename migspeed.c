@@ -55,7 +55,7 @@ void displaymap(void)
 			break;
 		if (!strstr(buffer, "bind"))
 			continue ;
-		printf(buffer);
+		printf("%s", buffer);
 
 	}
 	fclose(f);
