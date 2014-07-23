@@ -271,7 +271,8 @@ static void getpol(int *oldpolicy, struct bitmask *bmp)
 
 static void dombind(void *mem, size_t size, int pol, struct bitmask *bmp)
 { 
-	if (mbind(mem, size, pol, bmp->maskp, bmp->size, mbind_flags) < 0)
+	if (mbind(mem, size, pol, bmp ? bmp->maskp : NULL, bmp ? bmp->size : 0, 
+		  mbind_flags) < 0)
 		numa_error("mbind"); 
 } 
 
