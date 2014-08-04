@@ -14,6 +14,8 @@ LT_INIT
 
 AC_PROG_CC
 
+AX_TLS
+
 AC_CONFIG_FILES([Makefile])
 
 AC_OUTPUT

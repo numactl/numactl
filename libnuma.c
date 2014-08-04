@@ -31,6 +31,7 @@
 #include <sys/mman.h>
 #include <limits.h>
 
+#include "config.h"
 #include "numa.h"
 #include "numaif.h"
 #include "numaint.h"
@@ -61,8 +62,9 @@ struct bitmask **node_cpu_mask_v2;
 
 WEAK void numa_error(char *where);
 
-#ifdef __thread
+#ifndef TLS
 #warning "not threadsafe"
+#define __thread
 #endif
 
 static __thread int bind_policy = MPOL_BIND; 
