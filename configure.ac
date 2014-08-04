@@ -14,6 +14,9 @@ LT_INIT
 
 AC_PROG_CC
 
+# Override CFLAGS so that we can specify custom CFLAGS for numademo.
+AX_AM_OVERRIDE_VAR([CFLAGS])
+
 AX_TLS
 
 AC_CONFIG_FILES([Makefile])
