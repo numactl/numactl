@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #print cpu it is running on
 declare -a arr
 arr=( $(< /proc/self/stat) )
