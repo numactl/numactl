@@ -124,3 +124,18 @@ test_numademo: numademo
 	./numademo -t -e 10M
 
 test: all $(check_PROGRAMS) regress1 regress2 test_numademo
+
+TESTS_ENVIRONMENT = builddir='$(builddir)'; export builddir;
+
+TESTS = \
+	test/bind_range \
+	test/checkaffinity \
+	test/checktopology \
+	test/distance \
+	test/nodemap \
+	test/regress \
+	test/tbitmap
+
+# These are known to be broken:
+#	test/prefered
+#	test/randmap

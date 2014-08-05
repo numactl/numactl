@@ -54,3 +54,8 @@
 /config.status
 /libtool
 /stamp-*
+
+# Test logs:
+/test-suite.log
+/test/*.log
+/test/*.trs
