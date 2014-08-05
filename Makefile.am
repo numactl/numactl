@@ -1,6 +1,8 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
+AM_CPPFLAGS = -Wall
+
 bin_PROGRAMS = numactl numastat numademo migratepages migspeed memhog
 
 lib_LTLIBRARIES = libnuma.la
@@ -20,7 +22,7 @@ numastat_SOURCES = numastat.c
 numastat_CFLAGS = -std=gnu99
 
 numademo_SOURCES = numademo.c stream_lib.c stream_lib.h mt.c mt.h clearcache.c clearcache.h
-numademo_CPPFLAGS = -DHAVE_STREAM_LIB -DHAVE_MT -DHAVE_CLEAR_CACHE
+numademo_CPPFLAGS = $(AM_CPPFLAGS) -DHAVE_STREAM_LIB -DHAVE_MT -DHAVE_CLEAR_CACHE
 numademo_LDADD = libnuma.la -lm
 
 migratepages_SOURCES = migratepages.c util.c
