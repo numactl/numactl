@@ -755,10 +755,11 @@ int get_screen_width() {
 	} else if (isatty(fileno(stdout))) {
 		FILE *fs = popen("resize 2>/dev/null", "r");
 		if (fs != NULL) {
-			char columns[72];
-			fgets(columns, sizeof(columns), fs);
+			char buf[72];
+			char *columns;
+			columns = fgets(buf, sizeof(columns), fs);
 			pclose(fs);
-			if (strncmp(columns, "COLUMNS=", 8) == 0) {
+			if (columns && strncmp(columns, "COLUMNS=", 8) == 0) {
 				width = atoi(&columns[8]);
 				if ((width < 1) || (width > 10000000)) {
 					width = 80;
