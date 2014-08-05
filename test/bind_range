@@ -6,8 +6,10 @@
 
 # NOTE: Test needs two nodes and two cpus at least
 
-BASE=`pwd`/..
-export PATH=$BASE:$PATH
+testdir=`dirname "$0"`
+: ${srcdir:=${testdir}/..}
+: ${builddir:=${srcdir}}
+export PATH=${builddir}:$PATH
 
 export old_mask
 

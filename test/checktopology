@@ -2,8 +2,10 @@
 # check numactl --hardware output
 # this checks most of the topology discovery in libnuma
 
-BASE=`pwd`/..
-export PATH=$BASE:$PATH
+testdir=`dirname "$0"`
+: ${srcdir:=${testdir}/..}
+: ${builddir:=${srcdir}}
+export PATH=${builddir}:$PATH
 
 numcpus=$(grep -c processor /proc/cpuinfo)
 numnodes=$(ls -1d /sys/devices/system/node/node[0-9]* | wc -l)

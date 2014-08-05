@@ -6,10 +6,12 @@
 # memory pressure
 # Copyright 2003,2004 Andi Kleen, SuSE Labs.
 
-BASE=`(cd ..; pwd)`
-export PATH=$BASE:$PATH
+testdir=`dirname "$0"`
+: ${srcdir:=${testdir}/..}
+: ${builddir:=${srcdir}}
+export PATH=${builddir}:$PATH
 
-: ${NUMACTL:=$BASE/numactl}
+: ${NUMACTL:=${builddir}/numactl}
 VALGRIND=${VALGRIND:-}
 
 MB=$[1024*1024]
@@ -17,7 +19,7 @@ SIZE=$[15 * $MB]
 DEMOSIZE=$[10 * $MB]
 STAT_INTERVAL=5
 
-PAGESIZE=$(./pagesize)
+PAGESIZE=$("${builddir}/test/pagesize")
 PAGES=$[ $SIZE / $PAGESIZE ]
 HALFPAGES=$[ $PAGES / 2 ]
 HALFPAGES=$[ $HALFPAGES - 100 ]

@@ -1,8 +1,10 @@
 #!/bin/bash
 # check if affinity works
 
-BASE=`pwd`/..
-export PATH=$BASE:$PATH
+testdir=`dirname "$0"`
+: ${srcdir:=${testdir}/..}
+: ${builddir:=${srcdir}}
+export PATH=${builddir}:$PATH
 
 S=`numactl --show | grep nodebind:`
 NODES=`echo $S | sed -e "s/nodebind://"`
@@ -11,7 +13,7 @@ S=`numactl --show | grep physcpubind:`
 CPUS=`echo $S | sed -e "s/physcpubind://"`
 
 for i in $CPUS ; do
-    if [ "$(numactl --physcpubind=$i ./printcpu)" != "$i" ] ; then
+    if [ "$(numactl --physcpubind=$i "${testdir}"/printcpu)" != "$i" ] ; then
        echo "--physcpubind for $i doesn't work"
        exit 1
     fi
