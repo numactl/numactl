@@ -14,9 +14,6 @@ T() {
        echo
 }
 
-# various tests
-chmod 755 bind_range
-
 # still broken
 #T ./prefered
 T ./distance
