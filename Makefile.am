@@ -62,6 +62,7 @@ EXTRA_DIST += \
 	test/bind_range \
 	test/checkaffinity \
 	test/checktopology \
+	test/numademo \
 	test/printcpu \
 	test/regress \
 	test/regress2 \
@@ -133,6 +134,7 @@ TESTS = \
 	test/checktopology \
 	test/distance \
 	test/nodemap \
+	test/numademo \
 	test/regress \
 	test/tbitmap
 

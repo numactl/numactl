@@ -1,0 +1,8 @@
+#!/bin/sh
+
+testdir=`dirname "$0"`
+: ${srcdir:=${testdir}/..}
+: ${builddir:=${srcdir}}
+export PATH=${builddir}:$PATH
+
+exec "${builddir}"/numademo -t -e 10M
