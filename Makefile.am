@@ -24,6 +24,9 @@ numastat_CFLAGS = $(AM_CFLAGS) -std=gnu99
 numademo_SOURCES = numademo.c stream_lib.c stream_lib.h mt.c mt.h clearcache.c clearcache.h
 numademo_CPPFLAGS = $(AM_CPPFLAGS) -DHAVE_STREAM_LIB -DHAVE_MT -DHAVE_CLEAR_CACHE
 numademo_CFLAGS = -O3 -ffast-math -funroll-loops
+if HAVE_TREE_VECTORIZE
+numademo_CFLAGS += -ftree-vectorize
+endif
 numademo_LDADD = libnuma.la -lm
 
 migratepages_SOURCES = migratepages.c util.c

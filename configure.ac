@@ -19,6 +19,9 @@ AX_AM_OVERRIDE_VAR([CFLAGS])
 
 AX_TLS
 
+AX_CHECK_COMPILE_FLAG([-ftree-vectorize], [tree_vectorize="true"])
+AM_CONDITIONAL([HAVE_TREE_VECTORIZE], [test x"${tree_vectorize}" = x"true"])
+
 AC_CONFIG_FILES([Makefile])
 
 AC_OUTPUT
