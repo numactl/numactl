@@ -74,7 +74,7 @@ probe_hardware()
 	if [ $numnodes -lt 2 ] ; then
 	    echo "need at least two nodes with at least $NEEDPAGES each of"
 	    echo "free memory for mempolicy regression tests"
-	    exit 1
+	    exit 77  # Skip test
 	fi
 }
 
