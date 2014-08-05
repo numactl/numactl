@@ -1,0 +1,18 @@
+AC_PREREQ([2.64])
+AC_INIT([numactl], [2.0.10])
+
+AC_CONFIG_SRCDIR([numactl.c])
+AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_HEADERS([config.h])
+
+AM_INIT_AUTOMAKE([foreign])
+
+LT_PREREQ([2.2])
+LT_INIT
+
+AC_PROG_CC
+
+AC_CONFIG_FILES([Makefile])
+
+AC_OUTPUT
