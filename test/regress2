@@ -3,8 +3,6 @@
 
 VALGRIND=${VALGRIND:-}
 
-export LD_LIBRARY_PATH=`pwd`/..
-
 T() {
        echo "$@" 
        if ! $VALGRIND "$@" ;  then

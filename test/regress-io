@@ -26,7 +26,6 @@ fail() {
 }
 
 BASE=`(cd ..; pwd)`
-export LD_LIBRARY_PATH=$BASE
 export PATH=$BASE:$PATH
 
 check ./node-parse file:.

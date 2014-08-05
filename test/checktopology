@@ -3,7 +3,6 @@
 # this checks most of the topology discovery in libnuma
 
 BASE=`pwd`/..
-export LD_LIBRARY_PATH=$BASE
 export PATH=$BASE:$PATH
 
 numcpus=$(grep -c processor /proc/cpuinfo)

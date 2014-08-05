@@ -7,7 +7,6 @@
 # NOTE: Test needs two nodes and two cpus at least
 
 BASE=`pwd`/..
-export LD_LIBRARY_PATH=$BASE
 export PATH=$BASE:$PATH
 
 export old_mask

@@ -2,7 +2,6 @@
 # check if affinity works
 
 BASE=`pwd`/..
-export LD_LIBRARY_PATH=$BASE
 export PATH=$BASE:$PATH
 
 S=`numactl --show | grep nodebind:`
