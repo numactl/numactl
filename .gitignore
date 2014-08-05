@@ -1,0 +1,40 @@
+# Object files:
+*.o
+
+# Auxiliary build files:
+.depend
+
+# libnuma libraries:
+/libnuma.a
+/libnuma.so
+/libnuma.so.*
+
+# Built binaries:
+/memhog
+/migratepages
+/migspeed
+/numactl
+/numademo
+/numamon
+/numastat
+/stream
+
+# Built test cases:
+/test/distance
+/test/ftok
+/test/mbind_mig_pages
+/test/migrate_pages
+/test/move_pages
+/test/mynode
+/test/node-parse
+/test/nodemap
+/test/pagesize
+/test/prefered
+/test/randmap
+/test/realloc_test
+/test/tbitmap
+/test/tshared
+
+# Temporary files used by the build:
+/empty.c
+/threadtest
