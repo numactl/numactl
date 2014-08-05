@@ -41,3 +41,86 @@ memhog_LDADD = libnuma.la
 libnuma_la_SOURCES = libnuma.c syscall.c distance.c affinity.c affinity.h sysfs.c sysfs.h rtnetlink.c rtnetlink.h versions.ldscript
 libnuma_la_LDFLAGS = -version-info 1:0:0 -Wl,--version-script,$(srcdir)/versions.ldscript -Wl,-init,numa_init -Wl,-fini,numa_fini
 
+check_PROGRAMS = \
+	test/distance \
+	test/ftok \
+	test/mbind_mig_pages \
+	test/migrate_pages \
+	test/move_pages \
+	test/mynode \
+	test/node-parse \
+	test/nodemap \
+	test/pagesize \
+	test/prefered \
+	test/randmap \
+	test/realloc_test \
+	test/tbitmap \
+	test/tshared
+
+EXTRA_DIST += \
+	test/README \
+	test/bind_range \
+	test/checkaffinity \
+	test/checktopology \
+	test/printcpu \
+	test/regress \
+	test/regress2 \
+	test/regress-io \
+	test/runltp \
+	test/shmtest
+
+test_distance_SOURCES = test/distance.c
+test_distance_LDADD = libnuma.la
+
+test_ftok_SOURCES = test/ftok.c
+test_ftok_LDADD = libnuma.la
+
+test_mbind_mig_pages_SOURCES = test/mbind_mig_pages.c
+test_mbind_mig_pages_LDADD = libnuma.la
+
+test_migrate_pages_SOURCES = test/migrate_pages.c
+test_migrate_pages_LDADD = libnuma.la
+
+test_move_pages_SOURCES = test/move_pages.c
+test_move_pages_LDADD = libnuma.la
+
+test_mynode_SOURCES = test/mynode.c
+test_mynode_LDADD = libnuma.la
+
+test_node_parse_SOURCES = test/node-parse.c util.c
+test_node_parse_LDADD = libnuma.la
+
+test_nodemap_SOURCES = test/nodemap.c
+test_nodemap_LDADD = libnuma.la
+
+test_pagesize_SOURCES = test/pagesize.c
+test_pagesize_LDADD = libnuma.la
+
+test_prefered_SOURCES = test/prefered.c
+test_prefered_LDADD = libnuma.la
+
+test_randmap_SOURCES = test/randmap.c
+test_randmap_LDADD = libnuma.la
+
+test_realloc_test_SOURCES = test/realloc_test.c
+test_realloc_test_LDADD = libnuma.la
+
+test_tbitmap_SOURCES = test/tbitmap.c util.c
+test_tbitmap_LDADD = libnuma.la
+
+test_tshared_SOURCES = test/tshared.c
+test_tshared_LDADD = libnuma.la
+
+# Legacy make rules for test cases.
+# These will be superceded by "make check".
+
+regress1: $(check_PROGRAMS)
+	cd test && ./regress
+
+regress2: $(check_PROGRAMS)
+	cd test && ./regress2
+
+test_numademo: numademo
+	./numademo -t -e 10M
+
+test: all $(check_PROGRAMS) regress1 regress2 test_numademo
