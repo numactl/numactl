@@ -1,0 +1,15 @@
+language: c
+
+compiler:
+  - gcc
+  - clang
+
+before_script:
+  - ./autogen.sh
+  - ./configure CPPFLAGS=-Werror
+
+script:
+  - make -k -j4
+  - ./numactl --show
+  - make -k -j8 check VERBOSE=1 TESTS='test/distance test/nodemap test/numademo test/tbitmap'
+  - make distcheck LOG_COMPILER='sh -c "exit 77"'
