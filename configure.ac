@@ -6,7 +6,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
 
-AM_INIT_AUTOMAKE([foreign 1.11 silent-rules])
+AM_INIT_AUTOMAKE([foreign 1.11 silent-rules subdir-objects])
 AM_SILENT_RULES([yes])
 
 LT_PREREQ([2.2])

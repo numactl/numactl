@@ -3,8 +3,9 @@
 *.lo
 
 # Auxiliary build files:
-/.deps
-/.libs
+.deps
+.libs
+.dirstamp
 
 # libnuma libraries:
 /libnuma.la
