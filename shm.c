@@ -171,7 +171,7 @@ dumppol(unsigned long long start, unsigned long long end, int pol, struct bitmas
 {
 	if (pol == MPOL_DEFAULT)
 		return;
-	printf("%016Lx-%016Lx: %s ",
+	printf("%016llx-%016llx: %s ",
 	       shmoffset+start,
 	       shmoffset+end,
 	       policy_name(pol));
@@ -211,7 +211,7 @@ void dump_shm(void)
 
 static void dumpnode(unsigned long long start, unsigned long long end, int node)
 {
-	printf("%016Lx-%016Lx: %d\n", shmoffset+start, shmoffset+end, node);
+	printf("%016llx-%016llx: %d\n", shmoffset+start, shmoffset+end, node);
 }
 
 /* Dump nodes in a shared memory segment. */
