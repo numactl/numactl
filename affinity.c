@@ -73,7 +73,7 @@ static int node_parse_failure(int ret, char *cls, const char *dev)
 
 /* Generic sysfs class lookup */
 static int
-affinity_class(struct bitmask *mask, char *cls, const const char *dev)
+affinity_class(struct bitmask *mask, char *cls, const char *dev)
 {
 	int ret;
 	while (isspace(*dev))
