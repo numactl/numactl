@@ -401,3 +401,5 @@ newer:
 - 140715 numactl: fix numactl --show  and preferrred node (Bill Gray)
 2.0.10-rc2
 - 140722 makefile: remove warning about missing .depend (Filipe Brandenburger)
+
+2.0.10 released Oct, 2014
