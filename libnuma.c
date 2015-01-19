@@ -1382,8 +1382,12 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 		if (mask != buffer)
 			numa_bitmask_free(mask);
 	} else {
-		node_cpu_mask_v2[node] = mask;
-	} 
+		/* we don't want to cache faulty result */
+		if (!err)
+			node_cpu_mask_v2[node] = mask;
+		else
+			numa_bitmask_free(mask);
+	}
 	return err; 
 }
 __asm__(".symver numa_node_to_cpus_v2,numa_node_to_cpus@@libnuma_1.2");
@@ -1405,7 +1409,10 @@ int numa_node_of_cpu(int cpu)
 	bmp = numa_bitmask_alloc(ncpus);
 	nnodes = numa_max_node();
 	for (node = 0; node <= nnodes; node++){
-		numa_node_to_cpus_v2_int(node, bmp);
+		if (numa_node_to_cpus_v2_int(node, bmp) < 0) {
+			/* It's possible for the node to not exist */
+			continue;
+		}
 		if (numa_bitmask_isbitset(bmp, cpu)){
 			ret = node;
 			goto end;
