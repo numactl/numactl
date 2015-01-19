@@ -403,3 +403,6 @@ newer:
 - 140722 makefile: remove warning about missing .depend (Filipe Brandenburger)
 
 2.0.10 released Oct, 2014
+
+2.0.11-rc1
+- 150116 libnuma: numa_node_to_cpu skips over non-existing nodes (Petr Holasek)
