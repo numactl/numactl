@@ -58,7 +58,7 @@ struct bitmask *numa_possible_cpus_ptr = NULL;
 struct bitmask *numa_nodes_ptr = NULL;
 static struct bitmask *numa_memnode_ptr = NULL;
 static unsigned long *node_cpu_mask_v1[NUMA_NUM_NODES];
-struct bitmask **node_cpu_mask_v2;
+static struct bitmask **node_cpu_mask_v2;
 
 WEAK void numa_error(char *where);
 
@@ -1234,7 +1234,7 @@ numa_parse_bitmap_v2(char *line, struct bitmask *mask)
 __asm__(".symver numa_parse_bitmap_v2,numa_parse_bitmap@@libnuma_1.2");
 
 void
-init_node_cpu_mask_v2(void)
+static init_node_cpu_mask_v2(void)
 {
 	int nnodes = numa_max_possible_node_v2_int() + 1;
 	node_cpu_mask_v2 = calloc (nnodes, sizeof(struct bitmask *));
