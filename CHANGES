@@ -406,3 +406,6 @@ newer:
 
 2.0.11-rc1
 - 150116 libnuma: numa_node_to_cpu skips over non-existing nodes (Petr Holasek)
+
+2.0.11
+- 151210 libnuma: supress warnings for non-existing node (Petr Holasek)
