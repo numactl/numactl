@@ -115,7 +115,7 @@
 
 #endif
 
-#if defined(__GLIBC__) && __GLIBC_PREREQ(2, 11)
+#if defined(__GLIBC_PREREQ) && __GLIBC_PREREQ(2, 11)
 
 /* glibc 2.11 seems to have working 6 argument sycall. Use the
    glibc supplied syscall in this case.
