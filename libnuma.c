@@ -200,7 +200,8 @@ numa_bitmask_alloc(unsigned int n)
 	struct bitmask *bmp;
 
 	if (n < 1) {
-		numa_error("request to allocate mask for invalid number; abort\n");
+		errno = EINVAL;
+		numa_error("request to allocate mask for invalid number");
 		exit(1);
 	}
 	bmp = malloc(sizeof(*bmp));
@@ -572,7 +573,7 @@ set_configured_cpus(void)
 {
 	maxconfiguredcpu = sysconf(_SC_NPROCESSORS_CONF) - 1;
 	if (maxconfiguredcpu == -1)
-		numa_error("sysconf(NPROCESSORS_CONF) failed.\n");
+		numa_error("sysconf(NPROCESSORS_CONF) failed");
 }
 
 /*
@@ -1343,7 +1344,8 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 	if (node_cpu_mask_v2[node]) {
 		/* have already constructed a mask for this node */
 		if (buffer->size < node_cpu_mask_v2[node]->size) {
-			numa_error("map size mismatch; abort\n");
+			errno = EINVAL;
+			numa_error("map size mismatch");
 			return -1;
 		}
 		copy_bitmask_to_bitmask(node_cpu_mask_v2[node], buffer);
@@ -1528,7 +1530,7 @@ numa_run_on_node_mask_v2(struct bitmask *bmp)
 
 	/* used to have to consider that this could fail - it shouldn't now */
 	if (err < 0) {
-		numa_error("numa_sched_setaffinity_v2_int() failed; abort\n");
+		numa_error("numa_sched_setaffinity_v2_int() failed");
 	}
 
 	return err;
@@ -1577,7 +1579,7 @@ numa_run_on_node_mask_all(struct bitmask *bmp)
 
 	/* With possible nodes freedom it can happen easily now */
 	if (err < 0) {
-		numa_error("numa_sched_setaffinity_v2_int() failed; abort\n");
+		numa_error("numa_sched_setaffinity_v2_int() failed");
 	}
 
 	return err;
