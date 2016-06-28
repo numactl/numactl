@@ -552,12 +552,20 @@ set_numa_max_cpu(void)
 		buffer = numa_bitmask_alloc(len);
 		n = numa_sched_getaffinity_v2_int(0, buffer);
 		/* on success, returns size of kernel cpumask_t, in bytes */
-		if (n < 0 && errno == EINVAL) {
-			if (len >= 1024*1024)
+		if (n < 0) {
+			if (errno == EINVAL) {
+				if (len >= 1024*1024)
+					break;
+				len *= 2;
+				numa_bitmask_free(buffer);
+				continue;
+			} else {
+				numa_warn(W_numcpus, "Unable to determine max cpu"
+					  " (sched_getaffinity: %s); guessing...",
+					  strerror(errno));
+				n = sizeof(cpu_set_t);
 				break;
-			len *= 2;
-			numa_bitmask_free(buffer);
-			continue;
+			}
 		}
 	} while (n < 0);
 	numa_bitmask_free(buffer);
