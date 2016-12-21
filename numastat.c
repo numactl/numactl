@@ -1054,7 +1054,12 @@ void show_process_info() {
 					} else {
 						tmp_row = header_rows + pid_ix;
 					}
-					int tmp_col = header_cols + node_num;
+					// Don't assume nodes are sequential or contiguous.
+					// Need to find correct tmp_col from node_ix_map
+					int i = 0;
+					while(node_ix_map[i++] != node_num)
+						;
+					int tmp_col = header_cols + i - 1;
 					double_addto(&table, tmp_row, tmp_col, value);
 					double_addto(&table, tmp_row, total_col_ix, value);
 					double_addto(&table, total_row_ix, tmp_col, value);
