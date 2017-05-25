@@ -860,7 +860,7 @@ void numa_police_memory(void *mem, size_t size)
 	int pagesize = numa_pagesize_int();
 	unsigned long i; 
 	for (i = 0; i < size; i += pagesize)
-		asm volatile("" :: "r" (((volatile unsigned char *)mem)[i]));
+        ((volatile char*)mem)[i] = ((volatile char*)mem)[i];
 }
 
 make_internal_alias(numa_police_memory);
