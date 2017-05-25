@@ -185,8 +185,9 @@ long syscall6(long call, long a, long b, long c, long d, long e, long f)
 #define syscall6 syscall
 #endif
 
-long WEAK get_mempolicy(int *policy, const unsigned long *nmask,
-				unsigned long maxnode, void *addr, int flags)
+long WEAK get_mempolicy(int *policy, unsigned long *nmask,
+				unsigned long maxnode, void *addr,
+				unsigned flags)
 {
 	return syscall(__NR_get_mempolicy, policy, nmask,
 					maxnode, addr, flags);
