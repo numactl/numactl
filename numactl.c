@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include "config.h"
 #include "numa.h"
 #include "numaif.h"
 #include "numaint.h"
@@ -45,7 +46,7 @@ struct option opts[] = {
 	{"show", 0, 0, 's' },
 	{"localalloc", 0,0, 'l'},
 	{"hardware", 0,0,'H' },
-
+	{"version",0,0,'v'},
 	{"shm", 1, 0, 'S'},
 	{"file", 1, 0, 'f'},
 	{"offset", 1, 0, 'o'},
@@ -71,6 +72,7 @@ void usage(void)
 		"       numactl [--hardware | -H]\n"
 		"       numactl [--length | -l <length>] [--offset | -o <offset>] [--shmmode | -M <shmmode>]\n"
 		"               [--strict | -t]\n"
+		"               [--version | -v]\n"
 		"               [--shmid | -I <id>] --shm | -S <shmkeyfile>\n"
 		"               [--shmid | -I <id>] --file | -f <tmpfsfile>\n"
 		"               [--huge | -u] [--touch | -T] \n"
@@ -412,7 +414,10 @@ static struct bitmask *numactl_parse_nodestring(char *s, int flag)
 	else
 		return numa_parse_nodestring(s);
 }
-
+void print_version(void)
+{
+	printf("%s\n",VERSION);
+}
 int main(int ac, char **av)
 {
 	int c, i, nnodes=0;
@@ -430,6 +435,9 @@ int main(int ac, char **av)
 		case 'H': /* --hardware */
 			nopolicy();
 			hardware();
+			exit(0);
+		case 'v':
+			print_version();
 			exit(0);
 		case 'i': /* --interleave */
 			checknuma();
