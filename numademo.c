@@ -329,7 +329,7 @@ void test(enum test type)
 	
 	for (mask = 1, i = 0; mask < (1UL<<(max_node+1)); mask++, i++) {
 		int w;
-		char buf2[10];
+		char buf2[20];
 		if (popcnt(mask) == 1)
 			continue;
 		if (regression_testing && (i > 50)) {
