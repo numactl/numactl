@@ -43,6 +43,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <regex.h>
+#include <sys/sysmacros.h>
 #include "numa.h"
 #include "numaint.h"
 #include "sysfs.h"
