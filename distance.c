@@ -109,14 +109,12 @@ static int read_distance_table(void)
 
 int numa_distance(int a, int b)
 {
-	int maxnode = numa_max_node() + 1;
-
 	if (!distance_table) {
 		int err = read_distance_table();
 		if (err < 0)
 			return 0;
 	}
-	if (a < 0 || a >= maxnode || b < 0 || b >= maxnode)
+	if ((unsigned)a >= distance_numnodes || (unsigned)b >= distance_numnodes)
 		return 0;
 	return distance_table[a * distance_numnodes + b];
 }
