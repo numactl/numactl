@@ -42,9 +42,9 @@ static void parse_numbers(char *s, int *iptr)
 		/* Skip unavailable nodes */
 		while (j<=maxnode && !numa_bitmask_isbitset(numa_nodes_ptr, j))
 			j++;
-		*(iptr+j) = d;
 		if (s == end)
 			break;
+		*(iptr+j) = d;
 		s = end;
 	}
 }
