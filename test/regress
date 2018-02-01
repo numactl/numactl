@@ -31,6 +31,7 @@ EXIT=0
 
 declare -i maxnode
 declare -a node
+declare -a nlist
 
 # =====================================================================
 numactl() {
@@ -58,13 +59,14 @@ probe_hardware()
 
 	numnodes=$(numactl --hardware | awk '/^available/ { print $2 }')
 	maxnode=$(expr $numnodes - 1)
+	nlist=( $(numactl --hardware | grep "^node" |  tail -1 |awk '{$1=""; print }') )
 
 	# find nodes with at least NEEDPAGES of free memory
 	for i in $(seq 0 $maxnode) ; do
-		free=$(numactl --hardware | fgrep " $i free" | awk '{print $4}')
+		free=$(numactl --hardware | fgrep " ${nlist[$i]} free" | awk '{print $4}')
 		free=$(( free * MB ))
 		if [[ $((free / PAGESIZE)) -ge $NEEDPAGES ]]; then
-			node[$n]=$i
+			node[$n]=${nlist[$i]}
 			n=$((n + 1 ))
 		fi
 	done
@@ -90,11 +92,11 @@ test_process_state()
 
 	_test_process_state --interleave=$n1
 
-	a0=`nstat interleave_hit $n0`
-	a1=`nstat interleave_hit $n1`
+	a0=`nstat interleave_hit 0`
+	a1=`nstat interleave_hit 1`
 	_test_process_state --interleave=$n0,$n1
-	b0=`nstat interleave_hit $n0`
-	b1=`nstat interleave_hit $n1`
+	b0=`nstat interleave_hit 0`
+	b1=`nstat interleave_hit 1`
 	if [ $(expr $b1 - $a1) -lt $HALFPAGES ]; then
 	    echo "interleaving test failed $n1 $b1 $a1"
 	    failed
@@ -107,9 +109,9 @@ test_process_state()
 	_test_process_state --interleave=all
 	_test_process_state --membind=all
 
-	a=$(expr $(nstat numa_hit $n0) + $(nstat numa_hit $n1))
+	a=$(expr $(nstat numa_hit 0) + $(nstat numa_hit 1))
 	_test_process_state --membind=$n0,$n1
-	b=$(expr $(nstat numa_hit $n0) + $(nstat numa_hit $n1))
+	b=$(expr $(nstat numa_hit 0) + $(nstat numa_hit 1))
 	if [ $(expr $b - $a) -lt $PAGES ]; then
 	    echo "membind test failed $n1 $b $a ($PAGES)"
 	    failed
@@ -117,10 +119,10 @@ test_process_state()
 
 	for i in $(seq 0 $maxnode) ; do
 		declare -i ni=${node[$i]}
-		a=`nstat numa_hit $ni`
+		a=`nstat numa_hit $i`
 		_test_process_state --membind=$ni
 		_test_process_state --preferred=$ni
-		b=`nstat numa_hit $ni`
+		b=`nstat numa_hit $i`
 		if [ $(expr $b - $a) -lt $DOUBLEPAGES ]; then
 		    echo "membind/preferred on node $ni failed $b $a"
 		    failed
@@ -141,11 +143,11 @@ test_mbind()
 {
 	declare -i n0=${node[0]} n1=${node[1]}
 
-	a0=`nstat interleave_hit $n0`
-	a1=`nstat interleave_hit $n1`
+	a0=`nstat interleave_hit 0`
+	a1=`nstat interleave_hit 1`
 	_test_mbind interleave $n0,$n1
-	b0=`nstat interleave_hit $n0`
-	b1=`nstat interleave_hit $n1`
+	b0=`nstat interleave_hit 0`
+	b1=`nstat interleave_hit 1`
 	if [ $(expr $b1 - $a1) -lt $HALFPAGES ]; then
 	    echo "interleaving test 2 failed $n1 $b1 $a1 expected $HALFPAGES"
 	    failed
@@ -158,7 +160,7 @@ test_mbind()
 	_test_mbind interleave all
 
 	a=$(expr $(nstat numa_hit 0) + $(nstat numa_hit 1))
-	_test_mbind membind $n0,1
+	_test_mbind membind $n0,$n1
 	b=$(expr $(nstat numa_hit 0) + $(nstat numa_hit 1))
 	if [ $(expr $b - $a) -lt $PAGES ]; then
 	    echo "membind test 2 failed $b $a ($PAGES)"
@@ -167,10 +169,10 @@ test_mbind()
 
 	for i in $(seq 0 $maxnode) ; do
 		declare -i ni=${node[$i]}
-		a=`nstat numa_hit $ni`
+		a=`nstat numa_hit $i`
 		_test_mbind membind $ni
 		_test_mbind preferred $ni
-		b=`nstat numa_hit $ni`
+		b=`nstat numa_hit $i`
 		if [ $(expr $b - $a) -lt $DOUBLEPAGES ]; then
 		    echo "membind/preferred test 2 on node $ni failed $b $a"
 		    failed
