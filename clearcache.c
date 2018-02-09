@@ -57,7 +57,7 @@ void clearcache(unsigned char *mem, unsigned size)
 #if defined(__i386__) || defined(__x86_64__)
 	unsigned i, cl, eax, feat;
 	/* get clflush unit and feature */
-	asm("cpuid" : "=a" (eax), "=b" (cl), "=d" (feat) : "0" (1) : "cx");
+	asm("xchg %%ebx, %%esi; cpuid; xchg %%esi, %%ebx;" : "=a" (eax), "=S" (cl), "=d" (feat) : "0" (1) : "cx");
 	if (!(feat & (1 << 19)))
 		fallback_clearcache();
 	cl = ((cl >> 8) & 0xff) * 8;
