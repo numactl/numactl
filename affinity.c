@@ -40,6 +40,7 @@
 #include <linux/rtnetlink.h>
 #include <linux/netlink.h>
 #include <sys/types.h>
+#include <sys/sysmacros.h>
 #include <ctype.h>
 #include <assert.h>
 #include <regex.h>
