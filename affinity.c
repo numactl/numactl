@@ -131,7 +131,7 @@ static int affinity_file(struct bitmask *mask, char *cls, const char *file)
 	int n;
 	unsigned maj = 0, min = 0;
 	dev_t d;
-	struct dirent de, *dep;
+	struct dirent *dep;
 
 	cls = "block";
 	char fn[sizeof("/sys/class/") + strlen(cls)];
@@ -155,8 +155,10 @@ static int affinity_file(struct bitmask *mask, char *cls, const char *file)
 			  cls);
 		return -1;
 	}
-	while (readdir_r(dir, &de, &dep) == 0 && dep) {
+	while ((dep = readdir(dir)) != NULL) {
 		char *name = dep->d_name;
+		int ret;
+
 		if (*name == '.')
 			continue;
 		char *dev;
@@ -179,8 +181,9 @@ static int affinity_file(struct bitmask *mask, char *cls, const char *file)
 		if (major(d) != maj || minor(d) != min)
 			continue;
 
+		ret = affinity_class(mask, "block", name);
 		closedir(dir);
-		return affinity_class(mask, "block", name);
+		return ret;
 	}
 	closedir(dir);
 	numa_warn(W_blockdev5, "Cannot find block device %x:%x in sysfs for `%s'",
