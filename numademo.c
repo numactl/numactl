@@ -38,7 +38,7 @@ static inline void clearcache(void *a, unsigned size) {}
 #define FRACT_NODES 8
 #define FRACT_MASKS 32
 int fract_nodes;
-
+int *node_to_use;
 unsigned long msize;
 
 /* Should get this from cpuinfo, but on !x86 it's not there */
@@ -297,7 +297,19 @@ int popcnt(unsigned long val)
 	return cnt;
 }
 
-int max_node;
+int max_node, numnodes;
+
+void get_node_list(){
+        int a, got_nodes = 0;
+        long free_node_sizes;
+        numnodes = numa_num_configured_nodes();
+        node_to_use = (int *)malloc(numnodes * sizeof(int));
+        max_node = numa_max_node();
+        for (a = 0; a <= max_node; a++) {
+                if(numa_node_size(a, &free_node_sizes) != -1)
+                        node_to_use[got_nodes++] = a;
+        }
+}
 
 void test(enum test type)
 {
@@ -318,16 +330,16 @@ void test(enum test type)
 	memtest("local memory", numa_alloc_local(msize));
 
 	memtest("memory interleaved on all nodes", numa_alloc_interleaved(msize));
-	for (i = 0; i <= max_node; i++) {
-		if (regression_testing && (i % fract_nodes)) {
+	for (i = 0; i < numnodes; i++) {
+		if (regression_testing && (node_to_use[i] % fract_nodes)) {
 		/* for regression testing (-t) do only every eighth node */
 			continue;
 		}
-		sprintf(buf, "memory on node %d", i);
-		memtest(buf, numa_alloc_onnode(msize, i));
+		sprintf(buf, "memory on node %d", node_to_use[i]);
+		memtest(buf, numa_alloc_onnode(msize, node_to_use[i]));
 	}
 	
-	for (mask = 1, i = 0; mask < (1UL<<(max_node+1)); mask++, i++) {
+	for (mask = 1, i = 0; mask < (1UL<<numnodes); mask++, i++) {
 		int w;
 		char buf2[20];
 		if (popcnt(mask) == 1)
@@ -347,28 +359,28 @@ void test(enum test type)
 		}
 
 		sprintf(buf, "memory interleaved on");
-		for (k = 0; k <= max_node; k++)
-			if ((1UL<<k) & mask) {
-				sprintf(buf2, " %d", k);
+		for (k = 0; k < numnodes; k++)
+			if ((1UL<<node_to_use[k]) & mask) {
+				sprintf(buf2, " %d", node_to_use[k]);
 				strcat(buf, buf2);
 			}
 		memtest(buf, numa_alloc_interleaved_subset(msize, nodes));
 	}
 
-	for (i = 0; i <= max_node; i++) {
-		if (regression_testing && (i % fract_nodes)) {
+	for (i = 0; i < numnodes; i++) {
+		if (regression_testing && (node_to_use[i] % fract_nodes)) {
 		/* for regression testing (-t) do only every eighth node */
 			continue;
 		}
-		printf("setting preferred node to %d\n", i);
-		numa_set_preferred(i);
+		printf("setting preferred node to %d\n", node_to_use[i]);
+		numa_set_preferred(node_to_use[i]);
 		memtest("memory without policy", numa_alloc(msize));
 	}
 
 	numa_set_interleave_mask(numa_all_nodes_ptr);
 	memtest("manual interleaving to all nodes", numa_alloc(msize));
 
-	if (max_node > 0) {
+	if (numnodes > 0) {
 		numa_bitmask_clearall(nodes);
 		numa_bitmask_setbit(nodes, 0);
 		numa_bitmask_setbit(nodes, 1);
@@ -381,22 +393,22 @@ void test(enum test type)
 
 	nodes = numa_allocate_nodemask();
 
-	for (i = 0; i <= max_node; i++) {
+	for (i = 0; i < numnodes; i++) {
 		int oldhn = numa_preferred();
 
-		if (regression_testing && (i % fract_nodes)) {
+		if (regression_testing && (node_to_use[i] % fract_nodes)) {
 		/* for regression testing (-t) do only every eighth node */
 			continue;
 		}
-		numa_run_on_node(i);
-		printf("running on node %d, preferred node %d\n",i, oldhn);
+		numa_run_on_node(node_to_use[i]);
+		printf("running on node %d, preferred node %d\n",node_to_use[i], oldhn);
 
 		memtest("local memory", numa_alloc_local(msize));
 
 		memtest("memory interleaved on all nodes",
 			numa_alloc_interleaved(msize));
 
-		if (max_node >= 1) {
+		if (numnodes >= 2) {
 			numa_bitmask_clearall(nodes);
 			numa_bitmask_setbit(nodes, 0);
 			numa_bitmask_setbit(nodes, 1);
@@ -404,17 +416,17 @@ void test(enum test type)
 				numa_alloc_interleaved_subset(msize, nodes));
 		}
 
-		for (k = 0; k <= max_node; k++) {
-			if (k == i)
+		for (k = 0; k < numnodes; k++) {
+			if (node_to_use[k] == node_to_use[i])
 				continue;
-			if (regression_testing && (k % fract_nodes)) {
+			if (regression_testing && (node_to_use[k] % fract_nodes)) {
 			/* for regression testing (-t)
 				do only every eighth node */
 				continue;
 			}
-			sprintf(buf, "alloc on node %d", k);
+			sprintf(buf, "alloc on node %d", node_to_use[k]);
 			numa_bitmask_clearall(nodes);
-			numa_bitmask_setbit(nodes, k);
+			numa_bitmask_setbit(nodes, node_to_use[k]);
 			numa_set_membind(nodes);
 			memtest(buf, numa_alloc(msize)); 			
 			numa_set_membind(numa_all_nodes_ptr);
@@ -423,9 +435,9 @@ void test(enum test type)
 		numa_set_localalloc();
 		memtest("local allocation", numa_alloc(msize));
 
-		numa_set_preferred((i+1) % (1+max_node));
+		numa_set_preferred((node_to_use[i]+1) % numnodes );
 		memtest("setting wrong preferred node", numa_alloc(msize));
-		numa_set_preferred(i);
+		numa_set_preferred(node_to_use[i]);
 		memtest("setting correct preferred node", numa_alloc(msize));
 		numa_set_preferred(-1);
 		if (!delim[0])
@@ -499,12 +511,11 @@ int main(int ac, char **av)
 		if (!force)
 			exit(1);
 	}
+	get_node_list();
+	printf("%d nodes available\n", numnodes);
+	fract_nodes = (((numnodes-1)/8)*2) + FRACT_NODES;
 
-	max_node = numa_max_node();
-	printf("%d nodes available\n", max_node+1);
-	fract_nodes = ((max_node/8)*2) + FRACT_NODES;
-
-	if (max_node <= 2)
+	if (numnodes <= 3)
 		regression_testing = 0; /* set -t auto-off for small systems */
 
 	msize = memsize(av[1]);
