@@ -299,9 +299,11 @@ int popcnt(unsigned long val)
 
 int max_node, numnodes;
 
-void get_node_list(){
+void get_node_list()
+{
         int a, got_nodes = 0;
         long free_node_sizes;
+
         numnodes = numa_num_configured_nodes();
         node_to_use = (int *)malloc(numnodes * sizeof(int));
         max_node = numa_max_node();
