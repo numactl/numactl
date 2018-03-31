@@ -6,7 +6,7 @@
 int main(void)
 {
 	int numnodes, maxnode, a, b, got_nodes = 0;
-	int node_to_use[numnodes];
+	int *node_to_use;
 	long size, free_node_sizes;
 	if (numa_available() < 0) {
 		printf("no numa support in kernel\n");
@@ -14,6 +14,7 @@ int main(void)
 	}
 	numnodes = numa_num_configured_nodes();
 	maxnode = numa_max_node();
+	node_to_use = (int *)malloc(numnodes * sizeof(int));
 	for (a = 0; a <= maxnode; a++) {
 		size = numa_node_size(a, &free_node_sizes);
 		if(size != -1)
