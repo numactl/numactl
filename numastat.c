@@ -1312,7 +1312,7 @@ void add_pids_from_pattern_search(char *pattern) {
 		}
 		// Next copy cmdline file contents onto end of buffer.  Do it a
 		// character at a time to convert nulls to spaces.
-		char fname[64];
+		char fname[272];
 		snprintf(fname, sizeof(fname), "/proc/%s/cmdline", namelist[ix]->d_name);
 		FILE *fs = fopen(fname, "r");
 		if (fs) {

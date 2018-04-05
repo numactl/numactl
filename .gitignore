@@ -59,3 +59,6 @@
 /test-suite.log
 /test/*.log
 /test/*.trs
+
+# pkg-config file
+numa.pc

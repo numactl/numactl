@@ -1,5 +1,6 @@
 
 ACLOCAL_AMFLAGS = -I m4
+CLEANFILES =
 
 AM_CPPFLAGS = -Wall
 
@@ -141,3 +142,20 @@ TESTS = \
 # These are known to be broken:
 #	test/prefered
 #	test/randmap
+
+SED_PROCESS = \
+        $(AM_V_GEN)$(SED) \
+        -e 's,@VERSION\@,$(VERSION),g' \
+        -e 's,@prefix\@,$(prefix),g' \
+        -e 's,@exec_prefix\@,$(exec_prefix),g' \
+        -e 's,@libdir\@,$(libdir),g' \
+        -e 's,@includedir\@,$(includedir),g' \
+        < $< > $@ || rm $@
+
+%.pc: %.pc.in Makefile
+	$(SED_PROCESS)
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = numa.pc
+EXTRA_DIST += numa.pc.in
+CLEANFILES += numa.pc
