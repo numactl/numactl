@@ -46,6 +46,11 @@ struct bitmask {
 	unsigned long *maskp;
 };
 
+struct const_bitmask {
+	unsigned long size; /* number of bits in the map */
+	const unsigned long *maskp;
+};
+
 /* operations on struct bitmask */
 int numa_bitmask_isbitset(const struct bitmask *, unsigned int);
 struct bitmask *numa_bitmask_setall(struct bitmask *);
@@ -105,28 +110,30 @@ static inline int nodemask_isset_compat(const nodemask_t *mask, int node)
 
 static inline int nodemask_equal(const nodemask_t *a, const nodemask_t *b)
 {
-	struct bitmask tmp_a, tmp_b;
+	struct const_bitmask tmp_a, tmp_b;
 
-	tmp_a.maskp = (unsigned long *)a;
+	tmp_a.maskp = (const unsigned long *)a;
 	tmp_a.size = sizeof(nodemask_t) * 8;
 
-	tmp_b.maskp = (unsigned long *)b;
+	tmp_b.maskp = (const unsigned long *)b;
 	tmp_b.size = sizeof(nodemask_t) * 8;
 
-	return numa_bitmask_equal(&tmp_a, &tmp_b);
+	return numa_bitmask_equal((const struct bitmask *)&tmp_a,
+				  (const struct bitmask *)&tmp_b);
 }
 
 static inline int nodemask_equal_compat(const nodemask_t *a, const nodemask_t *b)
 {
-	struct bitmask tmp_a, tmp_b;
+	struct const_bitmask tmp_a, tmp_b;
 
-	tmp_a.maskp = (unsigned long *)a;
+	tmp_a.maskp = (const unsigned long *)a;
 	tmp_a.size = sizeof(nodemask_t) * 8;
 
-	tmp_b.maskp = (unsigned long *)b;
+	tmp_b.maskp = (const unsigned long *)b;
 	tmp_b.size = sizeof(nodemask_t) * 8;
 
-	return numa_bitmask_equal(&tmp_a, &tmp_b);
+	return numa_bitmask_equal((struct bitmask *)&tmp_a,
+				  (struct bitmask *)&tmp_b);
 }
 
 /* NUMA support available. If this returns a negative value all other function
@@ -385,20 +392,20 @@ static inline nodemask_t numa_get_membind_compat()
 static inline void *numa_alloc_interleaved_subset_compat(size_t size,
 					const nodemask_t *mask)
 {
-	struct bitmask tmp;
+	struct const_bitmask tmp;
 
-	tmp.maskp = (unsigned long *)mask;
+	tmp.maskp = (const unsigned long *)mask;
 	tmp.size = sizeof(nodemask_t) * 8;
-	return numa_alloc_interleaved_subset(size, &tmp);
+	return numa_alloc_interleaved_subset(size, (struct bitmask *)&tmp);
 }
 
 static inline int numa_run_on_node_mask_compat(const nodemask_t *mask)
 {
-	struct bitmask tmp;
+	struct const_bitmask tmp;
 
-	tmp.maskp = (unsigned long *)mask;
+	tmp.maskp = (const unsigned long *)mask;
 	tmp.size = sizeof(nodemask_t) * 8;
-	return numa_run_on_node_mask(&tmp);
+	return numa_run_on_node_mask((struct bitmask *)&tmp);
 }
 
 static inline nodemask_t numa_get_run_node_mask_compat()
@@ -415,21 +422,21 @@ static inline nodemask_t numa_get_run_node_mask_compat()
 static inline void numa_interleave_memory_compat(void *mem, size_t size,
 						const nodemask_t *mask)
 {
-	struct bitmask tmp;
+	struct const_bitmask tmp;
 
-	tmp.maskp = (unsigned long *)mask;
+	tmp.maskp = (const unsigned long *)mask;
 	tmp.size = sizeof(nodemask_t) * 8;
-	numa_interleave_memory(mem, size, &tmp);
+	numa_interleave_memory(mem, size, (struct bitmask *)&tmp);
 }
 
 static inline void numa_tonodemask_memory_compat(void *mem, size_t size,
 						const nodemask_t *mask)
 {
-	struct bitmask tmp;
+	struct const_bitmask tmp;
 
-	tmp.maskp = (unsigned long *)mask;
+	tmp.maskp = (const unsigned long *)mask;
 	tmp.size = sizeof(nodemask_t) * 8;
-	numa_tonodemask_memory(mem, size, &tmp);
+	numa_tonodemask_memory(mem, size, (struct bitmask *)&tmp);
 }
 
 static inline int numa_sched_getaffinity_compat(pid_t pid, unsigned len,
