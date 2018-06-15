@@ -134,6 +134,7 @@ TESTS = \
 	test/checkaffinity \
 	test/checktopology \
 	test/distance \
+	test/move_pages \
 	test/nodemap \
 	test/numademo \
 	test/regress \
