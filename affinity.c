@@ -122,7 +122,6 @@ affinity_class(struct bitmask *mask, char *cls, const char *dev)
 	return 0;
 }
 
-
 /* Turn file (or device node) into class name */
 static int affinity_file(struct bitmask *mask, char *cls, const char *file)
 {
@@ -346,4 +345,3 @@ hidden int resolve_affinity(const char *id, struct bitmask *mask)
 	}
 	return NO_IO_AFFINITY;
 }
-

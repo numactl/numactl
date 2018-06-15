@@ -23,15 +23,15 @@ int main(void)
 	nodes = numa_bitmask_alloc(maxmask);
 	mask = numa_bitmask_alloc(maxmask);
 
-	for (i = max; i >= 0; --i) { 
-		char *mem = mmap(NULL, pagesize*(max+1), PROT_READ|PROT_WRITE, 
+	for (i = max; i >= 0; --i) {
+		char *mem = mmap(NULL, pagesize*(max+1), PROT_READ|PROT_WRITE,
 					MAP_PRIVATE|MAP_ANONYMOUS, 0, 0);
 		char *adr = mem;
 
 		if (mem == (char *)-1)
 			err("mmap");
 
-		printf("%d offset %lx\n", i, (long)(adr - mem)); 
+		printf("%d offset %lx\n", i, (long)(adr - mem));
 
 		numa_bitmask_clearall(nodes);
 		numa_bitmask_clearall(mask);
@@ -40,23 +40,23 @@ int main(void)
 		if (mbind(adr,  pagesize, MPOL_PREFERRED, nodes->maskp,
 							nodes->size, 0) < 0)
 			err("mbind");
-		
+
 		++*adr;
-			
+
 		if (get_mempolicy(&pol, mask->maskp, mask->size, adr, MPOL_F_ADDR) < 0)
 			err("get_mempolicy");
-	
+
 		assert(pol == MPOL_PREFERRED);
 		assert(numa_bitmask_isbitset(mask, i));
 
 		node = 0x123;
-		
+
 		if (get_mempolicy(&node, NULL, 0, adr, MPOL_F_ADDR|MPOL_F_NODE) < 0)
-			err("get_mempolicy2"); 
+			err("get_mempolicy2");
 
 		printf("got node %d expected %d\n", node, i);
 
-		if (node != i) 
+		if (node != i)
 			err = 1;
 	}
 	return err;

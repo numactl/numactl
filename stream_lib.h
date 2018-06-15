@@ -6,6 +6,3 @@ void stream_check(void);
 void stream_setmem(unsigned long size);
 extern int stream_verbose;
 extern char *stream_names[];
-
-
-

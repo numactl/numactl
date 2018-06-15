@@ -8,7 +8,6 @@
 #define hidden __attribute__((visibility("hidden")))
 #include "rtnetlink.h"
 
-
 hidden void *rta_put(struct nlmsghdr *m, int type, int len)
 {
 	struct rtattr *rta = (void *)m + NLMSG_ALIGN(m->nlmsg_len);

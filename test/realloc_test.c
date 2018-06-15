@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 		node = parse_int(argv[1]);
 	if (argc > 2)
 		nr_pages = parse_int(argv[2]);
-	
+
 	mem = numa_alloc_onnode(page_size, node);
 
 	/* Store the policy of the newly allocated area */

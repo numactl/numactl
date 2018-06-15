@@ -106,7 +106,7 @@ void usage_msg(char *msg, ...)
 void show_physcpubind(void)
 {
 	int ncpus = numa_num_configured_cpus();
-	
+
 	for (;;) {
 		struct bitmask *cpubuf;
 
@@ -130,7 +130,7 @@ void show(void)
 	struct bitmask *membind, *interleave, *cpubind;
 	unsigned long cur;
 	int policy;
-	
+
 	if (numa_available() < 0) {
 		show_physcpubind();
 		printf("No NUMA support available on this system.\n");
@@ -149,7 +149,7 @@ void show(void)
 		perror("get_mempolicy");
 
 	printf("policy: %s\n", policy_name(policy));
-		
+
 	printf("preferred node: ");
 	switch (policy) {
 	case MPOL_PREFERRED:
@@ -216,7 +216,7 @@ static void print_distances(int maxnode)
 			    numa_bitmask_isbitset(numa_nodes_ptr, k))
 				printf("% 3d ", numa_distance(i,k));
 		printf("\n");
-	}			
+	}
 }
 
 void print_node_cpus(int node)
@@ -241,7 +241,7 @@ void hardware(void)
 	int prevnode=-1;
 	int skip=0;
 	int maxnode = numa_max_node();
-	
+
 	if (numa_available() < 0) {
                 printf("No NUMA available on this system\n");
                 exit(1);
@@ -350,7 +350,7 @@ void noshm(char *opt)
 {
 	if (shmattached)
 		usage_msg("%s must be before shared memory specification", opt);
-	shmoption = opt;		
+	shmoption = opt;
 }
 
 void dontshm(char *opt)
@@ -606,7 +606,7 @@ int main(int ac, char **av)
 		case 'o':  /* --offset */
 			noshm("--offset");
 			shmoffset = memsize(optarg);
-			break;			
+			break;
 
 		case 'T': /* --touch */
 			needshm("--touch");
@@ -653,7 +653,7 @@ int main(int ac, char **av)
 
 	if (shmoption)
 		usage_msg("shm related option %s for process", shmoption);
-	
+
 	if (*av == NULL)
 		usage();
 	execvp(*av, av);

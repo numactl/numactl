@@ -97,7 +97,6 @@ int main(int argc, char **argv)
 		errors++;
 	}
 
-
 	printf("\nMoving pages via mbind from node 0 to 1 ...\n");
 	rc = mbind(pages, page_count * pagesize, MPOL_BIND, new_nodes->maskp,
 		new_nodes->size + 1, MPOL_MF_MOVE | MPOL_MF_STRICT);
@@ -128,4 +127,3 @@ int main(int argc, char **argv)
 
 	return errors > 0 ? 1 : 0;
 }
-

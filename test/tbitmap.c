@@ -21,7 +21,6 @@ void usage(void)
 #define set_bit(i,p)   ((p)[(i) / BITS_PER_LONG] |=  (1UL << ((i)%BITS_PER_LONG)))
 #define clear_bit(i,p) ((p)[(i) / BITS_PER_LONG] &= ~(1UL << ((i)%BITS_PER_LONG)))
 
-
 typedef unsigned u32;
 #define BITS_PER_LONG (sizeof(long)*8)
 

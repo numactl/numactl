@@ -82,19 +82,19 @@ int main(int ac, char **av)
 			fd = open(av[1]+2, O_RDWR);
 			if (fd < 0)
 				perror(av[1]+2);
-			break;	
+			break;
 		case 'r':
 			repeat = atoi(av[1] + 2);
 			break;
 		case 'H':
 			disable_hugepage = true;
 			break;
-		default:	
+		default:
 			usage();
 		}
-		av++;		
+		av++;
 	}
-	
+
 	if (!av[1]) usage();
 
 	length = memsize(av[1]);
@@ -110,22 +110,22 @@ int main(int ac, char **av)
 		printf ("<%s> is invalid\n", av[3]);
 		exit(1);
 	}
-	
+
 	if (fd >= 0)
 		map = mmap(NULL,length,PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-	else	
+	else
 		map = mmap(NULL, length, PROT_READ|PROT_WRITE,
 				   MAP_PRIVATE|MAP_ANONYMOUS,
 				   0, 0);
 	if (map == (char*)-1)
 		err("mmap");
-	
+
 	if (mbind(map, length, policy, nodes->maskp, nodes->size, 0) < 0)
 		terr("mbind");
 
 	if (disable_hugepage)
 		madvise(map, length, MADV_NOHUGEPAGE);
-	
+
 	gpolicy = -1;
 	if (get_mempolicy(&gpolicy, gnodes->maskp, gnodes->size, map, MPOL_F_ADDR) < 0)
 		terr("get_mempolicy");

@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 int main(void)
 {
 	int i, k, w, ncpus;
@@ -18,14 +17,14 @@ int main(void)
 
 	for (i = 0; i <= maxnode ; i++) {
 		if (numa_node_to_cpus(i, cpus) < 0) {
-			printf("node %d failed to convert\n",i); 
-		}		
-		printf("%d: ", i); 
+			printf("node %d failed to convert\n",i);
+		}
+		printf("%d: ", i);
 		w = 0;
 		for (k = 0; k < ncpus; k++)
 			if (numa_bitmask_isbitset(cpus, k))
 				printf(" %s%d", w>0?",":"", k);
-		putchar('\n');		
+		putchar('\n');
 	}
 	return 0;
 }

@@ -97,9 +97,9 @@ int cpufilter(int cpu)
 	long num;
 	char *end;
 	char *s;
-	
+
 	if (!cfilter)
-		return 1;	
+		return 1;
 	for (s = cfilter;;) {
 		num = strtoul(s, &end, 0);
 		if (end == s)
@@ -175,7 +175,7 @@ void setup(int clear)
 		numcpus++;
 		checkcounter(cpunum, clear);
 	}
-	closedir(dir);		
+	closedir(dir);
 	if (numcpus == 0) {
 		fprintf(stderr, "No CPU found using MSR driver.\n");
 		exit(1);
@@ -211,7 +211,7 @@ void print_cpu(int cpu)
 		if (absolute)
 			printf_padded(16, "%Lu", val);
 		else
-			printf_padded(16, "%Lu", val - lastval[i]);		
+			printf_padded(16, "%Lu", val - lastval[i]);
 		lastval[i] = val;
 	}
 	putchar('\n');
@@ -235,7 +235,7 @@ void dumpall(void)
 			cnt = 0;
 			print_header();
 		}
-	} 		
+	}
 }
 
 void checkk8(void)
@@ -245,7 +245,7 @@ void checkk8(void)
 	int bad = 0;
 	FILE *f = fopen("/proc/cpuinfo", "r");
 	if (!f)
-		return;	
+		return;
 	while (getline(&line, &size, f) > 0) {
 		if (!strncmp("vendor_id", line, 9)) {
 			if (!strstr(line, "AMD"))
@@ -272,11 +272,11 @@ void usage(void)
 {
 	fprintf(stderr, "usage: numamon [args] [delay]\n");
 	fprintf(stderr, "       -f forcibly overwrite counters\n");
-	fprintf(stderr, "       -i count IO (default memory)\n"); 	
+	fprintf(stderr, "       -i count IO (default memory)\n");
 	fprintf(stderr, "       -a print absolute counter values (with delay)\n");
-	fprintf(stderr, "       -s setup counters and exit\n"); 	
-	fprintf(stderr, "       -c clear counters and exit\n"); 	
-	fprintf(stderr, "       -m Print memory traffic (default)\n"); 	
+	fprintf(stderr, "       -s setup counters and exit\n");
+	fprintf(stderr, "       -c clear counters and exit\n");
+	fprintf(stderr, "       -m Print memory traffic (default)\n");
 	fprintf(stderr, "       -C cpu{,cpu} only print for cpus\n");
 	fprintf(stderr, "       -v Be verbose\n");
 	exit(1);

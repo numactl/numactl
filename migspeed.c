@@ -185,4 +185,3 @@ int main(int argc, char *argv[])
 			mbytes / duration);
 	return 0;
 }
-

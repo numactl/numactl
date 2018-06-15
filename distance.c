@@ -104,7 +104,7 @@ static int read_distance_table(void)
 	}
 	distance_numnodes = maxnode;
 	distance_table = table;
-	return 0;		
+	return 0;
 }
 
 int numa_distance(int a, int b)

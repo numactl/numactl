@@ -81,7 +81,6 @@ long memsize(char *s)
 	return length;
 }
 
-
 static struct policy {
 	char *name;
 	int policy;

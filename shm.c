@@ -86,7 +86,7 @@ static key_t sysvkey(char *name)
 		name, shmmode);
 	fd = creat(name, shmmode);
 	if (fd < 0)
-		nerror("cannot create key for shm %s\n", name);	
+		nerror("cannot create key for shm %s\n", name);
 	key = ftok(name, shmid);
 	if (key < 0)
 		nerror("cannot get key for newly created shm key file %s",
@@ -99,7 +99,7 @@ void attach_sysvshm(char *name, char *opt)
 {
 	struct shmid_ds s;
 	key_t key = sysvkey(name);
-	
+
 	shmfd = shmget(key, shmlen, shmflags);
 	if (shmfd < 0 && errno == ENOENT) {
 		if (shmlen == 0)
@@ -157,12 +157,12 @@ void attach_shared(char *name, char *opt)
 	shm_pagesize = st.st_blksize;
 
 	check_region(opt);
-	
+
 	/* RED-PEN For shmlen > address space may need to map in pieces.
 	   Left for some poor 32bit soul. */
 	shmptr = mmap64(NULL, shmlen, PROT_READ, MAP_SHARED, shmfd, shmoffset);
 	if (shmptr == (char*)-1)
-		err("shm mmap");			
+		err("shm mmap");
 
 }
 
@@ -271,14 +271,14 @@ void verify_shm(int policy, struct bitmask *nodes)
 	struct bitmask *nodes2;
 
 	nodes2 = numa_allocate_nodemask();
-	
+
 	if (policy == MPOL_INTERLEAVE) {
 		if (get_mempolicy(&ilnode, NULL, 0, shmptr,
 					MPOL_F_ADDR|MPOL_F_NODE)
 		    < 0)
 			err("get_mempolicy");
 	}
-	
+
 	for (p = shmptr; p - (char *)shmptr < shmlen; p += shm_pagesize) {
 		if (get_mempolicy(&pol2, nodes2->maskp, nodes2->size, p,
 							MPOL_F_ADDR) < 0)
@@ -313,13 +313,13 @@ void verify_shm(int policy, struct bitmask *nodes)
 			if (!numa_bitmask_isbitset(nodes2, node)) {
 				vwarn(p, "unexpected node %d\n", node);
 				printmask("expected", nodes2);
-			}	
+			}
 			break;
 
 		case MPOL_DEFAULT:
 			break;
-			
+
 		}
 	}
-		
+
 }

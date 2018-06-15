@@ -83,7 +83,6 @@ void output(char *title, char *result)
 		printf("%-42s%s\n", title, result);
 }
 
-
 #ifdef HAVE_STREAM_LIB
 void do_stream(char *name, unsigned char *mem)
 {
@@ -169,7 +168,7 @@ void memtest(char *name, unsigned char *mem)
 		goto out;
 	}
 #endif
-	
+
 	max = 0;
 	min = ~0UL;
 	sum = 0;
@@ -340,7 +339,7 @@ void test(enum test type)
 		sprintf(buf, "memory on node %d", node_to_use[i]);
 		memtest(buf, numa_alloc_onnode(msize, node_to_use[i]));
 	}
-	
+
 	for (mask = 1, i = 0; mask < (1UL<<numnodes); mask++, i++) {
 		int w;
 		char buf2[20];
@@ -430,10 +429,10 @@ void test(enum test type)
 			numa_bitmask_clearall(nodes);
 			numa_bitmask_setbit(nodes, node_to_use[k]);
 			numa_set_membind(nodes);
-			memtest(buf, numa_alloc(msize)); 			
+			memtest(buf, numa_alloc(msize));
 			numa_set_membind(numa_all_nodes_ptr);
 		}
-		
+
 		numa_set_localalloc();
 		memtest("local allocation", numa_alloc(msize));
 
@@ -478,7 +477,7 @@ long memsize(char *s)
 int main(int ac, char **av)
 {
 	int simple_tests = 0;
-	
+
 	while (av[1] && av[1][0] == '-') {
 		ac--;
 		switch (av[1][1]) {

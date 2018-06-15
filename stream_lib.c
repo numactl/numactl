@@ -13,7 +13,6 @@ static inline double mysecond()
 	return tv.tv_sec + tv.tv_usec * 1.e-6;
 }
 
-
 /*
  * Program: Stream
  * Programmer: Joe R. Zagar

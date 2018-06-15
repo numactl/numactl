@@ -21,7 +21,6 @@ int main(int argc, char *argv[])
 		printf("numa_get_run_node_mask nodemask_isset returns=0x%lx\n", nodemask_isset(&nodemask, i));
 	}
 
-
 	rc = numa_run_on_node_mask(&nodemask);
 	printf("rc=%d from numa_run_on_node_mask\n", rc);
 
