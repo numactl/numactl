@@ -298,7 +298,7 @@ int popcnt(unsigned long val)
 
 int max_node, numnodes;
 
-void get_node_list()
+int get_node_list()
 {
         int a, got_nodes = 0;
         long free_node_sizes;
@@ -310,6 +310,9 @@ void get_node_list()
                 if (numa_node_size(a, &free_node_sizes) > 0)
                         node_to_use[got_nodes++] = a;
         }
+        if(got_nodes != numnodes)
+                return -1;
+        return 0;
 }
 
 void test(enum test type)
@@ -436,7 +439,7 @@ void test(enum test type)
 		numa_set_localalloc();
 		memtest("local allocation", numa_alloc(msize));
 
-		numa_set_preferred((node_to_use[i]+1) % numnodes );
+		numa_set_preferred(node_to_use[(i + 1) % numnodes]);
 		memtest("setting wrong preferred node", numa_alloc(msize));
 		numa_set_preferred(node_to_use[i]);
 		memtest("setting correct preferred node", numa_alloc(msize));
@@ -512,7 +515,11 @@ int main(int ac, char **av)
 		if (!force)
 			exit(1);
 	}
-	get_node_list();
+	if(get_node_list()){
+		fprintf(stderr, "Configured Nodes does not match available memory nodes\n");
+		exit(1);
+	}
+
 	printf("%d nodes available\n", numnodes);
 	fract_nodes = (((numnodes-1)/8)*2) + FRACT_NODES;
 
