@@ -307,7 +307,7 @@ void get_node_list()
         node_to_use = (int *)malloc(numnodes * sizeof(int));
         max_node = numa_max_node();
         for (a = 0; a <= max_node; a++) {
-                if(numa_node_size(a, &free_node_sizes) != -1)
+                if (numa_node_size(a, &free_node_sizes) > 0)
                         node_to_use[got_nodes++] = a;
         }
 }
