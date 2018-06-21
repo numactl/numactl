@@ -5,21 +5,20 @@
 
 int main(void)
 {
-	int numnodes, maxnode, a, b, got_nodes = 0;
+	int maxnode, a, b, got_nodes = 0;
 	int *node_to_use;
-	long size, free_node_sizes;
 	if (numa_available() < 0) {
 		printf("no numa support in kernel\n");
 		exit(1);
 	}
-	numnodes = numa_num_configured_nodes();
 	maxnode = numa_max_node();
-	node_to_use = (int *)malloc(numnodes * sizeof(int));
+	node_to_use = (int *)malloc(maxnode * sizeof(int));
 	for (a = 0; a <= maxnode; a++) {
-		size = numa_node_size(a, &free_node_sizes);
-		if(size != -1)
+		if (numa_bitmask_isbitset(numa_nodes_ptr, a)){
 			node_to_use[got_nodes++] = a;
+		}
 	}
+
 	for (a = 0; a < got_nodes; a++){
 		printf("%03d: ", node_to_use[a]);
 		if (numa_distance(node_to_use[a], node_to_use[a]) != 10) {
