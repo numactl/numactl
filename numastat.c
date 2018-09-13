@@ -122,9 +122,11 @@ meminfo_t system_meminfo[] = {
 	{ 27, "SReclaimable", "SReclaimable" },
 	{ 28, "SUnreclaim", "SUnreclaim" },
 	{ 29, "AnonHugePages", "AnonHugePages" },
-	{ 30, "HugePages_Total", "HugePages_Total" },
-	{ 31, "HugePages_Free", "HugePages_Free" },
-	{ 32, "HugePages_Surp", "HugePages_Surp" }
+	{ 30, "ShmemHugePages", "ShmemHugePages" },
+	{ 31, "ShmemPmdMapped", "ShmemPmdMapped" },
+	{ 32, "HugePages_Total", "HugePages_Total" },
+	{ 33, "HugePages_Free", "HugePages_Free" },
+	{ 34, "HugePages_Surp", "HugePages_Surp" }
 };
 
 #define SYSTEM_MEMINFO_ROWS (sizeof(system_meminfo) / sizeof(system_meminfo[0]))
