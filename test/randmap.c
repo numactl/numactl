@@ -105,7 +105,7 @@ void testmap(void)
 
 	for (;;) {
 		unsigned long offset = random() % PAGES;
-		int policy = random() % (MPOL_MAX+1);
+		int policy = random() % (MPOL_MAX);
 		unsigned long nodes = random() % 4;
 		long length = random() % (PAGES - offset);
 
