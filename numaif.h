@@ -23,9 +23,10 @@ extern long move_pages(int pid, unsigned long count,
 
 /* Policies */
 #define MPOL_DEFAULT     0
-#define MPOL_PREFERRED    1
+#define MPOL_PREFERRED   1
 #define MPOL_BIND        2
 #define MPOL_INTERLEAVE  3
+#define MPOL_LOCAL       4
 
 #define MPOL_MAX MPOL_INTERLEAVE
 
