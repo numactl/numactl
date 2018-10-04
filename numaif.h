@@ -1,6 +1,8 @@
 #ifndef NUMAIF_H
 #define NUMAIF_H 1
 
+#include <linux/version.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
