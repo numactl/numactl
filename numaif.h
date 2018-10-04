@@ -26,9 +26,12 @@ extern long move_pages(int pid, unsigned long count,
 #define MPOL_PREFERRED   1
 #define MPOL_BIND        2
 #define MPOL_INTERLEAVE  3
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 #define MPOL_LOCAL       4
-
-#define MPOL_MAX MPOL_INTERLEAVE
+#define MPOL_MAX         5
+#else
+#define MPOL_MAX         4
+#endif
 
 /* Flags for get_mem_policy */
 #define MPOL_F_NODE    (1<<0)   /* return next il node or node of address */
