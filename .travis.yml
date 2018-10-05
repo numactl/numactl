@@ -1,15 +1,79 @@
 language: c
 
-compiler:
-  - gcc
-  - clang
+env:
+  global:
+    - MAKEFLAGS="-j 2"  # parallelize compilation process
+
+matrix:
+  include:
+    - name: "gcc 8"
+      env: MATRIX_ENV="CC=gcc-8 CXX=g++-8"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-8
+    - name: "gcc 7"
+      env: MATRIX_ENV="CC=gcc-7 CXX=g++-7"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-7
+    - name: "gcc 6"
+      env: MATRIX_ENV="CC=gcc-6 CXX=g++-6"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-6
+    - name: "gcc 5"
+      env: MATRIX_ENV="CC=gcc-5 CXX=g++-5"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-5
+    - name: "gcc 4.9"
+      env: MATRIX_ENV="CC=gcc-4.9 CXX=g++-4.9"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-4.9
+    - name: "clang 6"
+      env: MATRIX_ENV="CC=clang-6.0 CXX=clang++-6.0"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-6.0
+          packages:
+            - clang-6.0
+    - name: "clang 5"
+      env: MATRIX_ENV="CC=clang-5.0 CXX=clang++-5.0"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-5.0
+          packages:
+            - clang-5.0
+
+before_install:
+  - eval "${MATRIX_ENV}"
 
 before_script:
   - ./autogen.sh
   - ./configure CPPFLAGS=-Werror
 
 script:
-  - make -k -j4
+  - make -k
   - ./numactl --show
-  - make -k -j8 check VERBOSE=1 TESTS='test/distance test/nodemap test/numademo test/tbitmap'
+  - make -k check VERBOSE=1 TESTS='test/distance test/nodemap test/numademo test/tbitmap'
   - make distcheck LOG_COMPILER='sh -c "exit 77"'
