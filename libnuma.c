@@ -103,6 +103,8 @@ numa_init(void)
 	memset(&numa_no_nodes, 0, sizeof(numa_no_nodes));
 }
 
+static void cleanup_node_cpu_mask_v2();
+
 #define FREE_AND_ZERO(x) if (x) {	\
 		numa_bitmask_free(x);	\
 		x = NULL;		\
@@ -118,6 +120,7 @@ numa_fini(void)
 	FREE_AND_ZERO(numa_no_nodes_ptr);
 	FREE_AND_ZERO(numa_memnode_ptr);
 	FREE_AND_ZERO(numa_nodes_ptr);
+	cleanup_node_cpu_mask_v2();
 }
 
 /*
@@ -1246,6 +1249,20 @@ static init_node_cpu_mask_v2(void)
 {
 	int nnodes = numa_max_possible_node_v2_int() + 1;
 	node_cpu_mask_v2 = calloc (nnodes, sizeof(struct bitmask *));
+}
+
+static void cleanup_node_cpu_mask_v2(void)
+{
+	if (node_cpu_mask_v2) {
+		int i;
+		int nnodes;
+		nnodes = numa_max_possible_node_v2_int() + 1;
+		for (i = 0; i < nnodes; i++) {
+			FREE_AND_ZERO(node_cpu_mask_v2[i]);
+		}
+		free(node_cpu_mask_v2);
+		node_cpu_mask_v2 = NULL;
+	}
 }
 
 /* This would be better with some locking, but I don't want to make libnuma
