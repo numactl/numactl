@@ -575,5 +575,6 @@ int main(int ac, char **av)
 			}
 		}
 	}
+	free(node_to_use);
 	return 0;
 }
