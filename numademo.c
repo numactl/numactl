@@ -393,6 +393,8 @@ void test(enum test type)
 		printf("current interleave node %d\n", numa_get_interleave_node());
 	}
 
+	numa_bitmask_free(nodes);
+
 	numa_set_interleave_mask(numa_no_nodes_ptr);
 
 	nodes = numa_allocate_nodemask();
@@ -447,7 +449,7 @@ void test(enum test type)
 		if (!delim[0])
 			printf("\n\n\n");
 	}
-
+	numa_bitmask_free(nodes);
 	/* numa_run_on_node_mask is not tested */
 }
 
