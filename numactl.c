@@ -101,6 +101,7 @@ void usage_msg(char *msg, ...)
 	vfprintf(stderr, msg, ap);
 	putchar('\n');
 	usage();
+	va_end(ap);
 }
 
 void show_physcpubind(void)
