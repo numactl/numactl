@@ -12,7 +12,7 @@ include_HEADERS = numa.h numacompat1.h numaif.h
 
 noinst_HEADERS = numaint.h util.h
 
-dist_man_MANS = move_pages.2 numa.3 numactl.8 numastat.8 migratepages.8 migspeed.8
+dist_man_MANS = move_pages.2 numa.3 numactl.8 numastat.8 migratepages.8 migspeed.8 memhog.8
 
 EXTRA_DIST = README.md INSTALL.md
 
