@@ -39,7 +39,8 @@ int repeat = 1;
 
 void usage(void)
 {
-	printf("memhog [-rNUM] size[kmg] [policy [nodeset]]\n");
+	printf("memhog [-fFILE] [-rNUM] size[kmg] [policy [nodeset]]\n");
+	printf("-f mmap is backed by FILE\n");
 	printf("-rNUM repeat memset NUM times\n");
 	printf("-H disable transparent hugepages\n");
 	print_policies();
