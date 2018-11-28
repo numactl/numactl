@@ -100,7 +100,6 @@ int main(int ac, char **av)
 	length = memsize(av[1]);
 	if (av[2] && numa_available() < 0) {
 		printf("Kernel doesn't support NUMA policy\n");
-		exit(1);
 	} else
 		loose = 1;
 	policy = parse_policy(av[2], av[3]);
