@@ -14,14 +14,14 @@ unsigned cache_size(void)
 #ifdef _SC_LEVEL1_DCACHE_SIZE
 	cs += sysconf(_SC_LEVEL1_DCACHE_SIZE);
 #endif
-#ifdef _SC_LEVEL2_DCACHE_SIZE
-	cs += sysconf(_SC_LEVEL2_DCACHE_SIZE);
+#ifdef _SC_LEVEL2_CACHE_SIZE
+	cs += sysconf(_SC_LEVEL2_CACHE_SIZE);
 #endif
-#ifdef _SC_LEVEL3_DCACHE_SIZE
-	cs += sysconf(_SC_LEVEL3_DCACHE_SIZE);
+#ifdef _SC_LEVEL3_CACHE_SIZE
+	cs += sysconf(_SC_LEVEL3_CACHE_SIZE);
 #endif
-#ifdef _SC_LEVEL4_DCACHE_SIZE
-	cs += sysconf(_SC_LEVEL4_DCACHE_SIZE);
+#ifdef _SC_LEVEL4_CACHE_SIZE
+	cs += sysconf(_SC_LEVEL4_CACHE_SIZE);
 #endif
 	if (cs == 0) {
 		static int warned;
