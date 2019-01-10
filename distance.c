@@ -111,7 +111,7 @@ int numa_distance(int a, int b)
 {
 	if (!distance_table) {
 		int err = read_distance_table();
-		if (err < 0)
+		if ((err < 0) || (!distance_table))
 			return 0;
 	}
 	if ((unsigned)a >= distance_numnodes || (unsigned)b >= distance_numnodes)

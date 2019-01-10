@@ -113,6 +113,14 @@
 /* https://bugs.debian.org/796802 */
 #warning "ARM does not implement the migrate_pages() syscall"
 
+#elif defined(__s390x__)
+
+#define __NR_mbind 235
+#define __NR_get_mempolicy 236
+#define __NR_set_mempolicy 237
+#define __NR_migrate_pages 238
+#define __NR_move_pages    239
+
 #elif !defined(DEPS_RUN)
 #error "Add syscalls for your architecture or update kernel headers"
 #endif
