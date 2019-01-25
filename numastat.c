@@ -824,7 +824,7 @@ void show_info_from_system_file(char *file, meminfo_p meminfo, int meminfo_rows,
 			// example line from meminfo  file: "Node 3 Inactive:  210680 kB"
 			int index = hash_lookup(tok[0 + tok_offset]);
 			if (index < 0) {
-				printf("Token %s not in hash table.\n", tok[0]);
+				printf("Token %s not in hash table.\n", tok[0 + tok_offset]);
 			} else {
 				double value = (double)atol(tok[1 + tok_offset]);
 				if (!compatibility_mode) {
