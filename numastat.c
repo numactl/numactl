@@ -126,7 +126,8 @@ meminfo_t system_meminfo[] = {
 	{ 31, "ShmemPmdMapped", "ShmemPmdMapped" },
 	{ 32, "HugePages_Total", "HugePages_Total" },
 	{ 33, "HugePages_Free", "HugePages_Free" },
-	{ 34, "HugePages_Surp", "HugePages_Surp" }
+	{ 34, "HugePages_Surp", "HugePages_Surp" },
+	{ 35, "KReclaimable", "KReclaimable" }
 };
 
 #define SYSTEM_MEMINFO_ROWS (sizeof(system_meminfo) / sizeof(system_meminfo[0]))
