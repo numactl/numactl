@@ -146,7 +146,7 @@ struct hash_entry {
 	int index;
 } hash_table[HASH_TABLE_SIZE];
 
-void init_hash_table() {
+void init_hash_table(void) {
 	memset(hash_table, 0, sizeof(hash_table));
 }
 
@@ -676,13 +676,13 @@ char *prog_name = NULL;
 double page_size_in_bytes = 0;
 double huge_page_size_in_bytes = 0;
 
-void display_version_and_exit() {
+void display_version_and_exit(void) {
 	char *version_string = "20130723";
 	printf("%s version: %s: %s\n", prog_name, version_string, __DATE__);
 	exit(EXIT_SUCCESS);
 }
 
-void display_usage_and_exit() {
+void display_usage_and_exit(void) {
 	fprintf(stderr, "Usage: %s [-c] [-m] [-n] [-p <PID>|<pattern>] [-s[<node>]] [-v] [-V] [-z] [ <PID>|<pattern>... ]\n", prog_name);
 	fprintf(stderr, "-c to minimize column widths\n");
 	fprintf(stderr, "-m to show meminfo-like system-wide memory usage\n");
@@ -695,7 +695,7 @@ void display_usage_and_exit() {
 	exit(EXIT_FAILURE);
 }
 
-int get_screen_width() {
+int get_screen_width(void) {
 	int width = 80;
 	char *p = getenv("NUMASTAT_WIDTH");
 	if (p != NULL) {
@@ -867,19 +867,19 @@ void show_info_from_system_file(char *file, meminfo_p meminfo, int meminfo_rows,
 	free_table(&table);
 }
 
-void show_numastat_info() {
+void show_numastat_info(void) {
 	if (!compatibility_mode) {
 		printf("\nPer-node numastat info (in MBs):\n");
 	}
 	show_info_from_system_file("numastat", numastat_meminfo, NUMASTAT_MEMINFO_ROWS, 0);
 }
 
-void show_system_info() {
+void show_system_info(void) {
 	printf("\nPer-node system memory usage (in MBs):\n");
 	show_info_from_system_file("meminfo", system_meminfo, SYSTEM_MEMINFO_ROWS, 2);
 }
 
-void show_process_info() {
+void show_process_info(void) {
 	vtab_t table;
 	int header_rows = 2;
 	int header_cols = 1;
@@ -1137,7 +1137,7 @@ void init_node_ix_map_and_header(int compatibility_mode) {
 	}
 }
 
-void free_node_ix_map_and_header() {
+void free_node_ix_map_and_header(void) {
 	if (node_ix_map != NULL) {
 		free(node_ix_map);
 		node_ix_map = NULL;
@@ -1151,7 +1151,7 @@ void free_node_ix_map_and_header() {
 	}
 }
 
-double get_huge_page_size_in_bytes() {
+double get_huge_page_size_in_bytes(void) {
 	double huge_page_size = 0;;
 	FILE *fs = fopen("/proc/meminfo", "r");
 	if (!fs) {
@@ -1211,7 +1211,7 @@ int ascending(const void *p1, const void *p2) {
 	return *(int *)p1 - *(int *) p2;
 }
 
-void sort_pids_and_remove_duplicates() {
+void sort_pids_and_remove_duplicates(void) {
 	if (num_pids > 1) {
 		qsort(pid_array, num_pids, sizeof(int), ascending);
 		int ix1 = 0;

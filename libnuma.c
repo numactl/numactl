@@ -103,7 +103,7 @@ numa_init(void)
 	memset(&numa_no_nodes, 0, sizeof(numa_no_nodes));
 }
 
-static void cleanup_node_cpu_mask_v2();
+static void cleanup_node_cpu_mask_v2(void);
 
 #define FREE_AND_ZERO(x) if (x) {	\
 		numa_bitmask_free(x);	\
@@ -708,7 +708,7 @@ make_internal_alias(numa_max_possible_node_v2);
  * match the kernel's cpumask_t.
  */
 struct bitmask *
-numa_allocate_cpumask()
+numa_allocate_cpumask(void)
 {
 	int ncpus = numa_num_possible_cpus();
 

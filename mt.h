@@ -1,7 +1,7 @@
 #define MT_LEN	     624
 
 extern void mt_init(void);
-extern void mt_refill();
+extern void mt_refill(void);
 
 extern int mt_index;
 extern unsigned int mt_buffer[MT_LEN];

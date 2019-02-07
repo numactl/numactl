@@ -3,6 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 CLEANFILES =
 
 AM_CPPFLAGS = -Wall
+CFLAGS = -Wall -Wstrict-prototypes
 
 bin_PROGRAMS = numactl numastat numademo migratepages migspeed memhog
 
