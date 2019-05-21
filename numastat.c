@@ -1023,6 +1023,7 @@ void show_process_info() {
 		if (ferror(fs)) {
 			sprintf(buf, "Can't read /proc/%d/numa_maps", pid);
 			perror(buf);
+			exit(EXIT_FAILURE);
 		}
 		fclose(fs);
 		// If showing individual tables, or we just added the last total line,
