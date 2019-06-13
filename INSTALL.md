@@ -3,6 +3,7 @@
 TL;DR:
 
 ```shell
+$ ./autogen.sh
 $ ./configure
 $ make
 # make install
