@@ -12,6 +12,7 @@ numnodes=$(ls -1d /sys/devices/system/node/node[0-9]* | wc -l)
 
 nccpus=$(numactl --hardware | grep cpus | sed 's/node.*cpus://' | wc -w ) 
 ncnodes=$(numactl --hardware | grep -c 'node.*size' ) 
+node_has_cpus=""
 
 if [ $numnodes != $ncnodes ] ; then
     echo "numactl --hardware doesnt report all nodes"
@@ -23,10 +24,21 @@ if [ $numcpus != $nccpus -a \( $[$nccpus / $numnodes] != $numcpus \) ] ; then
     exit 1
 fi
 
+if [ -s /sys/devices/system/node/has_cpu ]; then
+    node_has_cpus=$(cat /sys/devices/system/node/has_cpu | sed 's/,/ /')
+fi
+
 numactl --hardware | grep cpus | while read n ; do 
     node=${n/ cpus*/} 
     node=${node/ /}
     cpus=${n/*: /}
+    check_node=$(echo $node | sed 's/node//')
+    if [[ -n ${node_has_cpus} ]]; then
+        if ! [[ "${node_has_cpus}" == *"$check_node"* ]]; then
+            echo "Skipping cpu less $node"
+            continue
+	fi
+    fi
     k=0
     for i in $cpus ; do 
 	if [ ! -h "/sys/devices/system/node/$node/cpu$i" ] ; then
