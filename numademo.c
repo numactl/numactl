@@ -298,7 +298,7 @@ int popcnt(unsigned long val)
 
 int max_node, numnodes;
 
-int get_node_list()
+int get_node_list(void)
 {
         int a, got_nodes = 0;
         long free_node_sizes;

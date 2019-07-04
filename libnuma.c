@@ -103,7 +103,7 @@ numa_init(void)
 	memset(&numa_no_nodes, 0, sizeof(numa_no_nodes));
 }
 
-static void cleanup_node_cpu_mask_v2();
+static void cleanup_node_cpu_mask_v2(void);
 
 #define FREE_AND_ZERO(x) if (x) {	\
 		numa_bitmask_free(x);	\
@@ -1244,8 +1244,7 @@ numa_parse_bitmap_v2(char *line, struct bitmask *mask)
 }
 __asm__(".symver numa_parse_bitmap_v2,numa_parse_bitmap@@libnuma_1.2");
 
-void
-static init_node_cpu_mask_v2(void)
+static void init_node_cpu_mask_v2(void)
 {
 	int nnodes = numa_max_possible_node_v2_int() + 1;
 	node_cpu_mask_v2 = calloc (nnodes, sizeof(struct bitmask *));

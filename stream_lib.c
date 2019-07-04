@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "stream_lib.h"
 
-static inline double mysecond()
+static inline double mysecond(void)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -59,7 +59,7 @@ long N = 8000000;
  *
  */
 
-int checktick();
+int checktick(void);
 
 # define HLINE "-------------------------------------------------------------\n"
 
@@ -204,7 +204,7 @@ void stream_test(double *res)
 
 # define	M	20
 
-int checktick()
+int checktick(void)
 {
 	int i, minDelta, Delta;
 	double t1, t2, timesfound[M];
