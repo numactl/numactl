@@ -46,24 +46,6 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - gcc-4.9
-    - name: "clang 6"
-      env: MATRIX_ENV="CC=clang-6.0 CXX=clang++-6.0"
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-6.0
-          packages:
-            - clang-6.0
-    - name: "clang 5"
-      env: MATRIX_ENV="CC=clang-5.0 CXX=clang++-5.0"
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-5.0
-          packages:
-            - clang-5.0
 
 before_install:
   - eval "${MATRIX_ENV}"
