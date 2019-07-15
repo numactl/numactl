@@ -58,7 +58,9 @@ struct bitmask *numa_possible_cpus_ptr = NULL;
 struct bitmask *numa_nodes_ptr = NULL;
 static struct bitmask *numa_memnode_ptr = NULL;
 static unsigned long *node_cpu_mask_v1[NUMA_NUM_NODES];
+static char node_cpu_mask_v1_stale = 1;
 static struct bitmask **node_cpu_mask_v2;
+static char node_cpu_mask_v2_stale = 1;
 
 WEAK void numa_error(char *where);
 
@@ -1272,6 +1274,7 @@ numa_node_to_cpus_v1(int node, unsigned long *buffer, int bufferlen)
 	int err = 0;
 	char fn[64];
 	FILE *f;
+	char update;
 	char *line = NULL;
 	size_t len = 0;
 	struct bitmask bitmask;
@@ -1287,7 +1290,8 @@ numa_node_to_cpus_v1(int node, unsigned long *buffer, int bufferlen)
 	}
 	if (bufferlen > buflen_needed)
 		memset(buffer, 0, bufferlen);
-	if (node_cpu_mask_v1[node]) {
+	update = __atomic_fetch_and(&node_cpu_mask_v1_stale, 0, __ATOMIC_RELAXED);
+	if (node_cpu_mask_v1[node] && !update) {
 		memcpy(buffer, node_cpu_mask_v1[node], buflen_needed);
 		return 0;
 	}
@@ -1328,7 +1332,15 @@ numa_node_to_cpus_v1(int node, unsigned long *buffer, int bufferlen)
 
 	/* slightly racy, see above */
 	if (node_cpu_mask_v1[node]) {
-		if (mask != buffer)
+		if (update) {
+			/*
+			 * There may be readers on node_cpu_mask_v1[], hence it can not
+			 * be freed.
+			 */
+			memcpy(node_cpu_mask_v1[node], mask, buflen_needed);
+			free(mask);
+			mask = NULL;
+		} else if (mask != buffer)
 			free(mask);
 	} else {
 		node_cpu_mask_v1[node] = mask;
@@ -1352,6 +1364,7 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 	int nnodes = numa_max_node();
 	char fn[64], *line = NULL;
 	FILE *f;
+	char update;
 	size_t len = 0;
 	struct bitmask *mask;
 
@@ -1364,7 +1377,8 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 	}
 	numa_bitmask_clearall(buffer);
 
-	if (node_cpu_mask_v2[node]) {
+	update = __atomic_fetch_and(&node_cpu_mask_v2_stale, 0, __ATOMIC_RELAXED);
+	if (node_cpu_mask_v2[node] && !update) {
 		/* have already constructed a mask for this node */
 		if (buffer->size < node_cpu_mask_v2[node]->size) {
 			errno = EINVAL;
@@ -1407,8 +1421,12 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 	/* slightly racy, see above */
 	/* save the mask we created */
 	if (node_cpu_mask_v2[node]) {
+		if (update) {
+			copy_bitmask_to_bitmask(mask, node_cpu_mask_v2[node]);
+			numa_bitmask_free(mask);
+			mask = NULL;
 		/* how could this be? */
-		if (mask != buffer)
+		} else if (mask != buffer)
 			numa_bitmask_free(mask);
 	} else {
 		/* we don't want to cache faulty result */
@@ -1423,6 +1441,12 @@ __asm__(".symver numa_node_to_cpus_v2,numa_node_to_cpus@@libnuma_1.2");
 
 make_internal_alias(numa_node_to_cpus_v1);
 make_internal_alias(numa_node_to_cpus_v2);
+
+void numa_node_to_cpu_update(void)
+{
+	__atomic_store_n(&node_cpu_mask_v1_stale, 1, __ATOMIC_RELAXED);
+	__atomic_store_n(&node_cpu_mask_v2_stale, 1, __ATOMIC_RELAXED);
+}
 
 /* report the node of the specified cpu */
 int numa_node_of_cpu(int cpu)

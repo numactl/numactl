@@ -124,6 +124,8 @@ numa \- NUMA policy library
 .br
 .BI "int numa_node_to_cpus(int " node ", struct bitmask *" mask ");
 .br
+.BI "void numa_node_to_cpu_update();"
+.br
 .BI "int numa_node_of_cpu(int " cpu ");
 .sp
 .BI "struct bitmask *numa_allocate_cpumask();"
@@ -232,6 +234,7 @@ Most functions in this library are only concerned about numa nodes and
 their memory.
 The exceptions to this are:
 .IR numa_node_to_cpus (),
+.IR numa_node_to_cpu_update (),
 .IR numa_node_of_cpu (),
 .IR numa_bind (),
 .IR numa_run_on_node (),
@@ -794,6 +797,10 @@ Use numa_allocate_cpumask() to create it.  If the bitmask is not long enough
 will be set to
 .I ERANGE
 and \-1 returned. On success 0 is returned.
+
+.BR numa_node_to_cpu_update ()
+Mark the node's cpus bitmask stale, then get the latest bitmask by calling
+.BR numa_node_to_cpus ()
 
 .BR numa_node_of_cpu ()
 returns the node that a cpu belongs to. If the user supplies an invalid cpu
