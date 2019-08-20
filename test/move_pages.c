@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 
 	if (nr_nodes < 2) {
 		printf("A minimum of 2 nodes is required for this test.\n");
-		exit(1);
+		exit(77);
 	}
 	if (nr_nodes == -1) {
 		printf("Mismatch between congfigured nodes and memory-rich nodes.\n");
