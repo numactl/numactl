@@ -888,12 +888,12 @@ void *numa_realloc(void *old_addr, size_t old_size, size_t new_size)
 	if (mem == (char *)-1)
 		return NULL;
 	/*
-	 *	The memory policy of the allocated pages is preserved by mremap(), so
-	 *	there is no need to (re)set it here. If the policy of the original
-	 *	allocation is not set, the new pages will be allocated according to the
-	 *	process' mempolicy. Trying to allocate explicitly the new pages on the
-	 *	same node as the original ones would require changing the policy of the
-	 *	newly allocated pages, which violates the numa_realloc() semantics.
+	 * The memory policy of the allocated pages is preserved by mremap(), so
+	 * there is no need to (re)set it here. If the policy of the original
+	 * allocation is not set, the new pages will be allocated according to the
+	 * process' mempolicy. Trying to allocate explicitly the new pages on the
+	 * same node as the original ones would require changing the policy of the
+	 * newly allocated pages, which violates the numa_realloc() semantics.
 	 */
 	return mem;
 }
