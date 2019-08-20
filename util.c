@@ -13,15 +13,15 @@
    You should find a copy of v2 of the GNU General Public License somewhere
    on your Linux system; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
+#include "util.h"
 #include "numa.h"
 #include "numaif.h"
-#include "util.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 void printmask(char *name, struct bitmask *mask)
@@ -48,7 +48,7 @@ void complain(char *fmt, ...)
 	va_list ap;
 	va_start(ap, fmt);
 	fprintf(stderr, "numactl: ");
-	vfprintf(stderr,fmt,ap);
+	vfprintf(stderr, fmt, ap);
 	putchar('\n');
 	va_end(ap);
 	exit(1);
@@ -58,12 +58,12 @@ void nerror(char *fmt, ...)
 {
 	int err = errno;
 	va_list ap;
-	va_start(ap,fmt);
+	va_start(ap, fmt);
 	fprintf(stderr, "numactl: ");
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (err)
-		fprintf(stderr,": %s\n", strerror(err));
+		fprintf(stderr, ": %s\n", strerror(err));
 	else
 		fputc('\n', stderr);
 	exit(1);
@@ -72,11 +72,15 @@ void nerror(char *fmt, ...)
 long memsize(char *s)
 {
 	char *end;
-	long length = strtoul(s,&end,0);
+	long length = strtoul(s, &end, 0);
 	switch (toupper(*end)) {
-	case 'G': length *= 1024;  /*FALL THROUGH*/
-	case 'M': length *= 1024;  /*FALL THROUGH*/
-	case 'K': length *= 1024; break;
+	case 'G':
+		length *= 1024; /*FALL THROUGH*/
+	case 'M':
+		length *= 1024; /*FALL THROUGH*/
+	case 'K':
+		length *= 1024;
+		break;
 	}
 	return length;
 }
@@ -86,14 +90,14 @@ static struct policy {
 	int policy;
 	int noarg;
 } policies[] = {
-	{ "interleave", MPOL_INTERLEAVE },
-	{ "membind",    MPOL_BIND },
-	{ "preferred",   MPOL_PREFERRED },
-	{ "default",    MPOL_DEFAULT, 1 },
-	{ NULL },
+	{"interleave", MPOL_INTERLEAVE},
+	{"membind", MPOL_BIND},
+	{"preferred", MPOL_PREFERRED},
+	{"default", MPOL_DEFAULT, 1},
+	{NULL},
 };
 
-static char *policy_names[] = { "default", "preferred", "bind", "interleave" };
+static char *policy_names[] = {"default", "preferred", "bind", "interleave"};
 
 char *policy_name(int policy)
 {
@@ -118,7 +122,7 @@ int parse_policy(char *name, char *arg)
 	}
 	if (!p || !p->name || (!arg && !p->noarg))
 		usage();
-    return p->policy;
+	return p->policy;
 }
 
 void print_policies(void)

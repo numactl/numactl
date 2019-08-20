@@ -1,5 +1,5 @@
-#include <sys/ipc.h>
 #include <stdio.h>
+#include <sys/ipc.h>
 int main(int ac, char **av)
 {
 	while (*++av)

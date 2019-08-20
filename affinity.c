@@ -26,30 +26,29 @@
    - Better support for multi-path IO?
  */
 #define _GNU_SOURCE 1
-#include <string.h>
-#include <errno.h>
-#include <sys/stat.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-#include <dirent.h>
-#include <linux/rtnetlink.h>
-#include <linux/netlink.h>
-#include <sys/types.h>
-#include <sys/sysmacros.h>
-#include <ctype.h>
-#include <assert.h>
-#include <regex.h>
-#include <sys/sysmacros.h>
+#include "affinity.h"
 #include "numa.h"
 #include "numaint.h"
-#include "sysfs.h"
-#include "affinity.h"
 #include "rtnetlink.h"
+#include "sysfs.h"
+#include <assert.h>
+#include <ctype.h>
+#include <dirent.h>
+#include <errno.h>
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+#include <net/if.h>
+#include <netdb.h>
+#include <regex.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 static int badchar(const char *s)
 {
@@ -65,17 +64,15 @@ static int node_parse_failure(int ret, char *cls, const char *dev)
 	if (ret == -2)
 		numa_warn(W_node_parse1,
 			  "Kernel does not know node mask for%s%s device `%s'",
-				*cls ? " " : "", cls, dev);
+			  *cls ? " " : "", cls, dev);
 	else
 		numa_warn(W_node_parse2,
-			  "Cannot read node mask for %s device `%s'",
-			  cls, dev);
+			  "Cannot read node mask for %s device `%s'", cls, dev);
 	return -1;
 }
 
 /* Generic sysfs class lookup */
-static int
-affinity_class(struct bitmask *mask, char *cls, const char *dev)
+static int affinity_class(struct bitmask *mask, char *cls, const char *dev)
 {
 	int ret;
 	while (isspace(*dev))
@@ -115,8 +112,8 @@ affinity_class(struct bitmask *mask, char *cls, const char *dev)
 	}
 	free(fn);
 
-	ret = sysfs_node_read(mask, "/sys/class/%s/%s/device/numa_node",
-			      cls, dev);
+	ret = sysfs_node_read(mask, "/sys/class/%s/%s/device/numa_node", cls,
+			      dev);
 	if (ret < 0)
 		return node_parse_failure(ret, cls, dev);
 	return 0;
@@ -185,8 +182,9 @@ static int affinity_file(struct bitmask *mask, char *cls, const char *file)
 		return ret;
 	}
 	closedir(dir);
-	numa_warn(W_blockdev5, "Cannot find block device %x:%x in sysfs for `%s'",
-		  maj, min, file);
+	numa_warn(W_blockdev5,
+		  "Cannot find block device %x:%x in sysfs for `%s'", maj, min,
+		  file);
 	return -1;
 }
 
@@ -200,14 +198,16 @@ static int find_route(struct sockaddr *dst, int *iifp)
 		struct rtmsg rt;
 		char buf[256];
 	} req = {
-		.msg = {
-			.nlmsg_len = hdrlen,
-			.nlmsg_type = RTM_GETROUTE,
-			.nlmsg_flags = NLM_F_REQUEST,
-		},
-		.rt = {
-			.rtm_family = dst->sa_family,
-		},
+		.msg =
+			{
+				.nlmsg_len = hdrlen,
+				.nlmsg_type = RTM_GETROUTE,
+				.nlmsg_flags = NLM_F_REQUEST,
+			},
+		.rt =
+			{
+				.rtm_family = dst->sa_family,
+			},
 	};
 	struct sockaddr_nl adr = {
 		.nl_family = AF_NETLINK,
@@ -262,8 +262,7 @@ static int affinity_ip(struct bitmask *mask, char *cls, const char *id)
 	struct ifreq ifr;
 
 	if ((n = getaddrinfo(id, NULL, NULL, &ai)) != 0) {
-		numa_warn(W_net1, "Cannot resolve %s: %s",
-			  id, gai_strerror(n));
+		numa_warn(W_net1, "Cannot resolve %s: %s", id, gai_strerror(n));
 		return -1;
 	}
 
@@ -290,12 +289,14 @@ static int affinity_pci(struct bitmask *mask, char *cls, const char *id)
 	int n, ret;
 
 	/* Func is optional. */
-	if ((n = sscanf(id, "%x:%x:%x.%x",&seg,&bus,&dev,&func)) == 4 || n == 3) {
+	if ((n = sscanf(id, "%x:%x:%x.%x", &seg, &bus, &dev, &func)) == 4 ||
+	    n == 3) {
 		if (n == 3)
 			func = 0;
 	}
 	/* Segment is optional too */
-	else if ((n = sscanf(id, "%x:%x.%x",&bus,&dev,&func)) == 3 || n == 2) {
+	else if ((n = sscanf(id, "%x:%x.%x", &bus, &dev, &func)) == 3 ||
+		 n == 2) {
 		seg = 0;
 		if (n == 2)
 			func = 0;
@@ -303,9 +304,9 @@ static int affinity_pci(struct bitmask *mask, char *cls, const char *id)
 		numa_warn(W_pci1, "Cannot parse PCI device `%s'", id);
 		return -1;
 	}
-	ret = sysfs_node_read(mask,
-			"/sys/devices/pci%04x:%02x/%04x:%02x:%02x.%x/numa_node",
-			      seg, bus, seg, bus, dev, func);
+	ret = sysfs_node_read(
+		mask, "/sys/devices/pci%04x:%02x/%04x:%02x:%02x.%x/numa_node",
+		seg, bus, seg, bus, dev, func);
 	if (ret < 0)
 		return node_parse_failure(ret, cls, id);
 	return 0;
@@ -317,11 +318,11 @@ static struct handler {
 	char *cls;
 	int (*handler)(struct bitmask *mask, char *cls, const char *desc);
 } handlers[] = {
-	{ 'n', "netdev:", "net",   affinity_class },
-	{ 'i', "ip:",     NULL,    affinity_ip    },
-	{ 'f', "file:",   NULL,    affinity_file  },
-	{ 'b', "block:",  "block", affinity_class },
-	{ 'p', "pci:",    NULL,	   affinity_pci   },
+	{'n', "netdev:", "net", affinity_class},
+	{'i', "ip:", NULL, affinity_ip},
+	{'f', "file:", NULL, affinity_file},
+	{'b', "block:", "block", affinity_class},
+	{'p', "pci:", NULL, affinity_pci},
 	{},
 };
 
@@ -337,7 +338,8 @@ hidden int resolve_affinity(const char *id, struct bitmask *mask)
 		if (!strncmp(id, h->name, len)) {
 			int ret = h->handler(mask, h->cls, id + len);
 			if (ret == -2) {
-				numa_warn(W_nonode, "Kernel does not know node for %s\n",
+				numa_warn(W_nonode,
+					  "Kernel does not know node for %s\n",
 					  id + len);
 			}
 			return ret;

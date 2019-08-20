@@ -15,20 +15,20 @@
    on your Linux system; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
 #define _GNU_SOURCE
-#include <getopt.h>
+#include "numa.h"
+#include "numaif.h"
+#include "numaint.h"
+#include "shm.h"
+#include "util.h"
+#include <assert.h>
+#include <ctype.h>
 #include <errno.h>
+#include <getopt.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdarg.h>
-#include <ctype.h>
-#include <assert.h>
-#include "numa.h"
-#include "numaif.h"
-#include "numaint.h"
-#include "util.h"
-#include "shm.h"
 
 #define CPUSET 0
 #define ALL 1
@@ -37,15 +37,15 @@ int exitcode;
 
 struct option opts[] = {
 	{"all", 0, 0, 'a'},
-	{"interleave", 1, 0, 'i' },
-	{"preferred", 1, 0, 'p' },
-	{"cpubind", 1, 0, 'c' },
-	{"cpunodebind", 1, 0, 'N' },
-	{"physcpubind", 1, 0, 'C' },
+	{"interleave", 1, 0, 'i'},
+	{"preferred", 1, 0, 'p'},
+	{"cpubind", 1, 0, 'c'},
+	{"cpunodebind", 1, 0, 'N'},
+	{"physcpubind", 1, 0, 'C'},
 	{"membind", 1, 0, 'm'},
-	{"show", 0, 0, 's' },
-	{"localalloc", 0,0, 'l'},
-	{"hardware", 0,0,'H' },
+	{"show", 0, 0, 's'},
+	{"localalloc", 0, 0, 'l'},
+	{"hardware", 0, 0, 'H'},
 
 	{"shm", 1, 0, 'S'},
 	{"file", 1, 0, 'f'},
@@ -59,7 +59,7 @@ struct option opts[] = {
 	{"huge", 0, 0, 'u'},
 	{"touch", 0, 0, 'T'},
 	{"verify", 0, 0, 'V'}, /* undocumented - for debugging */
-	{ 0 },
+	{0},
 };
 
 void usage(void)
@@ -97,7 +97,7 @@ void usage(void)
 void usage_msg(char *msg, ...)
 {
 	va_list ap;
-	va_start(ap,msg);
+	va_start(ap, msg);
 	fprintf(stderr, "numactl: ");
 	vfprintf(stderr, msg, ap);
 	putchar('\n');
@@ -115,7 +115,7 @@ void show_physcpubind(void)
 		cpubuf = numa_bitmask_alloc(ncpus);
 
 		if (numa_sched_getaffinity(0, cpubuf) < 0) {
-			if (errno == EINVAL && ncpus < 1024*1024) {
+			if (errno == EINVAL && ncpus < 1024 * 1024) {
 				ncpus *= 2;
 				continue;
 			}
@@ -162,7 +162,7 @@ void show(void)
 		printf("current\n");
 		break;
 	case MPOL_INTERLEAVE:
-		printf("%ld (interleave next)\n",cur);
+		printf("%ld (interleave next)\n", cur);
 		break;
 	case MPOL_BIND:
 		printf("%d\n", find_first(membind));
@@ -173,7 +173,7 @@ void show(void)
 		printf("interleavenode: %ld\n", cur);
 	}
 	show_physcpubind();
-	printmask("cpubind", cpubind);  // for compatibility
+	printmask("cpubind", cpubind); // for compatibility
 	printmask("nodebind", cpubind);
 	printmask("membind", membind);
 }
@@ -189,7 +189,7 @@ char *fmt_mem(unsigned long long mem, char *buf)
 
 static void print_distances(int maxnode)
 {
-	int i,k;
+	int i, k;
 	int fst = 0;
 
 	for (i = 0; i <= maxnode; i++)
@@ -197,7 +197,7 @@ static void print_distances(int maxnode)
 			fst = i;
 			break;
 		}
-	if (numa_distance(maxnode,fst) == 0) {
+	if (numa_distance(maxnode, fst) == 0) {
 		printf("No distance information available.\n");
 		return;
 	}
@@ -214,7 +214,7 @@ static void print_distances(int maxnode)
 		for (k = 0; k <= maxnode; k++)
 			if (numa_bitmask_isbitset(numa_nodes_ptr, i) &&
 			    numa_bitmask_isbitset(numa_nodes_ptr, k))
-				printf("% 3d ", numa_distance(i,k));
+				printf("% 3d ", numa_distance(i, k));
 		printf("\n");
 	}
 }
@@ -237,9 +237,9 @@ void print_node_cpus(int node)
 void hardware(void)
 {
 	int i;
-	int numnodes=0;
-	int prevnode=-1;
-	int skip=0;
+	int numnodes = 0;
+	int prevnode = -1;
+	int skip = 0;
 	int maxnode = numa_max_node();
 
 	if (numa_available() < 0) {
@@ -247,34 +247,34 @@ void hardware(void)
 		exit(1);
 	}
 
-	for (i=0; i<=maxnode; i++)
+	for (i = 0; i <= maxnode; i++)
 		if (numa_bitmask_isbitset(numa_nodes_ptr, i))
 			numnodes++;
 	printf("available: %d nodes (", numnodes);
-	for (i=0; i<=maxnode; i++) {
+	for (i = 0; i <= maxnode; i++) {
 		if (numa_bitmask_isbitset(numa_nodes_ptr, i)) {
 			if (prevnode == -1) {
 				printf("%d", i);
-				prevnode=i;
+				prevnode = i;
 				continue;
 			}
 
 			if (i > prevnode + 1) {
 				if (skip) {
 					printf("%d", prevnode);
-					skip=0;
+					skip = 0;
 				}
 				printf(",%d", i);
-				prevnode=i;
+				prevnode = i;
 				continue;
 			}
 
 			if (i == prevnode + 1) {
 				if (!skip) {
 					printf("-");
-					skip=1;
+					skip = 1;
 				}
-				prevnode=i;
+				prevnode = i;
 			}
 
 			if ((i == maxnode) && skip)
@@ -356,7 +356,8 @@ void noshm(char *opt)
 void dontshm(char *opt)
 {
 	if (shmoption)
-		usage_msg("%s shm option is not allowed before %s", shmoption, opt);
+		usage_msg("%s shm option is not allowed before %s", shmoption,
+			  opt);
 }
 
 void needshm(char *opt)
@@ -368,7 +369,8 @@ void needshm(char *opt)
 void check_all_parse(int flag)
 {
 	if (did_node_cpu_parse)
-		usage_msg("--all/-a option must be before all cpu/node specifications");
+		usage_msg(
+			"--all/-a option must be before all cpu/node specifications");
 }
 
 void get_short_opts(struct option *o, char *s)
@@ -389,8 +391,8 @@ void check_shmbeyond(char *msg)
 {
 	if (shmoffset >= shmlen) {
 		fprintf(stderr,
-		"numactl: region offset %#llx beyond its length %#llx at %s\n",
-				shmoffset, shmlen, msg);
+			"numactl: region offset %#llx beyond its length %#llx at %s\n",
+			shmoffset, shmlen, msg);
 		exit(1);
 	}
 }
@@ -415,13 +417,13 @@ static struct bitmask *numactl_parse_nodestring(char *s, int flag)
 
 int main(int ac, char **av)
 {
-	int c, i, nnodes=0;
-	long node=-1;
+	int c, i, nnodes = 0;
+	long node = -1;
 	char *end;
-	char shortopts[array_len(opts)*2 + 1];
+	char shortopts[array_len(opts) * 2 + 1];
 	struct bitmask *mask = NULL;
 
-	get_short_opts(opts,shortopts);
+	get_short_opts(opts, shortopts);
 	while ((c = getopt_long(ac, av, shortopts, opts, NULL)) != -1) {
 		switch (c) {
 		case 's': /* --show */
@@ -438,7 +440,7 @@ int main(int ac, char **av)
 			else
 				mask = numactl_parse_nodestring(optarg, CPUSET);
 			if (!mask) {
-				printf ("<%s> is invalid\n", optarg);
+				printf("<%s> is invalid\n", optarg);
 				usage();
 			}
 
@@ -460,7 +462,7 @@ int main(int ac, char **av)
 			else
 				mask = numactl_parse_nodestring(optarg, CPUSET);
 			if (!mask) {
-				printf ("<%s> is invalid\n", optarg);
+				printf("<%s> is invalid\n", optarg);
 				usage();
 			}
 			errno = 0;
@@ -479,7 +481,7 @@ int main(int ac, char **av)
 			else
 				cpubuf = numa_parse_cpustring(optarg);
 			if (!cpubuf) {
-				printf ("<%s> is invalid\n", optarg);
+				printf("<%s> is invalid\n", optarg);
 				usage();
 			}
 			errno = 0;
@@ -499,7 +501,7 @@ int main(int ac, char **av)
 			else
 				mask = numactl_parse_nodestring(optarg, CPUSET);
 			if (!mask) {
-				printf ("<%s> is invalid\n", optarg);
+				printf("<%s> is invalid\n", optarg);
 				usage();
 			}
 			errno = 0;
@@ -521,10 +523,10 @@ int main(int ac, char **av)
 			else
 				mask = numactl_parse_nodestring(optarg, CPUSET);
 			if (!mask) {
-				printf ("<%s> is invalid\n", optarg);
+				printf("<%s> is invalid\n", optarg);
 				usage();
 			}
-			for (i=0; i<mask->size; i++) {
+			for (i = 0; i < mask->size; i++) {
 				if (numa_bitmask_isbitset(mask, i)) {
 					node = i;
 					nnodes++;
@@ -577,14 +579,14 @@ int main(int ac, char **av)
 		case 'd': /* --dump */
 			if (shmfd < 0)
 				complain(
-				"Cannot do --dump without shared memory.\n");
+					"Cannot do --dump without shared memory.\n");
 			dump_shm();
 			do_dump = 1;
 			break;
 		case 'D': /* --dump-nodes */
 			if (shmfd < 0)
 				complain(
-			    "Cannot do --dump-nodes without shared memory.\n");
+					"Cannot do --dump-nodes without shared memory.\n");
 			dump_shm_nodes();
 			do_dump = 1;
 			break;
@@ -603,7 +605,7 @@ int main(int ac, char **av)
 			shmflags |= SHM_HUGETLB;
 			break;
 
-		case 'o':  /* --offset */
+		case 'o': /* --offset */
 			noshm("--offset");
 			shmoffset = memsize(optarg);
 			break;

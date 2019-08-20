@@ -23,14 +23,14 @@
 /* Simple NUMA policy library */
 
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <stdlib.h>
 
 #if defined(__x86_64__) || defined(__i386__)
-#define NUMA_NUM_NODES  128
+#define NUMA_NUM_NODES 128
 #else
-#define NUMA_NUM_NODES  2048
+#define NUMA_NUM_NODES 2048
 #endif
 
 #ifdef __cplusplus
@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 typedef struct {
-	unsigned long n[NUMA_NUM_NODES/(sizeof(unsigned long)*8)];
+	unsigned long n[NUMA_NUM_NODES / (sizeof(unsigned long) * 8)];
 } nodemask_t;
 
 struct bitmask {
@@ -83,22 +83,22 @@ static inline void nodemask_zero_compat(nodemask_t *mask)
 
 static inline void nodemask_set_compat(nodemask_t *mask, int node)
 {
-	mask->n[node / (8*sizeof(unsigned long))] |=
-		(1UL<<(node%(8*sizeof(unsigned long))));
+	mask->n[node / (8 * sizeof(unsigned long))] |=
+		(1UL << (node % (8 * sizeof(unsigned long))));
 }
 
 static inline void nodemask_clr_compat(nodemask_t *mask, int node)
 {
-	mask->n[node / (8*sizeof(unsigned long))] &=
-		~(1UL<<(node%(8*sizeof(unsigned long))));
+	mask->n[node / (8 * sizeof(unsigned long))] &=
+		~(1UL << (node % (8 * sizeof(unsigned long))));
 }
 
 static inline int nodemask_isset_compat(const nodemask_t *mask, int node)
 {
 	if ((unsigned)node >= NUMA_NUM_NODES)
 		return 0;
-	if (mask->n[node / (8*sizeof(unsigned long))] &
-		(1UL<<(node%(8*sizeof(unsigned long)))))
+	if (mask->n[node / (8 * sizeof(unsigned long))] &
+	    (1UL << (node % (8 * sizeof(unsigned long)))))
 		return 1;
 	return 0;
 }
@@ -116,7 +116,8 @@ static inline int nodemask_equal(const nodemask_t *a, const nodemask_t *b)
 	return numa_bitmask_equal(&tmp_a, &tmp_b);
 }
 
-static inline int nodemask_equal_compat(const nodemask_t *a, const nodemask_t *b)
+static inline int nodemask_equal_compat(const nodemask_t *a,
+					const nodemask_t *b)
 {
 	struct bitmask tmp_a, tmp_b;
 
@@ -243,9 +244,10 @@ int numa_run_on_node_mask_all(struct bitmask *mask);
 /* Run current task only on node */
 int numa_run_on_node(int node);
 /* Return current mask of nodes the task can run on */
-struct bitmask * numa_get_run_node_mask(void);
+struct bitmask *numa_get_run_node_mask(void);
 
-/* When strict fail allocation when memory cannot be allocated in target node(s). */
+/* When strict fail allocation when memory cannot be allocated in target
+ * node(s). */
 void numa_set_bind_policy(int strict);
 
 /* Fail when existing memory has incompatible policy */
@@ -292,8 +294,8 @@ int numa_distance(int node1, int node2);
 
 /* Error handling. */
 /* This is an internal function in libnuma that can be overwritten by an user
-   program. Default is to print an error to stderr and exit if numa_exit_on_error
-   is true. */
+   program. Default is to print an error to stderr and exit if
+   numa_exit_on_error is true. */
 void numa_error(char *where);
 
 /* When true exit the program when a NUMA system call (except numa_available)
@@ -309,7 +311,7 @@ extern int numa_exit_on_warn;
 int numa_migrate_pages(int pid, struct bitmask *from, struct bitmask *to);
 
 int numa_move_pages(int pid, unsigned long count, void **pages,
-		const int *nodes, int *status, int flags);
+		    const int *nodes, int *status, int flags);
 
 int numa_sched_getaffinity(pid_t, struct bitmask *);
 int numa_sched_setaffinity(pid_t, struct bitmask *);
@@ -385,7 +387,7 @@ static inline nodemask_t numa_get_membind_compat(void)
 }
 
 static inline void *numa_alloc_interleaved_subset_compat(size_t size,
-					const nodemask_t *mask)
+							 const nodemask_t *mask)
 {
 	struct bitmask tmp;
 
@@ -415,7 +417,7 @@ static inline nodemask_t numa_get_run_node_mask_compat(void)
 }
 
 static inline void numa_interleave_memory_compat(void *mem, size_t size,
-						const nodemask_t *mask)
+						 const nodemask_t *mask)
 {
 	struct bitmask tmp;
 
@@ -425,7 +427,7 @@ static inline void numa_interleave_memory_compat(void *mem, size_t size,
 }
 
 static inline void numa_tonodemask_memory_compat(void *mem, size_t size,
-						const nodemask_t *mask)
+						 const nodemask_t *mask)
 {
 	struct bitmask tmp;
 
@@ -455,7 +457,7 @@ static inline int numa_sched_setaffinity_compat(pid_t pid, unsigned len,
 }
 
 static inline int numa_node_to_cpus_compat(int node, unsigned long *buffer,
-							int buffer_len)
+					   int buffer_len)
 {
 	struct bitmask tmp;
 

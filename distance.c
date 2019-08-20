@@ -17,11 +17,11 @@
 
    All calls are undefined when numa_available returns an error. */
 #define _GNU_SOURCE 1
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
 #include "numa.h"
 #include "numaint.h"
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 static int distance_numnodes;
 static int *distance_table;
@@ -40,11 +40,12 @@ static void parse_numbers(char *s, int *iptr)
 	for (i = 0, j = 0; i <= maxnode; i++, j++) {
 		d = strtoul(s, &end, 0);
 		/* Skip unavailable nodes */
-		while (j<=maxnode && !numa_bitmask_isbitset(numa_nodes_ptr, j))
+		while (j <= maxnode &&
+		       !numa_bitmask_isbitset(numa_nodes_ptr, j))
 			j++;
 		if (s == end)
 			break;
-		*(iptr+j) = d;
+		*(iptr + j) = d;
 		s = end;
 	}
 }
@@ -66,7 +67,7 @@ static int read_distance_table(void)
 		if (!dfh) {
 			if (errno == ENOENT)
 				err = 0;
-			if (!err && nd<maxnode)
+			if (!err && nd < maxnode)
 				continue;
 			else
 				break;
@@ -87,7 +88,7 @@ static int read_distance_table(void)
 		parse_numbers(line, table + nd * maxnode);
 	}
 	free(line);
-	if (err)  {
+	if (err) {
 		numa_warn(W_distance,
 			  "Cannot parse distance information in sysfs: %s",
 			  strerror(errno));
@@ -114,7 +115,8 @@ int numa_distance(int a, int b)
 		if ((err < 0) || (!distance_table))
 			return 0;
 	}
-	if ((unsigned)a >= distance_numnodes || (unsigned)b >= distance_numnodes)
+	if ((unsigned)a >= distance_numnodes ||
+	    (unsigned)b >= distance_numnodes)
 		return 0;
 	return distance_table[a * distance_numnodes + b];
 }

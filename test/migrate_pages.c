@@ -4,11 +4,11 @@
  * (C) 2006 Silicon Graphics, Inc.
  *		Christoph Lameter <clameter@sgi.com>
  */
+#include <errno.h>
+#include <numa.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <numa.h>
 #include <unistd.h>
-#include <errno.h>
 
 unsigned int pagesize;
 unsigned int page_count = 32;
@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 
 	pagesize = getpagesize();
 
-	nr_nodes = numa_max_node()+1;
+	nr_nodes = numa_max_node() + 1;
 
 	old_nodes = numa_bitmask_alloc(nr_nodes);
 	new_nodes = numa_bitmask_alloc(nr_nodes);
@@ -57,12 +57,13 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	pages = (void *) ((((long)page_base) & ~((long)(pagesize - 1))) + pagesize);
+	pages = (void *)((((long)page_base) & ~((long)(pagesize - 1))) +
+			 pagesize);
 
 	for (i = 0; i < page_count; i++) {
 		if (i != 2)
 			/* We leave page 2 unallocated */
-			pages[ i * pagesize ] = (char) i;
+			pages[i * pagesize] = (char)i;
 		addr[i] = pages + i * pagesize;
 		nodes[i] = 1;
 		status[i] = -123;
@@ -81,9 +82,11 @@ int main(int argc, char **argv)
 
 	numa_move_pages(0, page_count, addr, NULL, status, 0);
 	for (i = 0; i < page_count; i++) {
-		printf("Page %d vaddr=%p node=%d\n", i, pages + i * pagesize, status[i]);
+		printf("Page %d vaddr=%p node=%d\n", i, pages + i * pagesize,
+		       status[i]);
 		if (i != 2 && status[i] != 1) {
-			printf("Bad page state before migrate_pages. Page %d status %d\n",i, status[i]);
+			printf("Bad page state before migrate_pages. Page %d status %d\n",
+			       i, status[i]);
 			exit(1);
 		}
 	}
@@ -103,9 +106,9 @@ int main(int argc, char **argv)
 	numa_move_pages(0, page_count, addr, NULL, status, 0);
 	for (i = 0; i < page_count; i++) {
 		printf("Page %d vaddr=%lx node=%d\n", i,
-			(unsigned long)(pages + i * pagesize), status[i]);
+		       (unsigned long)(pages + i * pagesize), status[i]);
 		if (i != 2) {
-			if (pages[ i* pagesize ] != (char) i) {
+			if (pages[i * pagesize] != (char)i) {
 				printf("*** Page contents corrupted.\n");
 				errors++;
 			} else if (status[i]) {

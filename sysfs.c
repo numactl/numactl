@@ -1,13 +1,13 @@
 /* Utility functions for reading sysfs values */
 #define _GNU_SOURCE 1
-#include <stdio.h>
-#include <sys/fcntl.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <ctype.h>
 #include "numa.h"
 #include "numaint.h"
+#include <ctype.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/fcntl.h>
+#include <unistd.h>
 
 #define SYSFS_BLOCK 4096
 

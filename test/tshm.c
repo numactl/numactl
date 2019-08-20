@@ -1,13 +1,12 @@
-#include <sys/shm.h>
-#include <sys/ipc.h>
-#include <sys/fcntl.h>
-#include <stdio.h>
 #include <numaif.h>
+#include <stdio.h>
+#include <sys/fcntl.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
-#define err(x) perror(x),exit(1)
+#define err(x) perror(x), exit(1)
 
-enum {
-	MEMSZ = 10*1024*1024,
+enum { MEMSZ = 10 * 1024 * 1024,
 };
 
 struct req {
@@ -29,14 +28,15 @@ void worker(void)
 	while (read(0, &req, sizeof(struct req) > 0)) {
 		switch (req.cmd) {
 		case SET:
-			if (mbind(map + req.offset, req.len, req.policy, &req.nodes,
-				  NUMA_MAX_NODES+1, 0) < 0)
+			if (mbind(map + req.offset, req.len, req.policy,
+				  &req.nodes, NUMA_MAX_NODES + 1, 0) < 0)
 				err("mbind");
 			break;
 		case TEST:
 			req.cmd = REPLY;
-			if (get_mempolicy(&req.policy, &req.nodes, NUMA_MAX_NODES+1,
-					  map + req.offset, MPOL_F_ADDR) < 0)
+			if (get_mempolicy(&req.policy, &req.nodes,
+					  NUMA_MAX_NODES + 1, map + req.offset,
+					  MPOL_F_ADDR) < 0)
 				err("get_mempolicy");
 			write(1, &req, sizeof(struct req));
 			break;
@@ -48,7 +48,8 @@ void worker(void)
 	}
 }
 
-void sendreq(int fd, enum cmd cmd, int policy, long offset, long len, nodemask_t nodes)
+void sendreq(int fd, enum cmd cmd, int policy, long offset, long len,
+	     nodemask_t nodes)
 {
 	struct req req = {
 		.cmd = cmd,
@@ -77,16 +78,19 @@ int main(void)
 	int fd = open("tshm", O_CREAT, 0600);
 	close(fd);
 	key_t key = ftok("tshm", 1);
-	int shm = shmget(key, MEMSZ,  IPC_CREAT|0600);
-	if (shm < 0) err("shmget");
+	int shm = shmget(key, MEMSZ, IPC_CREAT | 0600);
+	if (shm < 0)
+		err("shmget");
 	char *map = shmat(shm, NULL, 0);
 	printf("map = %p\n", map);
 
 	unsigned long nmask = 0x3;
-	if (mbind(map, MEMSZ, MPOL_INTERLEAVE, &nmask, 4, 0) < 0) err("mbind1");
+	if (mbind(map, MEMSZ, MPOL_INTERLEAVE, &nmask, 4, 0) < 0)
+		err("mbind1");
 
 	int fd[2];
-	if (pipe(fd) < 0) err("pipe");
+	if (pipe(fd) < 0)
+		err("pipe");
 	if (fork() == 0) {
 		close(0);
 		close(1);
@@ -109,7 +113,6 @@ int main(void)
 		/* change policy */
 
 		/* ask other guy to check */
-
 	}
 
 	shmdt(map);

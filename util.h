@@ -14,7 +14,7 @@ extern int parse_policy(char *name, char *arg);
 extern void print_policies(void);
 extern char *policy_name(int policy);
 
-#define err(x) perror("numactl: " x),exit(1)
-#define array_len(x) (sizeof(x)/sizeof(*(x)))
+#define err(x) perror("numactl: " x), exit(1)
+#define array_len(x) (sizeof(x) / sizeof(*(x)))
 
-#define round_up(x,y) (((x) + (y) - 1) & ~((y)-1))
+#define round_up(x, y) (((x) + (y)-1) & ~((y)-1))

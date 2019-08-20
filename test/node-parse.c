@@ -1,13 +1,10 @@
 /* Test wrapper for the nodemask parser */
-#include <stdio.h>
 #include "numa.h"
 #include "util.h"
+#include <stdio.h>
 
 /* For util.c. Fixme. */
-void usage(void)
-{
-	exit(1);
-}
+void usage(void) { exit(1); }
 
 int main(int ac, char **av)
 {

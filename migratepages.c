@@ -19,21 +19,21 @@
  */
 
 #define _GNU_SOURCE
-#include <getopt.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdarg.h>
 #include "numa.h"
 #include "numaif.h"
 #include "numaint.h"
 #include "util.h"
+#include <errno.h>
+#include <getopt.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 struct option opts[] = {
-	{"help", 0, 0, 'h' },
-	{ 0 },
+	{"help", 0, 0, 'h'},
+	{0},
 };
 
 void usage(void)
@@ -41,8 +41,7 @@ void usage(void)
 	fprintf(stderr,
 		"usage: migratepages pid from-nodes to-nodes\n"
 		"\n"
-		"nodes is a comma delimited list of node numbers or A-B ranges or all.\n"
-);
+		"nodes is a comma delimited list of node numbers or A-B ranges or all.\n");
 	exit(1);
 }
 
@@ -51,7 +50,8 @@ void checknuma(void)
 	static int numa = -1;
 	if (numa < 0) {
 		if (numa_available() < 0)
-			complain("This system does not support NUMA functionality");
+			complain(
+				"This system does not support NUMA functionality");
 	}
 	numa = 0;
 }
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 	struct bitmask *fromnodes;
 	struct bitmask *tonodes;
 
-	while ((c = getopt_long(argc,argv,"h", opts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "h", opts, NULL)) != -1) {
 		switch (c) {
 		default:
 			usage();
@@ -86,12 +86,12 @@ int main(int argc, char *argv[])
 
 	fromnodes = numa_parse_nodestring(argv[1]);
 	if (!fromnodes) {
-		printf ("<%s> is invalid\n", argv[1]);
+		printf("<%s> is invalid\n", argv[1]);
 		exit(1);
 	}
 	tonodes = numa_parse_nodestring(argv[2]);
 	if (!tonodes) {
-		printf ("<%s> is invalid\n", argv[2]);
+		printf("<%s> is invalid\n", argv[2]);
 		exit(1);
 	}
 

@@ -18,22 +18,22 @@
    Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
 
 #define _GNU_SOURCE 1
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <sys/fcntl.h>
-#include <sys/stat.h>
-#include <stdarg.h>
-#include <errno.h>
-#include <unistd.h>
+#include "shm.h"
 #include "numa.h"
 #include "numaif.h"
 #include "numaint.h"
 #include "util.h"
-#include "shm.h"
+#include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/fcntl.h>
+#include <sys/ipc.h>
+#include <sys/mman.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 int shmfd = -1;
 long shmid = 0;
@@ -69,7 +69,7 @@ static void check_region(char *opt)
 	}
 	if (!shmlen) {
 		fprintf(stderr,
-		"numactl: policy region length not specified before %s\n",
+			"numactl: policy region length not specified before %s\n",
 			opt);
 		exit(1);
 	}
@@ -82,15 +82,15 @@ static key_t sysvkey(char *name)
 	if (key >= 0)
 		return key;
 
-	fprintf(stderr, "numactl: Creating shm key file %s mode %04o\n",
-		name, shmmode);
+	fprintf(stderr, "numactl: Creating shm key file %s mode %04o\n", name,
+		shmmode);
 	fd = creat(name, shmmode);
 	if (fd < 0)
 		nerror("cannot create key for shm %s\n", name);
 	key = ftok(name, shmid);
 	if (key < 0)
 		nerror("cannot get key for newly created shm key file %s",
-			name);
+		       name);
 	return key;
 }
 
@@ -104,11 +104,11 @@ void attach_sysvshm(char *name, char *opt)
 	if (shmfd < 0 && errno == ENOENT) {
 		if (shmlen == 0)
 			complain(
-		     "need a --length to create a sysv shared memory segment");
+				"need a --length to create a sysv shared memory segment");
 		fprintf(stderr,
-	 "numactl: Creating shared memory segment %s id %ld mode %04o length %.fMB\n",
-			name, shmid, shmmode, ((double)shmlen) / (1024*1024) );
-		shmfd = shmget(key, shmlen, IPC_CREAT|shmmode|shmflags);
+			"numactl: Creating shared memory segment %s id %ld mode %04o length %.fMB\n",
+			name, shmid, shmmode, ((double)shmlen) / (1024 * 1024));
+		shmfd = shmget(key, shmlen, IPC_CREAT | shmmode | shmflags);
 		if (shmfd < 0)
 			nerror("cannot create shared memory segment");
 	}
@@ -120,11 +120,12 @@ void attach_sysvshm(char *name, char *opt)
 	}
 
 	shmptr = shmat(shmfd, NULL, 0);
-	if (shmptr == (void*)-1)
+	if (shmptr == (void *)-1)
 		err("shmat");
 	shmptr += shmoffset;
 
-	shm_pagesize = (shmflags & SHM_HUGETLB) ? huge_page_size() : getpagesize();
+	shm_pagesize =
+		(shmflags & SHM_HUGETLB) ? huge_page_size() : getpagesize();
 
 	check_region(opt);
 }
@@ -139,7 +140,7 @@ void attach_shared(char *name, char *opt)
 		errno = 0;
 		if (shmlen == 0)
 			complain("need a --length to create a shared file");
-		shmfd = open(name, O_RDWR|O_CREAT, shmmode);
+		shmfd = open(name, O_RDWR | O_CREAT, shmmode);
 		if (shmfd < 0)
 			nerror("cannot create file %s", name);
 	}
@@ -161,21 +162,19 @@ void attach_shared(char *name, char *opt)
 
 	/* RED-PEN For shmlen > address space may need to map in pieces.
 	   Left for some poor 32bit soul. */
-	shmptr = mmap64(NULL, shmlen, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd, shmoffset);
-	if (shmptr == (char*)-1)
+	shmptr = mmap64(NULL, shmlen, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd,
+			shmoffset);
+	if (shmptr == (char *)-1)
 		err("shm mmap");
-
 }
 
-static void
-dumppol(unsigned long long start, unsigned long long end, int pol, struct bitmask *mask)
+static void dumppol(unsigned long long start, unsigned long long end, int pol,
+		    struct bitmask *mask)
 {
 	if (pol == MPOL_DEFAULT)
 		return;
-	printf("%016llx-%016llx: %s ",
-		shmoffset+start,
-		shmoffset+end,
-		policy_name(pol));
+	printf("%016llx-%016llx: %s ", shmoffset + start, shmoffset + end,
+	       policy_name(pol));
 	printmask("", mask);
 }
 
@@ -196,8 +195,8 @@ void dump_shm(void)
 	prevnodes = numa_allocate_nodemask();
 
 	for (c = 0; c < shmlen; c += shm_pagesize) {
-		if (get_mempolicy(&pol, nodes->maskp, nodes->size, c+shmptr,
-						MPOL_F_ADDR) < 0)
+		if (get_mempolicy(&pol, nodes->maskp, nodes->size, c + shmptr,
+				  MPOL_F_ADDR) < 0)
 			err("get_mempolicy on shm");
 		if (pol == prevpol)
 			continue;
@@ -212,7 +211,8 @@ void dump_shm(void)
 
 static void dumpnode(unsigned long long start, unsigned long long end, int node)
 {
-	printf("%016llx-%016llx: %d\n", shmoffset+start, shmoffset+end, node);
+	printf("%016llx-%016llx: %d\n", shmoffset + start, shmoffset + end,
+	       node);
 }
 
 /* Dump nodes in a shared memory segment. */
@@ -228,8 +228,8 @@ void dump_shm_nodes(void)
 	}
 
 	for (c = 0; c < shmlen; c += shm_pagesize) {
-		if (get_mempolicy(&node, NULL, 0, c+shmptr,
-						MPOL_F_ADDR|MPOL_F_NODE) < 0)
+		if (get_mempolicy(&node, NULL, 0, c + shmptr,
+				  MPOL_F_ADDR | MPOL_F_NODE) < 0)
 			err("get_mempolicy on shm");
 		if (node == prevnode)
 			continue;
@@ -245,8 +245,8 @@ static void vwarn(char *ptr, char *fmt, ...)
 {
 	va_list ap;
 	unsigned long off = (unsigned long)ptr - (unsigned long)shmptr;
-	va_start(ap,fmt);
-	printf("numactl verify %lx(%lx): ",  (unsigned long)ptr, off);
+	va_start(ap, fmt);
+	printf("numactl verify %lx(%lx): ", (unsigned long)ptr, off);
 	vprintf(fmt, ap);
 	va_end(ap);
 	exitcode = 1;
@@ -258,7 +258,7 @@ static unsigned interleave_next(unsigned cur, struct bitmask *mask)
 
 	++cur;
 	while (!numa_bitmask_isbitset(mask, cur)) {
-		cur = (cur+1) % numa_num_nodes;
+		cur = (cur + 1) % numa_num_nodes;
 	}
 	return cur;
 }
@@ -275,14 +275,13 @@ void verify_shm(int policy, struct bitmask *nodes)
 
 	if (policy == MPOL_INTERLEAVE) {
 		if (get_mempolicy(&ilnode, NULL, 0, shmptr,
-					MPOL_F_ADDR|MPOL_F_NODE)
-		    < 0)
+				  MPOL_F_ADDR | MPOL_F_NODE) < 0)
 			err("get_mempolicy");
 	}
 
 	for (p = shmptr; p - (char *)shmptr < shmlen; p += shm_pagesize) {
 		if (get_mempolicy(&pol2, nodes2->maskp, nodes2->size, p,
-							MPOL_F_ADDR) < 0)
+				  MPOL_F_ADDR) < 0)
 			err("get_mempolicy");
 		if (pol2 != policy) {
 			vwarn(p, "wrong policy %s, expected %s\n",
@@ -295,16 +294,19 @@ void verify_shm(int policy, struct bitmask *nodes)
 			printmask("real", nodes2);
 		}
 
-		if (get_mempolicy(&node, NULL, 0, p, MPOL_F_ADDR|MPOL_F_NODE) < 0)
+		if (get_mempolicy(&node, NULL, 0, p,
+				  MPOL_F_ADDR | MPOL_F_NODE) < 0)
 			err("get_mempolicy");
 
 		switch (policy) {
 		case MPOL_INTERLEAVE:
 			if (node < 0 || !numa_bitmask_isbitset(nodes2, node))
-				vwarn(p, "interleave node out of range %d\n", node);
+				vwarn(p, "interleave node out of range %d\n",
+				      node);
 			if (node != ilnode) {
-				vwarn(p, "expected interleave node %d, got %d\n",
-				     ilnode,node);
+				vwarn(p,
+				      "expected interleave node %d, got %d\n",
+				      ilnode, node);
 				return;
 			}
 			ilnode = interleave_next(ilnode, nodes2);
@@ -319,8 +321,6 @@ void verify_shm(int policy, struct bitmask *nodes)
 
 		case MPOL_DEFAULT:
 			break;
-
 		}
 	}
-
 }

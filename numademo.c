@@ -18,12 +18,12 @@
    on your Linux system; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
 #define _GNU_SOURCE 1
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <sys/time.h>
 #include "numa.h"
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
 #ifdef HAVE_STREAM_LIB
 #include "stream_lib.h"
 #endif
@@ -42,8 +42,7 @@ int *node_to_use;
 unsigned long msize;
 
 /* Should get this from cpuinfo, but on !x86 it's not there */
-enum {
-	CACHELINESIZE = 64,
+enum { CACHELINESIZE = 64,
 };
 
 enum test {
@@ -58,27 +57,23 @@ enum test {
 
 char *delim = " ";
 int force;
-int regression_testing=0;
+int regression_testing = 0;
 
 char *testname[] = {
-	"memset",
-	"memcpy",
-	"forward",
-	"backward",
+	"memset",   "memcpy", "forward", "backward",
 #ifdef HAVE_STREAM_LIB
 	"stream",
 #endif
 #ifdef HAVE_MT
 	"random2",
 #endif
-	"ptrchase",
-	NULL,
+	"ptrchase", NULL,
 };
 
 void output(char *title, char *result)
 {
 	if (!isspace(delim[0]))
-		printf("%s%s%s\n", title,delim, result);
+		printf("%s%s%s\n", title, delim, result);
 	else
 		printf("%-42s%s\n", title, result);
 }
@@ -97,9 +92,9 @@ void do_stream(char *name, unsigned char *mem)
 	buf[0] = '\0';
 	for (i = 0; i < STREAM_NRESULTS; i++) {
 		if (buf[0])
-			strcat(buf,delim);
-		sprintf(buf+strlen(buf), "%s%s%.2f%sMB/s",
-			stream_names[i], delim, res[i], delim);
+			strcat(buf, delim);
+		sprintf(buf + strlen(buf), "%s%s%.2f%sMB/s", stream_names[i],
+			delim, res[i], delim);
 	}
 	output(title, buf);
 	clearcache(mem, msize);
@@ -157,7 +152,7 @@ void memtest(char *name, unsigned char *mem)
 
 	if (!mem) {
 		fprintf(stderr,
-		"Failed to allocate %lu bytes of memory. Test \"%s\" exits.\n",
+			"Failed to allocate %lu bytes of memory. Test \"%s\" exits.\n",
 			msize, name);
 		return;
 	}
@@ -176,54 +171,52 @@ void memtest(char *name, unsigned char *mem)
 	/*
 	 * Note:  0th pass allocates the pages, don't measure
 	 */
-	for (i = 0; i < LOOPS+1; i++) {
+	for (i = 0; i < LOOPS + 1; i++) {
 		clearcache(mem, msize);
 		switch (thistest) {
-		case PTRCHASE:
-		{
+		case PTRCHASE: {
 			void **ptr;
 			ptr = ptrchase_init(mem);
-			gettimeofday(&start,NULL);
+			gettimeofday(&start, NULL);
 			while (*ptr)
 				ptr = (void **)*ptr;
-			gettimeofday(&end,NULL);
+			gettimeofday(&end, NULL);
 			/* Side effect to trick the optimizer */
 			*ptr = "bla";
 			break;
 		}
 
 		case MEMSET:
-			gettimeofday(&start,NULL);
+			gettimeofday(&start, NULL);
 			memset(mem, 0xff, msize);
-			gettimeofday(&end,NULL);
+			gettimeofday(&end, NULL);
 			break;
 
 		case MEMCPY:
-			gettimeofday(&start,NULL);
-			memcpy(mem, mem + msize/2, msize/2);
-			gettimeofday(&end,NULL);
+			gettimeofday(&start, NULL);
+			memcpy(mem, mem + msize / 2, msize / 2);
+			gettimeofday(&end, NULL);
 			break;
 
 		case FORWARD:
-			/* simple kernel to just fetch cachelines and write them back.
-			   will trigger hardware prefetch */
-			gettimeofday(&start,NULL);
-			for (k = 0; k < msize; k+=CACHELINESIZE)
+			/* simple kernel to just fetch cachelines and write them
+			   back. will trigger hardware prefetch */
+			gettimeofday(&start, NULL);
+			for (k = 0; k < msize; k += CACHELINESIZE)
 				mem[k]++;
-			gettimeofday(&end,NULL);
+			gettimeofday(&end, NULL);
 			break;
 
 		case BACKWARD:
-			gettimeofday(&start,NULL);
-			for (k = msize-5; k > 0; k-=CACHELINESIZE)
+			gettimeofday(&start, NULL);
+			for (k = msize - 5; k > 0; k -= CACHELINESIZE)
 				mem[k]--;
-			gettimeofday(&end,NULL);
+			gettimeofday(&end, NULL);
 			break;
 
 #ifdef HAVE_MT
-		case RANDOM2:
-		{
-			unsigned * __restrict m = (unsigned *)mem;
+		case RANDOM2: {
+			unsigned *__restrict m = (unsigned *)mem;
 			unsigned max = msize / sizeof(unsigned);
 			unsigned mask;
 
@@ -236,14 +229,14 @@ void memtest(char *name, unsigned char *mem)
 			 * we assume (hope) that the distribution of the MT
 			 * is good enough to touch most.
 			 */
-			gettimeofday(&start,NULL);
+			gettimeofday(&start, NULL);
 			for (k = 0; k < max; k++) {
 				unsigned idx = mt_random() & mask;
 				if (idx >= max)
 					idx -= max;
 				m[idx]++;
 			}
-			gettimeofday(&end,NULL);
+			gettimeofday(&end, NULL);
 		}
 
 #endif
@@ -252,31 +245,27 @@ void memtest(char *name, unsigned char *mem)
 		}
 
 		if (!i)
-			continue;  /* don't count allocation pass */
+			continue; /* don't count allocation pass */
 
 		timersub(&end, &start, &res);
 		r = timerfold(&res);
-		if (r > max) max = r;
-		if (r < min) min = r;
+		if (r > max)
+			max = r;
+		if (r < min)
+			min = r;
 		sum += r;
 	}
 	sprintf(title, "%s%s%s", name, delim, testname[thistest]);
 #define H(t) (((double)msize) / ((double)t))
-#define D3 delim,delim,delim
+#define D3 delim, delim, delim
 	sprintf(result, "Avg%s%.2f%sMB/s%sMax%s%.2f%sMB/s%sMin%s%.2f%sMB/s",
-		delim,
-		H(sum/LOOPS),
-		D3,
-		H(min),
-		D3,
-		H(max),
-		delim);
+		delim, H(sum / LOOPS), D3, H(min), D3, H(max), delim);
 #undef H
 #undef D3
-	output(title,result);
+	output(title, result);
 
 #ifdef HAVE_STREAM_LIB
- out:
+out:
 #endif
 	/* Just to make sure that when we switch CPUs that the old guy
 	   doesn't still keep it around. */
@@ -310,7 +299,7 @@ int get_node_list(void)
 		if (numa_node_size(a, &free_node_sizes) > 0)
 			node_to_use[got_nodes++] = a;
 	}
-	if(got_nodes != numnodes)
+	if (got_nodes != numnodes)
 		return -1;
 	return 0;
 }
@@ -327,23 +316,25 @@ void test(enum test type)
 
 	if (regression_testing) {
 		printf("\nTest %s doing 1 of %d nodes and 1 of %d masks.\n",
-			testname[thistest], fract_nodes, FRACT_MASKS);
+		       testname[thistest], fract_nodes, FRACT_MASKS);
 	}
 
 	memtest("memory with no policy", numa_alloc(msize));
 	memtest("local memory", numa_alloc_local(msize));
 
-	memtest("memory interleaved on all nodes", numa_alloc_interleaved(msize));
+	memtest("memory interleaved on all nodes",
+		numa_alloc_interleaved(msize));
 	for (i = 0; i < numnodes; i++) {
 		if (regression_testing && (node_to_use[i] % fract_nodes)) {
-		/* for regression testing (-t) do only every eighth node */
+			/* for regression testing (-t) do only every eighth node
+			 */
 			continue;
 		}
 		sprintf(buf, "memory on node %d", node_to_use[i]);
 		memtest(buf, numa_alloc_onnode(msize, node_to_use[i]));
 	}
 
-	for (mask = 1, i = 0; mask < (1UL<<numnodes); mask++, i++) {
+	for (mask = 1, i = 0; mask < (1UL << numnodes); mask++, i++) {
 		int w;
 		char buf2[20];
 		if (popcnt(mask) == 1)
@@ -352,8 +343,8 @@ void test(enum test type)
 			break;
 		}
 		if (regression_testing && (i % FRACT_MASKS)) {
-		/* for regression testing (-t)
-			do only every 32nd mask permutation */
+			/* for regression testing (-t)
+				do only every 32nd mask permutation */
 			continue;
 		}
 		numa_bitmask_clearall(nodes);
@@ -364,7 +355,7 @@ void test(enum test type)
 
 		sprintf(buf, "memory interleaved on");
 		for (k = 0; k < numnodes; k++)
-			if ((1UL<<node_to_use[k]) & mask) {
+			if ((1UL << node_to_use[k]) & mask) {
 				sprintf(buf2, " %d", node_to_use[k]);
 				strcat(buf, buf2);
 			}
@@ -373,7 +364,8 @@ void test(enum test type)
 
 	for (i = 0; i < numnodes; i++) {
 		if (regression_testing && (node_to_use[i] % fract_nodes)) {
-		/* for regression testing (-t) do only every eighth node */
+			/* for regression testing (-t) do only every eighth node
+			 */
 			continue;
 		}
 		printf("setting preferred node to %d\n", node_to_use[i]);
@@ -390,7 +382,8 @@ void test(enum test type)
 		numa_bitmask_setbit(nodes, 1);
 		numa_set_interleave_mask(nodes);
 		memtest("manual interleaving on node 0/1", numa_alloc(msize));
-		printf("current interleave node %d\n", numa_get_interleave_node());
+		printf("current interleave node %d\n",
+		       numa_get_interleave_node());
 	}
 
 	numa_bitmask_free(nodes);
@@ -403,11 +396,13 @@ void test(enum test type)
 		int oldhn = numa_preferred();
 
 		if (regression_testing && (node_to_use[i] % fract_nodes)) {
-		/* for regression testing (-t) do only every eighth node */
+			/* for regression testing (-t) do only every eighth node
+			 */
 			continue;
 		}
 		numa_run_on_node(node_to_use[i]);
-		printf("running on node %d, preferred node %d\n",node_to_use[i], oldhn);
+		printf("running on node %d, preferred node %d\n",
+		       node_to_use[i], oldhn);
 
 		memtest("local memory", numa_alloc_local(msize));
 
@@ -425,9 +420,10 @@ void test(enum test type)
 		for (k = 0; k < numnodes; k++) {
 			if (node_to_use[k] == node_to_use[i])
 				continue;
-			if (regression_testing && (node_to_use[k] % fract_nodes)) {
-			/* for regression testing (-t)
-				do only every eighth node */
+			if (regression_testing &&
+			    (node_to_use[k] % fract_nodes)) {
+				/* for regression testing (-t)
+					do only every eighth node */
 				continue;
 			}
 			sprintf(buf, "alloc on node %d", node_to_use[k]);
@@ -470,11 +466,15 @@ void usage(void)
 long memsize(char *s)
 {
 	char *end;
-	long length = strtoul(s,&end,0);
+	long length = strtoul(s, &end, 0);
 	switch (toupper(*end)) {
-	case 'G': length *= 1024;  /*FALL THROUGH*/
-	case 'M': length *= 1024;  /*FALL THROUGH*/
-	case 'K': length *= 1024; break;
+	case 'G':
+		length *= 1024; /*FALL THROUGH*/
+	case 'M':
+		length *= 1024; /*FALL THROUGH*/
+	case 'K':
+		length *= 1024;
+		break;
 	}
 	return length;
 }
@@ -517,13 +517,14 @@ int main(int ac, char **av)
 		if (!force)
 			exit(1);
 	}
-	if(get_node_list()){
-		fprintf(stderr, "Configured Nodes does not match available memory nodes\n");
+	if (get_node_list()) {
+		fprintf(stderr,
+			"Configured Nodes does not match available memory nodes\n");
 		exit(1);
 	}
 
 	printf("%d nodes available\n", numnodes);
-	fract_nodes = (((numnodes-1)/8)*2) + FRACT_NODES;
+	fract_nodes = (((numnodes - 1) / 8) * 2) + FRACT_NODES;
 
 	if (numnodes <= 3)
 		regression_testing = 0; /* set -t auto-off for small systems */
@@ -553,7 +554,8 @@ int main(int ac, char **av)
 		if (msize >= sizeof(union node)) {
 			test(PTRCHASE);
 		} else {
-			fprintf(stderr, "You must set msize at least %lu bytes for ptrchase test.\n",
+			fprintf(stderr,
+				"You must set msize at least %lu bytes for ptrchase test.\n",
 				sizeof(union node));
 			exit(1);
 		}
@@ -563,14 +565,14 @@ int main(int ac, char **av)
 			int i;
 			int found = 0;
 			for (i = 0; testname[i]; i++) {
-				if (!strcmp(testname[i],av[k])) {
+				if (!strcmp(testname[i], av[k])) {
 					test(i);
 					found = 1;
 					break;
 				}
 			}
 			if (!found) {
-				fprintf(stderr,"unknown test `%s'\n", av[k]);
+				fprintf(stderr, "unknown test `%s'\n", av[k]);
 				usage();
 			}
 		}

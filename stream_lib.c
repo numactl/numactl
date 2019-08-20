@@ -1,10 +1,10 @@
-#include <stdio.h>
-#include <math.h>
+#include "stream_lib.h"
 #include <float.h>
 #include <limits.h>
-#include <sys/time.h>
+#include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include "stream_lib.h"
+#include <sys/time.h>
 
 static inline double mysecond(void)
 {
@@ -35,8 +35,8 @@ static inline double mysecond(void)
  */
 
 long N = 8000000;
-#define NTIMES	10
-#define OFFSET	0
+#define NTIMES 10
+#define OFFSET 0
 
 /*
  *	3) Compile the code with full optimization.  Many compilers
@@ -61,31 +61,33 @@ long N = 8000000;
 
 int checktick(void);
 
-# define HLINE "-------------------------------------------------------------\n"
+#define HLINE "-------------------------------------------------------------\n"
 
-# ifndef MIN
-# define MIN(x,y) ((x)<(y)?(x):(y))
-# endif
-# ifndef MAX
-# define MAX(x,y) ((x)>(y)?(x):(y))
-# endif
+#ifndef MIN
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+#endif
+#ifndef MAX
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#endif
 
 static double *a, *b, *c;
 
-static double rmstime[4] = { 0 }, maxtime[4] = {
-0}, mintime[4] = {
-FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX};
+static double rmstime[4] = {0}, maxtime[4] = {0},
+	      mintime[4] = {FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX};
 
-static char *label[4] = { "Copy:      ", "Scale:     ",
-	"Add:       ", "Triad:     "
-};
-char *stream_names[] = { "Copy","Scale","Add","Triad" };
+static char *label[4] = {
+	"Copy:      ", "Scale:     ", "Add:       ", "Triad:     "};
+char *stream_names[] = {"Copy", "Scale", "Add", "Triad"};
 
 static double bytes[4];
 
 int stream_verbose = 1;
 
-#define Vprintf(x...) do { if (stream_verbose) printf(x); } while(0)
+#define Vprintf(x...)                                                          \
+	do {                                                                   \
+		if (stream_verbose)                                            \
+			printf(x);                                             \
+	} while (0)
 
 void stream_check(void)
 {
@@ -120,7 +122,8 @@ void stream_check(void)
 
 	if ((quantum = checktick()) >= 1)
 		Vprintf("Your clock granularity/precision appears to be "
-			"%d microseconds.\n", quantum);
+			"%d microseconds.\n",
+			quantum);
 	else
 		Vprintf("Your clock granularity appears to be "
 			"less than one microsecond.\n");
@@ -131,8 +134,9 @@ void stream_check(void)
 	t = 1.0E6 * (mysecond() - t);
 
 	Vprintf("Each test below will take on the order"
-		" of %d microseconds.\n", (int) t);
-	Vprintf("   (= %d clock ticks)\n", (int) (t / quantum));
+		" of %d microseconds.\n",
+		(int)t);
+	Vprintf("   (= %d clock ticks)\n", (int)(t / quantum));
 	Vprintf("Increase the size of the arrays if this shows that\n");
 	Vprintf("you are not getting at least 20 clock ticks per test.\n");
 
@@ -178,55 +182,51 @@ void stream_test(double *res)
 
 	for (k = 0; k < NTIMES; k++) {
 		for (j = 0; j < 4; j++) {
-			rmstime[j] =
-			    rmstime[j] + (times[j][k] * times[j][k]);
+			rmstime[j] = rmstime[j] + (times[j][k] * times[j][k]);
 			mintime[j] = MIN(mintime[j], times[j][k]);
 			maxtime[j] = MAX(maxtime[j], times[j][k]);
 		}
 	}
 
-	Vprintf
-	    ("Function      Rate (MB/s)   RMS time     Min time     Max time\n");
+	Vprintf("Function      Rate (MB/s)   RMS time     Min time     Max time\n");
 	for (j = 0; j < 4; j++) {
 		double speed = 1.0E-06 * bytes[j] / mintime[j];
 
-		rmstime[j] = sqrt(rmstime[j] / (double) NTIMES);
+		rmstime[j] = sqrt(rmstime[j] / (double)NTIMES);
 
-		Vprintf("%s%11.4f  %11.4f  %11.4f  %11.4f\n", label[j],
-			speed,
+		Vprintf("%s%11.4f  %11.4f  %11.4f  %11.4f\n", label[j], speed,
 			rmstime[j], mintime[j], maxtime[j]);
 
 		if (res)
 			res[j] = speed;
-
 	}
 }
 
-# define	M	20
+#define M 20
 
 int checktick(void)
 {
 	int i, minDelta, Delta;
 	double t1, t2, timesfound[M];
 
-/*  Collect a sequence of M unique time values from the system. */
+	/*  Collect a sequence of M unique time values from the system. */
 
 	for (i = 0; i < M; i++) {
 		t1 = mysecond();
-		while (((t2 = mysecond()) - t1) < 1.0E-6);
+		while (((t2 = mysecond()) - t1) < 1.0E-6)
+			;
 		timesfound[i] = t1 = t2;
 	}
 
-/*
- * Determine the minimum difference between these M values.
- * This result will be our estimate (in microseconds) for the
- * clock granularity.
- */
+	/*
+	 * Determine the minimum difference between these M values.
+	 * This result will be our estimate (in microseconds) for the
+	 * clock granularity.
+	 */
 
 	minDelta = 1000000;
 	for (i = 1; i < M; i++) {
-		Delta =
-		    (int) (1.0E6 * (timesfound[i] - timesfound[i - 1]));
+		Delta = (int)(1.0E6 * (timesfound[i] - timesfound[i - 1]));
 		minDelta = MIN(minDelta, MAX(Delta, 0));
 	}
 
@@ -235,13 +235,10 @@ int checktick(void)
 
 void stream_setmem(unsigned long size)
 {
-	N = (size - OFFSET) / (3*sizeof(double));
+	N = (size - OFFSET) / (3 * sizeof(double));
 }
 
-long stream_memsize(void)
-{
-	return 3*(sizeof(double) * (N+OFFSET)) ;
-}
+long stream_memsize(void) { return 3 * (sizeof(double) * (N + OFFSET)); }
 
 long stream_init(void *mem)
 {
@@ -259,8 +256,8 @@ long stream_init(void *mem)
 	bytes[3] = 3 * sizeof(double) * N;
 
 	a = mem;
-	b = (double *)mem +   (N+OFFSET);
-	c = (double *)mem + 2*(N+OFFSET);
+	b = (double *)mem + (N + OFFSET);
+	c = (double *)mem + 2 * (N + OFFSET);
 	stream_check();
 	return 0;
 }

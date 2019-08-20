@@ -1,15 +1,12 @@
-#include <stdio.h>
-#include <sys/mman.h>
-#include <stdlib.h>
 #include "numa.h"
 #include "numaif.h"
-#include "util.h"
 #include "stream_lib.h"
+#include "util.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/mman.h>
 
-void usage(void)
-{
-	exit(1);
-}
+void usage(void) { exit(1); }
 
 char *policy = "default";
 
@@ -28,13 +25,14 @@ int main(int ac, char **av)
 	if (av[1] && av[2])
 		nodes = numa_parse_nodestring(av[2]);
 	if (!nodes) {
-		printf ("<%s> is invalid\n", av[2]);
+		printf("<%s> is invalid\n", av[2]);
 		exit(1);
 	}
 	size = stream_memsize();
-	map = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,
-		   0, 0);
-	if (map == (char*)-1) exit(1);
+	map = mmap(NULL, size, PROT_READ | PROT_WRITE,
+		   MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+	if (map == (char *)-1)
+		exit(1);
 	if (mbind(map, size, policy, nodes->maskp, nodes->size, 0) < 0)
 		perror("mbind"), exit(1);
 	stream_init(map);

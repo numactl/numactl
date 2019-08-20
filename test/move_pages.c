@@ -4,11 +4,11 @@
  * (C) 2006 Silicon Graphics, Inc.
  *		Christoph Lameter <clameter@sgi.com>
  */
+#include "numa.h"
+#include <asm/unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "numa.h"
 #include <unistd.h>
-#include <asm/unistd.h>
 
 unsigned int pagesize;
 unsigned int page_count = 32;
@@ -35,7 +35,7 @@ int get_node_list()
 		if (numa_node_size(a, &free_node_sizes) > 0)
 			node_to_use[got_nodes++] = a;
 	}
-	if(got_nodes != numnodes)
+	if (got_nodes != numnodes)
 		return -1;
 	return got_nodes;
 }
@@ -73,12 +73,13 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	pages = (void *) ((((long)page_base) & ~((long)(pagesize - 1))) + pagesize);
+	pages = (void *)((((long)page_base) & ~((long)(pagesize - 1))) +
+			 pagesize);
 
 	for (i = 0; i < page_count; i++) {
 		if (i != 2)
 			/* We leave page 2 unallocated */
-			pages[ i * pagesize ] = (char) i;
+			pages[i * pagesize] = (char)i;
 		addr[i] = pages + i * pagesize;
 		nodes[i] = node_to_use[(i % nr_nodes)];
 		status[i] = -123;
@@ -90,7 +91,8 @@ int main(int argc, char **argv)
 		perror("move_pages");
 
 	for (i = 0; i < page_count; i++)
-		printf("Page %d vaddr=%p node=%d\n", i, pages + i * pagesize, status[i]);
+		printf("Page %d vaddr=%p node=%d\n", i, pages + i * pagesize,
+		       status[i]);
 
 	printf("\nMoving pages to target nodes ...\n");
 	rc = numa_move_pages(0, page_count, addr, nodes, status, 0);
@@ -102,7 +104,7 @@ int main(int argc, char **argv)
 
 	for (i = 0; i < page_count; i++) {
 		if (i != 2) {
-			if (pages[ i* pagesize ] != (char) i)
+			if (pages[i * pagesize] != (char)i)
 				errors++;
 			else if (nodes[i] != node_to_use[(i % nr_nodes)])
 				errors++;
@@ -111,7 +113,7 @@ int main(int argc, char **argv)
 
 	for (i = 0; i < page_count; i++) {
 		printf("Page %d vaddr=%lx node=%d\n", i,
-			(unsigned long)(pages + i * pagesize), status[i]);
+		       (unsigned long)(pages + i * pagesize), status[i]);
 	}
 
 	if (!errors)

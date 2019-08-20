@@ -15,20 +15,19 @@
    on your Linux system; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/mman.h>
-#include <sys/fcntl.h>
-#include <string.h>
-#include <stdbool.h>
 #include "numa.h"
 #include "numaif.h"
 #include "util.h"
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/fcntl.h>
+#include <sys/mman.h>
 
 #define terr(x) perror(x)
 
-enum {
-	UNIT = 10*1024*1024,
+enum { UNIT = 10 * 1024 * 1024,
 };
 
 #ifndef MADV_NOHUGEPAGE
@@ -52,7 +51,7 @@ long length;
 void hog(void *map)
 {
 	long i;
-	for (i = 0;  i < length; i += UNIT) {
+	for (i = 0; i < length; i += UNIT) {
 		long left = length - i;
 		if (left > UNIT)
 			left = UNIT;
@@ -80,9 +79,9 @@ int main(int ac, char **av)
 	while (av[1] && av[1][0] == '-') {
 		switch (av[1][1]) {
 		case 'f':
-			fd = open(av[1]+2, O_RDWR);
+			fd = open(av[1] + 2, O_RDWR);
 			if (fd < 0)
-				perror(av[1]+2);
+				perror(av[1] + 2);
 			break;
 		case 'r':
 			repeat = atoi(av[1] + 2);
@@ -96,7 +95,8 @@ int main(int ac, char **av)
 		av++;
 	}
 
-	if (!av[1]) usage();
+	if (!av[1])
+		usage();
 
 	length = memsize(av[1]);
 	if (av[2] && numa_available() < 0) {
@@ -107,17 +107,17 @@ int main(int ac, char **av)
 	if (policy != MPOL_DEFAULT)
 		nodes = numa_parse_nodestring(av[3]);
 	if (!nodes) {
-		printf ("<%s> is invalid\n", av[3]);
+		printf("<%s> is invalid\n", av[3]);
 		exit(1);
 	}
 
 	if (fd >= 0)
-		map = mmap(NULL,length,PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+		map = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd,
+			   0);
 	else
-		map = mmap(NULL, length, PROT_READ|PROT_WRITE,
-				   MAP_PRIVATE|MAP_ANONYMOUS,
-				   0, 0);
-	if (map == (char*)-1)
+		map = mmap(NULL, length, PROT_READ | PROT_WRITE,
+			   MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+	if (map == (char *)-1)
 		err("mmap");
 
 	if (mbind(map, length, policy, nodes->maskp, nodes->size, 0) < 0)
@@ -127,15 +127,16 @@ int main(int ac, char **av)
 		madvise(map, length, MADV_NOHUGEPAGE);
 
 	gpolicy = -1;
-	if (get_mempolicy(&gpolicy, gnodes->maskp, gnodes->size, map, MPOL_F_ADDR) < 0)
+	if (get_mempolicy(&gpolicy, gnodes->maskp, gnodes->size, map,
+			  MPOL_F_ADDR) < 0)
 		terr("get_mempolicy");
 	if (!loose && policy != gpolicy) {
 		ret = 1;
 		printf("policy %d gpolicy %d\n", policy, gpolicy);
 	}
 	if (!loose && !numa_bitmask_equal(gnodes, nodes)) {
-		printf("nodes differ %lx, %lx!\n",
-			gnodes->maskp[0], nodes->maskp[0]);
+		printf("nodes differ %lx, %lx!\n", gnodes->maskp[0],
+		       nodes->maskp[0]);
 		ret = 1;
 	}
 

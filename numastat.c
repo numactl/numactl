@@ -68,66 +68,68 @@ typedef struct meminfo {
 	char *label;
 } meminfo_t, *meminfo_p;
 
-#define PROCESS_HUGE_INDEX    0
+#define PROCESS_HUGE_INDEX 0
 #define PROCESS_PRIVATE_INDEX 3
 
 meminfo_t process_meminfo[] = {
-	{ PROCESS_HUGE_INDEX,  "huge", "Huge" },
-	{        1,            "heap", "Heap" },
-	{        2,            "stack", "Stack" },
-	{ PROCESS_PRIVATE_INDEX, "N", "Private" },
+	{PROCESS_HUGE_INDEX, "huge", "Huge"},
+	{1, "heap", "Heap"},
+	{2, "stack", "Stack"},
+	{PROCESS_PRIVATE_INDEX, "N", "Private"},
 };
 
-#define PROCESS_MEMINFO_ROWS (sizeof(process_meminfo) / sizeof(process_meminfo[0]))
+#define PROCESS_MEMINFO_ROWS                                                   \
+	(sizeof(process_meminfo) / sizeof(process_meminfo[0]))
 
 meminfo_t numastat_meminfo[] = {
-	{ 0, "numa_hit", "Numa_Hit" },
-	{ 1, "numa_miss", "Numa_Miss" },
-	{ 2, "numa_foreign", "Numa_Foreign" },
-	{ 3, "interleave_hit", "Interleave_Hit" },
-	{ 4, "local_node", "Local_Node" },
-	{ 5, "other_node", "Other_Node" },
+	{0, "numa_hit", "Numa_Hit"},
+	{1, "numa_miss", "Numa_Miss"},
+	{2, "numa_foreign", "Numa_Foreign"},
+	{3, "interleave_hit", "Interleave_Hit"},
+	{4, "local_node", "Local_Node"},
+	{5, "other_node", "Other_Node"},
 };
 
-#define NUMASTAT_MEMINFO_ROWS (sizeof(numastat_meminfo) / sizeof(numastat_meminfo[0]))
+#define NUMASTAT_MEMINFO_ROWS                                                  \
+	(sizeof(numastat_meminfo) / sizeof(numastat_meminfo[0]))
 
 meminfo_t system_meminfo[] = {
-	{  0, "MemTotal", "MemTotal" },
-	{  1, "MemFree", "MemFree" },
-	{  2, "MemUsed", "MemUsed" },
-	{  3, "HighTotal", "HighTotal" },
-	{  4, "HighFree", "HighFree" },
-	{  5, "LowTotal", "LowTotal" },
-	{  6, "LowFree", "LowFree" },
-	{  7, "Active", "Active" },
-	{  8, "Inactive", "Inactive" },
-	{  9, "Active(anon)", "Active(anon)" },
-	{ 10, "Inactive(anon)", "Inactive(anon)" },
-	{ 11, "Active(file)", "Active(file)" },
-	{ 12, "Inactive(file)", "Inactive(file)" },
-	{ 13, "Unevictable", "Unevictable" },
-	{ 14, "Mlocked", "Mlocked" },
-	{ 15, "Dirty", "Dirty" },
-	{ 16, "Writeback", "Writeback" },
-	{ 17, "FilePages", "FilePages" },
-	{ 18, "Mapped", "Mapped" },
-	{ 19, "AnonPages", "AnonPages" },
-	{ 20, "Shmem", "Shmem" },
-	{ 21, "KernelStack", "KernelStack" },
-	{ 22, "PageTables", "PageTables" },
-	{ 23, "NFS_Unstable", "NFS_Unstable" },
-	{ 24, "Bounce", "Bounce" },
-	{ 25, "WritebackTmp", "WritebackTmp" },
-	{ 26, "Slab", "Slab" },
-	{ 27, "SReclaimable", "SReclaimable" },
-	{ 28, "SUnreclaim", "SUnreclaim" },
-	{ 29, "AnonHugePages", "AnonHugePages" },
-	{ 30, "ShmemHugePages", "ShmemHugePages" },
-	{ 31, "ShmemPmdMapped", "ShmemPmdMapped" },
-	{ 32, "HugePages_Total", "HugePages_Total" },
-	{ 33, "HugePages_Free", "HugePages_Free" },
-	{ 34, "HugePages_Surp", "HugePages_Surp" },
-	{ 35, "KReclaimable", "KReclaimable" },
+	{0, "MemTotal", "MemTotal"},
+	{1, "MemFree", "MemFree"},
+	{2, "MemUsed", "MemUsed"},
+	{3, "HighTotal", "HighTotal"},
+	{4, "HighFree", "HighFree"},
+	{5, "LowTotal", "LowTotal"},
+	{6, "LowFree", "LowFree"},
+	{7, "Active", "Active"},
+	{8, "Inactive", "Inactive"},
+	{9, "Active(anon)", "Active(anon)"},
+	{10, "Inactive(anon)", "Inactive(anon)"},
+	{11, "Active(file)", "Active(file)"},
+	{12, "Inactive(file)", "Inactive(file)"},
+	{13, "Unevictable", "Unevictable"},
+	{14, "Mlocked", "Mlocked"},
+	{15, "Dirty", "Dirty"},
+	{16, "Writeback", "Writeback"},
+	{17, "FilePages", "FilePages"},
+	{18, "Mapped", "Mapped"},
+	{19, "AnonPages", "AnonPages"},
+	{20, "Shmem", "Shmem"},
+	{21, "KernelStack", "KernelStack"},
+	{22, "PageTables", "PageTables"},
+	{23, "NFS_Unstable", "NFS_Unstable"},
+	{24, "Bounce", "Bounce"},
+	{25, "WritebackTmp", "WritebackTmp"},
+	{26, "Slab", "Slab"},
+	{27, "SReclaimable", "SReclaimable"},
+	{28, "SUnreclaim", "SUnreclaim"},
+	{29, "AnonHugePages", "AnonHugePages"},
+	{30, "ShmemHugePages", "ShmemHugePages"},
+	{31, "ShmemPmdMapped", "ShmemPmdMapped"},
+	{32, "HugePages_Total", "HugePages_Total"},
+	{33, "HugePages_Free", "HugePages_Free"},
+	{34, "HugePages_Surp", "HugePages_Surp"},
+	{35, "KReclaimable", "KReclaimable"},
 };
 
 #define SYSTEM_MEMINFO_ROWS (sizeof(system_meminfo) / sizeof(system_meminfo[0]))
@@ -146,10 +148,7 @@ struct hash_entry {
 	int index;
 } hash_table[HASH_TABLE_SIZE];
 
-void init_hash_table(void)
-{
-	memset(hash_table, 0, sizeof(hash_table));
-}
+void init_hash_table(void) { memset(hash_table, 0, sizeof(hash_table)); }
 
 int hash_ix(char *s)
 {
@@ -164,9 +163,9 @@ int hash_ix(char *s)
 int hash_lookup(char *s)
 {
 	int ix = hash_ix(s);
-	while (hash_table[ix].name) {	// Assumes big table with blank entries
+	while (hash_table[ix].name) { // Assumes big table with blank entries
 		if (!strcmp(s, hash_table[ix].name)) {
-			return hash_table[ix].index;	// found it
+			return hash_table[ix].index; // found it
 		}
 		ix += 1;
 		if (ix >= HASH_TABLE_SIZE) {
@@ -179,7 +178,7 @@ int hash_lookup(char *s)
 int hash_insert(char *s, int i)
 {
 	int ix = hash_ix(s);
-	while (hash_table[ix].name) {	// assumes no duplicate entries
+	while (hash_table[ix].name) { // assumes no duplicate entries
 		hash_collisions += 1;
 		ix += 1;
 		if (ix >= HASH_TABLE_SIZE) {
@@ -197,28 +196,28 @@ int hash_insert(char *s, int i)
 // routines to set table attributes, assign and test some cell contents,
 // initialize and actually display the table.
 
-#define CELL_TYPE_NULL     0
-#define CELL_TYPE_LONG     1
-#define CELL_TYPE_DOUBLE   2
-#define CELL_TYPE_STRING   3
-#define CELL_TYPE_CHAR8    4
-#define CELL_TYPE_REPCHAR  5
+#define CELL_TYPE_NULL 0
+#define CELL_TYPE_LONG 1
+#define CELL_TYPE_DOUBLE 2
+#define CELL_TYPE_STRING 3
+#define CELL_TYPE_CHAR8 4
+#define CELL_TYPE_REPCHAR 5
 
 #define CELL_FLAG_FREEABLE (1 << 0)
-#define CELL_FLAG_ROWSPAN  (1 << 1)
-#define CELL_FLAG_COLSPAN  (1 << 2)
+#define CELL_FLAG_ROWSPAN (1 << 1)
+#define CELL_FLAG_COLSPAN (1 << 2)
 
-#define COL_JUSTIFY_LEFT       (1 << 0)
-#define COL_JUSTIFY_RIGHT      (1 << 1)
-#define COL_JUSTIFY_CENTER     3
-#define COL_JUSTIFY_MASK       0x3
-#define COL_FLAG_SEEN_DATA     (1 << 2)
+#define COL_JUSTIFY_LEFT (1 << 0)
+#define COL_JUSTIFY_RIGHT (1 << 1)
+#define COL_JUSTIFY_CENTER 3
+#define COL_JUSTIFY_MASK 0x3
+#define COL_FLAG_SEEN_DATA (1 << 2)
 #define COL_FLAG_NON_ZERO_DATA (1 << 3)
-#define COL_FLAG_ALWAYS_SHOW   (1 << 4)
+#define COL_FLAG_ALWAYS_SHOW (1 << 4)
 
-#define ROW_FLAG_SEEN_DATA     COL_FLAG_SEEN_DATA
+#define ROW_FLAG_SEEN_DATA COL_FLAG_SEEN_DATA
 #define ROW_FLAG_NON_ZERO_DATA COL_FLAG_NON_ZERO_DATA
-#define ROW_FLAG_ALWAYS_SHOW   COL_FLAG_ALWAYS_SHOW
+#define ROW_FLAG_ALWAYS_SHOW COL_FLAG_ALWAYS_SHOW
 
 typedef struct cell {
 	uint32_t type;
@@ -369,7 +368,8 @@ void zero_table_data(vtab_p table, int type)
 {
 	// Sets data area of table to zeros of specified type
 	for (int row = table->header_rows; (row < ALL_TABLE_ROWS); row++) {
-		for (int col = table->header_cols; (col < ALL_TABLE_COLS); col++) {
+		for (int col = table->header_cols; (col < ALL_TABLE_COLS);
+		     col++) {
 			cell_p c_ptr = GET_CELL_PTR(row, col);
 			memset(c_ptr, 0, sizeof(cell_t));
 			c_ptr->type = type;
@@ -377,15 +377,18 @@ void zero_table_data(vtab_p table, int type)
 	}
 }
 
-void sort_rows_descending_by_col(vtab_p table, int start_row, int stop_row, int col)
+void sort_rows_descending_by_col(vtab_p table, int start_row, int stop_row,
+				 int col)
 {
 	// Rearrange row_ix_map[] indices so the rows will be in
 	// descending order by the value in the specified column
 	for (int ix = start_row; (ix <= stop_row); ix++) {
 		int biggest_ix = ix;
-		cell_p biggest_ix_c_ptr = GET_CELL_PTR(table->row_ix_map[ix], col);
+		cell_p biggest_ix_c_ptr =
+			GET_CELL_PTR(table->row_ix_map[ix], col);
 		for (int iy = ix + 1; (iy <= stop_row); iy++) {
-			cell_p iy_c_ptr = GET_CELL_PTR(table->row_ix_map[iy], col);
+			cell_p iy_c_ptr =
+				GET_CELL_PTR(table->row_ix_map[iy], col);
 			if (biggest_ix_c_ptr->d < iy_c_ptr->d) {
 				biggest_ix_c_ptr = iy_c_ptr;
 				biggest_ix = iy;
@@ -399,12 +402,14 @@ void sort_rows_descending_by_col(vtab_p table, int start_row, int stop_row, int 
 	}
 }
 
-void span(vtab_p table, int first_row, int first_col, int last_row, int last_col)
+void span(vtab_p table, int first_row, int first_col, int last_row,
+	  int last_col)
 {
 	// FIXME: implement row / col spannnig someday?
 }
 
-void init_table(vtab_p table, int header_rows, int header_cols, int data_rows, int data_cols)
+void init_table(vtab_p table, int header_rows, int header_cols, int data_rows,
+		int data_cols)
 {
 	// init table sizes
 	table->header_rows = header_rows;
@@ -466,9 +471,8 @@ void init_table(vtab_p table, int header_rows, int header_cols, int data_rows, i
 void free_cell(vtab_p table, int row, int col)
 {
 	cell_p c_ptr = GET_CELL_PTR(row, col);
-	if ((c_ptr->type == CELL_TYPE_STRING)
-			&& (c_ptr->flags & CELL_FLAG_FREEABLE)
-			&& (c_ptr->s != NULL)) {
+	if ((c_ptr->type == CELL_TYPE_STRING) &&
+	    (c_ptr->flags & CELL_FLAG_FREEABLE) && (c_ptr->s != NULL)) {
 		free(c_ptr->s);
 	}
 	memset(c_ptr, 0, sizeof(cell_t));
@@ -544,7 +548,8 @@ void auto_set_col_width(vtab_p table, int col, int min_width, int max_width)
 		if (c_ptr->type == CELL_TYPE_REPCHAR) {
 			continue;
 		}
-		char *p = fmt_cell_data(c_ptr, max_width, (int)(table->col_decimal_places[col]));
+		char *p = fmt_cell_data(c_ptr, max_width,
+					(int)(table->col_decimal_places[col]));
 		int l = strlen(p);
 		if (width < l) {
 			width = l;
@@ -557,7 +562,8 @@ void auto_set_col_width(vtab_p table, int col, int min_width, int max_width)
 	table->col_width[col] = (uint8_t)width;
 }
 
-void display_justified_cell(cell_p c_ptr, int row_flags, int col_flags, int width, int decimal_places)
+void display_justified_cell(cell_p c_ptr, int row_flags, int col_flags,
+			    int width, int decimal_places)
 {
 	char *p = fmt_cell_data(c_ptr, width, decimal_places);
 	int l = strlen(p);
@@ -585,35 +591,37 @@ void display_justified_cell(cell_p c_ptr, int row_flags, int col_flags, int widt
 	printf("%s", buf);
 }
 
-void display_table(vtab_p table,
-		   int screen_width,
-		   int show_unseen_rows,
-		   int show_unseen_cols,
-		   int show_zero_rows,
-		   int show_zero_cols)
+void display_table(vtab_p table, int screen_width, int show_unseen_rows,
+		   int show_unseen_cols, int show_zero_rows, int show_zero_cols)
 {
 	// Set row and column flags according to whether data in rows and cols
 	// has been assigned, and is currently non-zero.
 	int some_seen_data = 0;
 	int some_non_zero_data = 0;
 	for (int row = table->header_rows; (row < ALL_TABLE_ROWS); row++) {
-		for (int col = table->header_cols; (col < ALL_TABLE_COLS); col++) {
+		for (int col = table->header_cols; (col < ALL_TABLE_COLS);
+		     col++) {
 			cell_p c_ptr = GET_CELL_PTR(row, col);
-			// Currently, "seen data" includes not only numeric data, but also
-			// any strings, etc -- anything non-NULL (other than rephcars).
-			if ((c_ptr->type != CELL_TYPE_NULL) && (c_ptr->type != CELL_TYPE_REPCHAR)) {
+			// Currently, "seen data" includes not only numeric
+			// data, but also any strings, etc -- anything non-NULL
+			// (other than rephcars).
+			if ((c_ptr->type != CELL_TYPE_NULL) &&
+			    (c_ptr->type != CELL_TYPE_REPCHAR)) {
 				some_seen_data = 1;
 				set_row_flag(table, row, ROW_FLAG_SEEN_DATA);
 				set_col_flag(table, col, COL_FLAG_SEEN_DATA);
-				// Currently, "non-zero data" includes not only numeric data,
-				// but also any strings, etc -- anything non-zero (other than
-				// repchars, which are already excluded above).  So, note a
-				// valid non-NULL pointer to an empty string would still be
-				// counted as non-zero data.
+				// Currently, "non-zero data" includes not only
+				// numeric data, but also any strings, etc --
+				// anything non-zero (other than repchars, which
+				// are already excluded above).  So, note a
+				// valid non-NULL pointer to an empty string
+				// would still be counted as non-zero data.
 				if (c_ptr->l != (int64_t)0) {
 					some_non_zero_data = 1;
-					set_row_flag(table, row, ROW_FLAG_NON_ZERO_DATA);
-					set_col_flag(table, col, COL_FLAG_NON_ZERO_DATA);
+					set_row_flag(table, row,
+						     ROW_FLAG_NON_ZERO_DATA);
+					set_col_flag(table, col,
+						     COL_FLAG_NON_ZERO_DATA);
 				}
 			}
 		}
@@ -633,8 +641,11 @@ void display_table(vtab_p table,
 	while (data_col < ALL_TABLE_COLS) {
 		// Skip data columns until we have one to display
 		if ((!test_col_flag(table, data_col, COL_FLAG_ALWAYS_SHOW)) &&
-				(((!show_unseen_cols) && (!test_col_flag(table, data_col, COL_FLAG_SEEN_DATA))) ||
-				 ((!show_zero_cols)   && (!test_col_flag(table, data_col, COL_FLAG_NON_ZERO_DATA))))) {
+		    (((!show_unseen_cols) &&
+		      (!test_col_flag(table, data_col, COL_FLAG_SEEN_DATA))) ||
+		     ((!show_zero_cols) &&
+		      (!test_col_flag(table, data_col,
+				      COL_FLAG_NON_ZERO_DATA))))) {
 			data_col += 1;
 			continue;
 		}
@@ -646,10 +657,18 @@ void display_table(vtab_p table,
 		for (int row_ix = 0; (row_ix < ALL_TABLE_ROWS); row_ix++) {
 			int row = table->row_ix_map[row_ix];
 			// If past the header rows, conditionally skip rows
-			if ((row >= table->header_rows) && (!test_row_flag(table, row, ROW_FLAG_ALWAYS_SHOW))) {
-				// Optionally skip row if no data seen or if all zeros
-				if (((!show_unseen_rows) && (!test_row_flag(table, row, ROW_FLAG_SEEN_DATA))) ||
-						((!show_zero_rows)   && (!test_row_flag(table, row, ROW_FLAG_NON_ZERO_DATA)))) {
+			if ((row >= table->header_rows) &&
+			    (!test_row_flag(table, row,
+					    ROW_FLAG_ALWAYS_SHOW))) {
+				// Optionally skip row if no data seen or if all
+				// zeros
+				if (((!show_unseen_rows) &&
+				     (!test_row_flag(table, row,
+						     ROW_FLAG_SEEN_DATA))) ||
+				    ((!show_zero_rows) &&
+				     (!test_row_flag(
+					     table, row,
+					     ROW_FLAG_NON_ZERO_DATA)))) {
 					continue;
 				}
 			}
@@ -657,32 +676,47 @@ void display_table(vtab_p table,
 			int cur_line_width = 0;
 			// All lines start with the left header columns
 			for (col = 0; (col < table->header_cols); col++) {
-				display_justified_cell(GET_CELL_PTR(row, col),
-							(int)(table->row_flags[row]),
-							(int)(table->col_flags[col]),
-							(int)(table->col_width[col]),
-							(int)(table->col_decimal_places[col]));
+				display_justified_cell(
+					GET_CELL_PTR(row, col),
+					(int)(table->row_flags[row]),
+					(int)(table->col_flags[col]),
+					(int)(table->col_width[col]),
+					(int)(table->col_decimal_places[col]));
 				cur_line_width += (int)(table->col_width[col]);
 			}
-			// Reset column index to starting data column for each new row
+			// Reset column index to starting data column for each
+			// new row
 			col = data_col;
-			// Try to display as many data columns as possible in every section
+			// Try to display as many data columns as possible in
+			// every section
 			for (;;) {
 				// See if we should print this column
-				if (test_col_flag(table, col, COL_FLAG_ALWAYS_SHOW) ||
-						(((show_unseen_cols) || (test_col_flag(table, col, COL_FLAG_SEEN_DATA))) &&
-						 ((show_zero_cols)   || (test_col_flag(table, col, COL_FLAG_NON_ZERO_DATA))))) {
-					display_justified_cell(GET_CELL_PTR(row, col),
-								(int)(table->row_flags[row]),
-								(int)(table->col_flags[col]),
-								(int)(table->col_width[col]),
-								(int)(table->col_decimal_places[col]));
-					cur_line_width += (int)(table->col_width[col]);
+				if (test_col_flag(table, col,
+						  COL_FLAG_ALWAYS_SHOW) ||
+				    (((show_unseen_cols) ||
+				      (test_col_flag(table, col,
+						     COL_FLAG_SEEN_DATA))) &&
+				     ((show_zero_cols) ||
+				      (test_col_flag(
+					      table, col,
+					      COL_FLAG_NON_ZERO_DATA))))) {
+					display_justified_cell(
+						GET_CELL_PTR(row, col),
+						(int)(table->row_flags[row]),
+						(int)(table->col_flags[col]),
+						(int)(table->col_width[col]),
+						(int)(table->col_decimal_places
+							      [col]));
+					cur_line_width +=
+						(int)(table->col_width[col]);
 				}
 				col += 1;
-				// End the line if no more columns or next column would exceed screen width
+				// End the line if no more columns or next
+				// column would exceed screen width
 				if ((col >= ALL_TABLE_COLS) ||
-						((cur_line_width + (int)(table->col_width[col])) > screen_width)) {
+				    ((cur_line_width +
+				      (int)(table->col_width[col])) >
+				     screen_width)) {
 					break;
 				}
 			}
@@ -717,7 +751,9 @@ void display_version_and_exit(void)
 
 void display_usage_and_exit(void)
 {
-	fprintf(stderr, "Usage: %s [-c] [-m] [-n] [-p <PID>|<pattern>] [-s[<node>]] [-v] [-V] [-z] [ <PID>|<pattern>... ]\n", prog_name);
+	fprintf(stderr,
+		"Usage: %s [-c] [-m] [-n] [-p <PID>|<pattern>] [-s[<node>]] [-v] [-V] [-z] [ <PID>|<pattern>... ]\n",
+		prog_name);
 	fprintf(stderr, "-c to minimize column widths\n");
 	fprintf(stderr, "-m to show meminfo-like system-wide memory usage\n");
 	fprintf(stderr, "-n to show the numastat statistics info\n");
@@ -765,7 +801,8 @@ int get_screen_width(void)
 char *command_name_for_pid(int pid)
 {
 	// Get the PID command name field from /proc/PID/status file.  Return
-	// pointer to a static buffer, expecting caller to immediately copy result.
+	// pointer to a static buffer, expecting caller to immediately copy
+	// result.
 	static char buf[SMALL_BUF_SIZE];
 	char fname[64];
 	snprintf(fname, sizeof(fname), "/proc/%d/status", pid);
@@ -791,35 +828,43 @@ char *command_name_for_pid(int pid)
 	return NULL;
 }
 
-void show_info_from_system_file(char *file, meminfo_p meminfo, int meminfo_rows, int tok_offset)
+void show_info_from_system_file(char *file, meminfo_p meminfo, int meminfo_rows,
+				int tok_offset)
 {
 	// Setup and init table
 	vtab_t table;
 	int header_rows = 2 - compatibility_mode;
 	int header_cols = 1;
 	// Add an extra data column for a total column
-	init_table(&table, header_rows, header_cols, meminfo_rows, num_nodes + 1);
+	init_table(&table, header_rows, header_cols, meminfo_rows,
+		   num_nodes + 1);
 	int total_col_ix = header_cols + num_nodes;
-	// Insert token mapping in hash table and assign left header column label for each row in table
+	// Insert token mapping in hash table and assign left header column
+	// label for each row in table
 	init_hash_table();
 	for (int row = 0; (row < meminfo_rows); row++) {
 		hash_insert(meminfo[row].token, meminfo[row].index);
 		if (compatibility_mode) {
-			string_assign(&table, (header_rows + row), 0, meminfo[row].token);
+			string_assign(&table, (header_rows + row), 0,
+				      meminfo[row].token);
 		} else {
-			string_assign(&table, (header_rows + row), 0, meminfo[row].label);
+			string_assign(&table, (header_rows + row), 0,
+				      meminfo[row].label);
 		}
 	}
 	// printf("There are %d table hash collisions.\n", hash_collisions);
 	// Set left header column width and left justify it
 	set_col_width(&table, 0, 16);
 	set_col_justification(&table, 0, COL_JUSTIFY_LEFT);
-	// Open /sys/devices/system/node/node?/<file> for each node and store data
-	// in table.  If not compatibility_mode, do approximately first third of
-	// this loop also for (node_ix == num_nodes) to get "Total" column header.
-	for (int node_ix = 0; (node_ix < (num_nodes + (1 - compatibility_mode))); node_ix++) {
+	// Open /sys/devices/system/node/node?/<file> for each node and store
+	// data in table.  If not compatibility_mode, do approximately first
+	// third of this loop also for (node_ix == num_nodes) to get "Total"
+	// column header.
+	for (int node_ix = 0;
+	     (node_ix < (num_nodes + (1 - compatibility_mode))); node_ix++) {
 		int col = header_cols + node_ix;
-		// Assign header row label and horizontal line for this column...
+		// Assign header row label and horizontal line for this
+		// column...
 		string_assign(&table, 0, col, node_header[node_ix]);
 		if (!compatibility_mode) {
 			repchar_assign(&table, 1, col, '-');
@@ -838,7 +883,9 @@ void show_info_from_system_file(char *file, meminfo_p meminfo, int meminfo_rows,
 		// Open /sys/.../node<N>/numstast file for this node...
 		char buf[SMALL_BUF_SIZE];
 		char fname[64];
-		snprintf(fname, sizeof(fname), "/sys/devices/system/node/node%d/%s", node_ix_map[node_ix], file);
+		snprintf(fname, sizeof(fname),
+			 "/sys/devices/system/node/node%d/%s",
+			 node_ix_map[node_ix], file);
 		FILE *fs = fopen(fname, "r");
 		if (!fs) {
 			sprintf(buf, "cannot open %s", fname);
@@ -852,33 +899,40 @@ void show_info_from_system_file(char *file, meminfo_p meminfo, int meminfo_rows,
 			const char *delimiters = " \t\r\n:";
 			char *p = strtok(buf, delimiters);
 			if (p == NULL) {
-				continue;	// Skip blank lines;
+				continue; // Skip blank lines;
 			}
 			while (p) {
 				tok[tokens++] = p;
 				p = strtok(NULL, delimiters);
 			}
 			// example line from numastat file: "numa_miss 16463"
-			// example line from meminfo  file: "Node 3 Inactive:  210680 kB"
+			// example line from meminfo  file: "Node 3 Inactive:
+			// 210680 kB"
 			int index = hash_lookup(tok[0 + tok_offset]);
 			if (index < 0) {
-				printf("Token %s not in hash table.\n", tok[0 + tok_offset]);
+				printf("Token %s not in hash table.\n",
+				       tok[0 + tok_offset]);
 			} else {
-				double value = (double)atol(tok[1 + tok_offset]);
+				double value =
+					(double)atol(tok[1 + tok_offset]);
 				if (!compatibility_mode) {
 					double multiplier = 1.0;
 					if (tokens < 4) {
 						multiplier = page_size_in_bytes;
-					} else if (!strncmp("HugePages", tok[2], 9)) {
-						multiplier = huge_page_size_in_bytes;
+					} else if (!strncmp("HugePages", tok[2],
+							    9)) {
+						multiplier =
+							huge_page_size_in_bytes;
 					} else if (!strncmp("kB", tok[4], 2)) {
 						multiplier = KILOBYTE;
 					}
 					value *= multiplier;
 					value /= (double)MEGABYTE;
 				}
-				double_assign(&table, header_rows + index, col, value);
-				double_addto(&table, header_rows + index, total_col_ix, value);
+				double_assign(&table, header_rows + index, col,
+					      value);
+				double_addto(&table, header_rows + index,
+					     total_col_ix, value);
 			}
 		}
 		fclose(fs);
@@ -897,10 +951,13 @@ void show_info_from_system_file(char *file, meminfo_p meminfo, int meminfo_rows,
 		} else {
 			sort_col = header_cols + node_ix_map[sort_table_node];
 		}
-		sort_rows_descending_by_col(&table, header_rows, header_rows + meminfo_rows - 1, sort_col);
+		sort_rows_descending_by_col(&table, header_rows,
+					    header_rows + meminfo_rows - 1,
+					    sort_col);
 	}
 	// Actually display the table now, doing line-folding as necessary
-	display_table(&table, screen_width, 0, 0, show_zero_data, show_zero_data);
+	display_table(&table, screen_width, 0, 0, show_zero_data,
+		      show_zero_data);
 	free_table(&table);
 }
 
@@ -909,13 +966,15 @@ void show_numastat_info(void)
 	if (!compatibility_mode) {
 		printf("\nPer-node numastat info (in MBs):\n");
 	}
-	show_info_from_system_file("numastat", numastat_meminfo, NUMASTAT_MEMINFO_ROWS, 0);
+	show_info_from_system_file("numastat", numastat_meminfo,
+				   NUMASTAT_MEMINFO_ROWS, 0);
 }
 
 void show_system_info(void)
 {
 	printf("\nPer-node system memory usage (in MBs):\n");
-	show_info_from_system_file("meminfo", system_meminfo, SYSTEM_MEMINFO_ROWS, 2);
+	show_info_from_system_file("meminfo", system_meminfo,
+				   SYSTEM_MEMINFO_ROWS, 2);
 }
 
 void show_process_info(void)
@@ -932,14 +991,16 @@ void show_process_info(void)
 	}
 	// Add two extra rows for a horizontal rule followed by a total row
 	// Add one extra data column for a total column
-	init_table(&table, header_rows, header_cols, data_rows + 2, num_nodes + 1);
+	init_table(&table, header_rows, header_cols, data_rows + 2,
+		   num_nodes + 1);
 	int total_col_ix = header_cols + num_nodes;
 	int total_row_ix = header_rows + data_rows + 1;
 	string_assign(&table, total_row_ix, 0, "Total");
 	if (show_sub_categories) {
 		// Assign left header column label for each row in table
 		for (int row = 0; (row < PROCESS_MEMINFO_ROWS); row++) {
-			string_assign(&table, (header_rows + row), 0, process_meminfo[row].label);
+			string_assign(&table, (header_rows + row), 0,
+				      process_meminfo[row].label);
 		}
 	} else {
 		string_assign(&table, 0, 0, "PID");
@@ -949,10 +1010,12 @@ void show_process_info(void)
 	// Set left header column width and left justify it
 	set_col_width(&table, 0, 16);
 	set_col_justification(&table, 0, COL_JUSTIFY_LEFT);
-	// Set up "Node <N>" column headers over data columns, plus "Total" column
+	// Set up "Node <N>" column headers over data columns, plus "Total"
+	// column
 	for (int node_ix = 0; (node_ix <= num_nodes); node_ix++) {
 		int col = header_cols + node_ix;
-		// Assign header row label and horizontal line for this column...
+		// Assign header row label and horizontal line for this
+		// column...
 		string_assign(&table, 0, col, node_header[node_ix]);
 		repchar_assign(&table, 1, col, '-');
 		// Set column width, decimal places, and right justify data
@@ -966,27 +1029,34 @@ void show_process_info(void)
 	}
 	// Initialize data in table to all zeros
 	zero_table_data(&table, CELL_TYPE_DOUBLE);
-	// If (show_sub_categories), show individual process tables for each PID,
-	// Otherwise show one big table of process total lines from all the PIDs.
+	// If (show_sub_categories), show individual process tables for each
+	// PID, Otherwise show one big table of process total lines from all the
+	// PIDs.
 	for (int pid_ix = 0; (pid_ix < num_pids); pid_ix++) {
 		int pid = pid_array[pid_ix];
 		if (show_sub_categories) {
-			printf("\nPer-node process memory usage (in MBs) for PID %d (%s)\n", pid, command_name_for_pid(pid));
+			printf("\nPer-node process memory usage (in MBs) for PID %d (%s)\n",
+			       pid, command_name_for_pid(pid));
 			if (pid_ix > 0) {
-				// Re-initialize show_sub_categories table, because we re-use it for each PID.
+				// Re-initialize show_sub_categories table,
+				// because we re-use it for each PID.
 				zero_table_data(&table, CELL_TYPE_DOUBLE);
 			}
 		} else {
-			// Put this row's "PID (cmd)" label in left header column for this PID total row
+			// Put this row's "PID (cmd)" label in left header
+			// column for this PID total row
 			char tmp_buf[64];
-			snprintf(tmp_buf, sizeof(tmp_buf), "%d (%s)", pid, command_name_for_pid(pid));
+			snprintf(tmp_buf, sizeof(tmp_buf), "%d (%s)", pid,
+				 command_name_for_pid(pid));
 			char *p = strdup(tmp_buf);
 			if (p == NULL) {
-				perror("malloc failed line: " STRINGIFY(__LINE__));
+				perror("malloc failed line: " STRINGIFY(
+					__LINE__));
 				exit(EXIT_FAILURE);
 			}
 			string_assign(&table, header_rows + pid_ix, 0, p);
-			set_cell_flag(&table, header_rows + pid_ix, 0, CELL_FLAG_FREEABLE);
+			set_cell_flag(&table, header_rows + pid_ix, 0,
+				      CELL_FLAG_FREEABLE);
 		}
 		// Open numa_map for this PID to get per-node data
 		char fname[64];
@@ -998,119 +1068,158 @@ void show_process_info(void)
 			perror(buf);
 			continue;
 		}
-		// Add up sub-category memory used from each node.  Must go line by line
-		// through the numa_map figuring out which category memory, node, and the
-		// amount.
+		// Add up sub-category memory used from each node.  Must go line
+		// by line through the numa_map figuring out which category
+		// memory, node, and the amount.
 		while (fgets(buf, BUF_SIZE, fs)) {
-			int category = PROCESS_PRIVATE_INDEX;	// init category to the catch-all...
+			int category =
+				PROCESS_PRIVATE_INDEX; // init category to the
+						       // catch-all...
 			const char *delimiters = " \t\r\n";
 			char *p = strtok(buf, delimiters);
 			while (p) {
-				// If the memory category for this line is still the catch-all
-				// (i.e.  private), then see if the current token is a special
-				// keyword for a specific memory sub-category.
+				// If the memory category for this line is still
+				// the catch-all (i.e.  private), then see if
+				// the current token is a special keyword for a
+				// specific memory sub-category.
 				if (category == PROCESS_PRIVATE_INDEX) {
-					for (int ix = 0; (ix < PROCESS_PRIVATE_INDEX); ix++) {
-						if (!strncmp(p, process_meminfo[ix].token, strlen(process_meminfo[ix].token))) {
+					for (int ix = 0;
+					     (ix < PROCESS_PRIVATE_INDEX);
+					     ix++) {
+						if (!strncmp(
+							    p,
+							    process_meminfo[ix]
+								    .token,
+							    strlen(process_meminfo[ix]
+									   .token))) {
 							category = ix;
 							break;
 						}
 					}
 				}
-				// If the current token is a per-node pages quantity, parse the
-				// node number and accumulate the number of pages in the specific
-				// category (and also add to the total).
+				// If the current token is a per-node pages
+				// quantity, parse the node number and
+				// accumulate the number of pages in the
+				// specific category (and also add to the
+				// total).
 				if (p[0] == 'N') {
-					int node_num = (int)strtol(&p[1], &p, 10);
+					int node_num =
+						(int)strtol(&p[1], &p, 10);
 					if (p[0] != '=') {
 						perror("node value parse error");
 						exit(EXIT_FAILURE);
 					}
-					double value = (double)strtol(&p[1], &p, 10);
+					double value =
+						(double)strtol(&p[1], &p, 10);
 					double multiplier = page_size_in_bytes;
 					if (category == PROCESS_HUGE_INDEX) {
-						multiplier = huge_page_size_in_bytes;
+						multiplier =
+							huge_page_size_in_bytes;
 					}
 					value *= multiplier;
 					value /= (double)MEGABYTE;
-					// Add value to data cell, total_col, and total_row
+					// Add value to data cell, total_col,
+					// and total_row
 					int tmp_row;
 					if (show_sub_categories) {
-						tmp_row = header_rows + category;
+						tmp_row =
+							header_rows + category;
 					} else {
 						tmp_row = header_rows + pid_ix;
 					}
-					// Don't assume nodes are sequential or contiguous.
-					// Need to find correct tmp_col from node_ix_map
+					// Don't assume nodes are sequential or
+					// contiguous. Need to find correct
+					// tmp_col from node_ix_map
 					int i = 0;
-					while(node_ix_map[i++] != node_num)
+					while (node_ix_map[i++] != node_num)
 						;
 					int tmp_col = header_cols + i - 1;
-					double_addto(&table, tmp_row, tmp_col, value);
-					double_addto(&table, tmp_row, total_col_ix, value);
-					double_addto(&table, total_row_ix, tmp_col, value);
-					double_addto(&table, total_row_ix, total_col_ix, value);
+					double_addto(&table, tmp_row, tmp_col,
+						     value);
+					double_addto(&table, tmp_row,
+						     total_col_ix, value);
+					double_addto(&table, total_row_ix,
+						     tmp_col, value);
+					double_addto(&table, total_row_ix,
+						     total_col_ix, value);
 				}
 				// Get next token on the line
 				p = strtok(NULL, delimiters);
 			}
 		}
-		// Currently, a non-root user can open some numa_map files successfully
-		// without error, but can't actually read the contents -- despite the
-		// 444 file permissions.  So, use ferror() to check here to see if we
-		// actually got a read error, and if so, alert the user so they know
-		// not to trust the zero in the table.
+		// Currently, a non-root user can open some numa_map files
+		// successfully without error, but can't actually read the
+		// contents -- despite the 444 file permissions.  So, use
+		// ferror() to check here to see if we actually got a read
+		// error, and if so, alert the user so they know not to trust
+		// the zero in the table.
 		if (ferror(fs)) {
 			sprintf(buf, "Can't read /proc/%d/numa_maps", pid);
 			perror(buf);
 			exit(EXIT_FAILURE);
 		}
 		fclose(fs);
-		// If showing individual tables, or we just added the last total line,
-		// prepare the table for display and display it...
+		// If showing individual tables, or we just added the last total
+		// line, prepare the table for display and display it...
 		if ((show_sub_categories) || (pid_ix + 1 == num_pids)) {
 			// Crompress display column widths, if requested
 			if (compress_display) {
-				for (int col = 0; (col < header_cols + num_nodes + 1); col++) {
+				for (int col = 0;
+				     (col < header_cols + num_nodes + 1);
+				     col++) {
 					auto_set_col_width(&table, col, 4, 16);
 				}
 			} else {
-				// Since not compressing the display, allow the left header
-				// column to be wider.  Otherwise, sometimes process command
-				// name instance numbers can be truncated in an annoying way.
+				// Since not compressing the display, allow the
+				// left header column to be wider.  Otherwise,
+				// sometimes process command name instance
+				// numbers can be truncated in an annoying way.
 				auto_set_col_width(&table, 0, 16, 24);
 			}
 			// Put dashes above Total line...
-			set_row_flag(&table, total_row_ix - 1, COL_FLAG_ALWAYS_SHOW);
-			for (int col = 0; (col < header_cols + num_nodes + 1); col++) {
-				repchar_assign(&table, total_row_ix - 1, col, '-');
+			set_row_flag(&table, total_row_ix - 1,
+				     COL_FLAG_ALWAYS_SHOW);
+			for (int col = 0; (col < header_cols + num_nodes + 1);
+			     col++) {
+				repchar_assign(&table, total_row_ix - 1, col,
+					       '-');
 			}
 			// Optionally sort the table data
 			if (sort_table) {
 				int sort_col;
-				if ((sort_table_node < 0) || (sort_table_node >= num_nodes)) {
+				if ((sort_table_node < 0) ||
+				    (sort_table_node >= num_nodes)) {
 					sort_col = total_col_ix;
 				} else {
-					sort_col = header_cols + node_ix_map[sort_table_node];
+					sort_col = header_cols +
+						   node_ix_map[sort_table_node];
 				}
-				sort_rows_descending_by_col(&table, header_rows, header_rows + data_rows - 1, sort_col);
+				sort_rows_descending_by_col(
+					&table, header_rows,
+					header_rows + data_rows - 1, sort_col);
 			}
 			// Actually show the table
-			display_table(&table, screen_width, 0, 0, show_zero_data, show_zero_data);
+			display_table(&table, screen_width, 0, 0,
+				      show_zero_data, show_zero_data);
 		}
-	}			// END OF FOR_EACH-PID loop
+	} // END OF FOR_EACH-PID loop
 	free_table(&table);
-}				// show_process_info()
+} // show_process_info()
 
 int node_and_digits(const struct dirent *dptr)
 {
 	char *p = (char *)(dptr->d_name);
-	if (*p++ != 'n') return 0;
-	if (*p++ != 'o') return 0;
-	if (*p++ != 'd') return 0;
-	if (*p++ != 'e') return 0;
+	if (*p++ != 'n')
+		return 0;
+	if (*p++ != 'o')
+		return 0;
+	if (*p++ != 'd')
+		return 0;
+	if (*p++ != 'e')
+		return 0;
 	do {
-		if (!isdigit(*p++)) return 0;
+		if (!isdigit(*p++))
+			return 0;
 	} while (*p != '\0');
 	return 1;
 }
@@ -1119,7 +1228,8 @@ void init_node_ix_map_and_header(int compatibility_mode)
 {
 	// Count directory names of the form: /sys/devices/system/node/node<N>
 	struct dirent **namelist;
-	num_nodes = scandir("/sys/devices/system/node", &namelist, node_and_digits, NULL);
+	num_nodes = scandir("/sys/devices/system/node", &namelist,
+			    node_and_digits, NULL);
 	if (num_nodes < 1) {
 		if (compatibility_mode) {
 			perror("sysfs not mounted or system not NUMA aware");
@@ -1139,12 +1249,14 @@ void init_node_ix_map_and_header(int compatibility_mode)
 			free(namelist[ix]);
 		}
 		free(namelist);
-		// Now, sort the node map in increasing order. Use a simplistic sort
-		// since we expect a relatively short (and maybe pre-ordered) list.
+		// Now, sort the node map in increasing order. Use a simplistic
+		// sort since we expect a relatively short (and maybe
+		// pre-ordered) list.
 		for (int ix = 0; (ix < num_nodes); ix++) {
 			int smallest_ix = ix;
 			for (int iy = ix + 1; (iy < num_nodes); iy++) {
-				if (node_ix_map[smallest_ix] > node_ix_map[iy]) {
+				if (node_ix_map[smallest_ix] >
+				    node_ix_map[iy]) {
 					smallest_ix = iy;
 				}
 			}
@@ -1154,8 +1266,9 @@ void init_node_ix_map_and_header(int compatibility_mode)
 				node_ix_map[smallest_ix] = tmp;
 			}
 		}
-		// Construct vector of "Node <N>" and "Total" column headers. Allocate
-		// one for each NUMA node, plus one on the end for the "Total" column
+		// Construct vector of "Node <N>" and "Total" column headers.
+		// Allocate one for each NUMA node, plus one on the end for the
+		// "Total" column
 		node_header = malloc((num_nodes + 1) * sizeof(char *));
 		if (node_header == NULL) {
 			perror("malloc failed line: " STRINGIFY(__LINE__));
@@ -1166,13 +1279,16 @@ void init_node_ix_map_and_header(int compatibility_mode)
 			if (node_ix == num_nodes) {
 				strcpy(node_label, "Total");
 			} else if (compatibility_mode) {
-				snprintf(node_label, sizeof(node_label), "node%d", node_ix_map[node_ix]);
+				snprintf(node_label, sizeof(node_label),
+					 "node%d", node_ix_map[node_ix]);
 			} else {
-				snprintf(node_label, sizeof(node_label), "Node %d", node_ix_map[node_ix]);
+				snprintf(node_label, sizeof(node_label),
+					 "Node %d", node_ix_map[node_ix]);
 			}
 			char *s = strdup(node_label);
 			if (s == NULL) {
-				perror("malloc failed line: " STRINGIFY(__LINE__));
+				perror("malloc failed line: " STRINGIFY(
+					__LINE__));
 				exit(EXIT_FAILURE);
 			}
 			node_header[node_ix] = s;
@@ -1197,7 +1313,8 @@ void free_node_ix_map_and_header(void)
 
 double get_huge_page_size_in_bytes(void)
 {
-	double huge_page_size = 0;;
+	double huge_page_size = 0;
+	;
 	FILE *fs = fopen("/proc/meminfo", "r");
 	if (!fs) {
 		perror("Can't open /proc/meminfo");
@@ -1224,7 +1341,8 @@ int all_digits(char *p)
 		return 0;
 	}
 	while (*p != '\0') {
-		if (!isdigit(*p++)) return 0;
+		if (!isdigit(*p++))
+			return 0;
 	}
 	return 1;
 }
@@ -1242,7 +1360,8 @@ void add_pid_to_list(int pid)
 		if (pid_array_max_pids == 0) {
 			pid_array_max_pids = 32;
 		}
-		int *tmp_int_ptr = realloc(pid_array, 2 * pid_array_max_pids * sizeof(int));
+		int *tmp_int_ptr = realloc(pid_array, 2 * pid_array_max_pids *
+							      sizeof(int));
 		if (tmp_int_ptr == NULL) {
 			char buf[SMALL_BUF_SIZE];
 			sprintf(buf, "Too many PIDs, skipping %d", pid);
@@ -1257,7 +1376,7 @@ void add_pid_to_list(int pid)
 
 int ascending(const void *p1, const void *p2)
 {
-	return *(int *)p1 - *(int *) p2;
+	return *(int *)p1 - *(int *)p2;
 }
 
 void sort_pids_and_remove_duplicates(void)
@@ -1280,8 +1399,9 @@ void sort_pids_and_remove_duplicates(void)
 
 void add_pids_from_pattern_search(char *pattern)
 {
-	// Search all /proc/<PID>/cmdline files and /proc/<PID>/status:Name fields
-	// for matching patterns.  Show the memory details for matching PIDs.
+	// Search all /proc/<PID>/cmdline files and /proc/<PID>/status:Name
+	// fields for matching patterns.  Show the memory details for matching
+	// PIDs.
 	int num_matches_found = 0;
 	struct dirent **namelist;
 	int files = scandir("/proc", &namelist, starts_with_digit, NULL);
@@ -1301,7 +1421,8 @@ void add_pids_from_pattern_search(char *pattern)
 		// Next copy cmdline file contents onto end of buffer.  Do it a
 		// character at a time to convert nulls to spaces.
 		char fname[272];
-		snprintf(fname, sizeof(fname), "/proc/%s/cmdline", namelist[ix]->d_name);
+		snprintf(fname, sizeof(fname), "/proc/%s/cmdline",
+			 namelist[ix]->d_name);
 		FILE *fs = fopen(fname, "r");
 		if (fs) {
 			p = buf;
@@ -1310,7 +1431,8 @@ void add_pids_from_pattern_search(char *pattern)
 			}
 			*p++ = ' ';
 			int c;
-			while (((c = fgetc(fs)) != EOF) && (p < buf + BUF_SIZE - 1)) {
+			while (((c = fgetc(fs)) != EOF) &&
+			       (p < buf + BUF_SIZE - 1)) {
 				if (c == '\0') {
 					c = ' ';
 				}
@@ -1329,7 +1451,8 @@ void add_pids_from_pattern_search(char *pattern)
 	}
 	free(namelist);
 	if (num_matches_found == 0) {
-		printf("Found no processes containing pattern: \"%s\"\n", pattern);
+		printf("Found no processes containing pattern: \"%s\"\n",
+		       pattern);
 	}
 }
 
@@ -1338,16 +1461,16 @@ int main(int argc, char **argv)
 	prog_name = argv[0];
 	int show_the_system_info = 0;
 	int show_the_numastat_info = 0;
-	static struct option long_options[] = {
-		{"help", 0, 0, '?'},
-		{0, 0, 0, 0}
-	};
+	static struct option long_options[] = {{"help", 0, 0, '?'},
+					       {0, 0, 0, 0}};
 	int long_option_index = 0;
 	int opt;
-	while ((opt = getopt_long(argc, argv, "cmnp:s::vVz?", long_options, &long_option_index)) != -1) {
+	while ((opt = getopt_long(argc, argv, "cmnp:s::vVz?", long_options,
+				  &long_option_index)) != -1) {
 		switch (opt) {
 		case 0:
-			printf("Unexpected long option %s", long_options[long_option_index].name);
+			printf("Unexpected long option %s",
+			       long_options[long_option_index].name);
 			if (optarg) {
 				printf(" with arg %s", optarg);
 			}
@@ -1394,7 +1517,8 @@ int main(int argc, char **argv)
 	// Figure out the display width, which is used to format the tables
 	// and limit the output columns per row
 	screen_width = get_screen_width();
-	// Any remaining arguments are assumed to be additional process specifiers
+	// Any remaining arguments are assumed to be additional process
+	// specifiers
 	while (optind < argc) {
 		if (all_digits(argv[optind])) {
 			add_pid_to_list(atoi(argv[optind]));
@@ -1404,10 +1528,11 @@ int main(int argc, char **argv)
 		optind += 1;
 	}
 	// If there are no program options or arguments, be extremely compatible
-	// with the old numastat perl script (which is included at the end of this
-	// file for reference)
+	// with the old numastat perl script (which is included at the end of
+	// this file for reference)
 	compatibility_mode = (argc == 1);
-	init_node_ix_map_and_header(compatibility_mode);	// enumarate the NUMA nodes
+	init_node_ix_map_and_header(
+		compatibility_mode); // enumarate the NUMA nodes
 	if (compatibility_mode) {
 		show_numastat_info();
 		free_node_ix_map_and_header();
@@ -1429,7 +1554,8 @@ int main(int argc, char **argv)
 		show_system_info();
 	}
 	// Display the numastat statistics info
-	if ((show_the_numastat_info) || ((num_pids == 0) && (!show_the_system_info))) {
+	if ((show_the_numastat_info) ||
+	    ((num_pids == 0) && (!show_the_system_info))) {
 		show_numastat_info();
 	}
 	free_node_ix_map_and_header();

@@ -13,24 +13,24 @@
    You should find a copy of v2.1 of the GNU Lesser General Public License
    somewhere on your Linux system; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
-#include <unistd.h>
-#include <sys/types.h>
-#include <asm/unistd.h>
-#include <errno.h>
 #include "numa.h"
 #include "numaif.h"
 #include "numaint.h"
+#include <asm/unistd.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #define WEAK __attribute__((weak))
 
-#if !defined(__NR_mbind) || !defined(__NR_set_mempolicy) || \
-    !defined(__NR_get_mempolicy) || !defined(__NR_migrate_pages) || \
-    !defined(__NR_move_pages)
+#if !defined(__NR_mbind) || !defined(__NR_set_mempolicy) ||                    \
+	!defined(__NR_get_mempolicy) || !defined(__NR_migrate_pages) ||        \
+	!defined(__NR_move_pages)
 
 #if defined(__x86_64__)
 
-#define __NR_sched_setaffinity    203
-#define __NR_sched_getaffinity     204
+#define __NR_sched_setaffinity 203
+#define __NR_sched_getaffinity 204
 
 /* Official allocation */
 
@@ -41,9 +41,9 @@
 #define __NR_move_pages 279
 
 #elif defined(__ia64__)
-#define __NR_sched_setaffinity    1231
-#define __NR_sched_getaffinity    1232
-#define __NR_migrate_pages	1280
+#define __NR_sched_setaffinity 1231
+#define __NR_sched_getaffinity 1232
+#define __NR_migrate_pages 1280
 #define __NR_move_pages 1276
 
 /* Official allocation */
@@ -107,7 +107,7 @@
 
 #elif defined(__hppa__)
 
-#define __NR_migrate_pages	272
+#define __NR_migrate_pages 272
 
 #elif defined(__arm__)
 /* https://bugs.debian.org/796802 */
@@ -119,7 +119,7 @@
 #define __NR_get_mempolicy 236
 #define __NR_set_mempolicy 237
 #define __NR_migrate_pages 238
-#define __NR_move_pages    239
+#define __NR_move_pages 239
 
 #elif !defined(DEPS_RUN)
 #error "Add syscalls for your architecture or update kernel headers"
@@ -128,7 +128,7 @@
 #endif
 
 #ifndef __GLIBC_PREREQ
-# define __GLIBC_PREREQ(x,y) 0
+#define __GLIBC_PREREQ(x, y) 0
 #endif
 
 #if defined(__GLIBC__) && __GLIBC_PREREQ(2, 11)
@@ -145,11 +145,12 @@
 long syscall6(long call, long a, long b, long c, long d, long e, long f)
 {
 	long res;
-	asm volatile ("movq %[d],%%r10 ; movq %[e],%%r8 ; movq %[f],%%r9 ; syscall"
-		     : "=a" (res)
-		     : "0" (call),"D" (a),"S" (b), "d" (c),
-			[d] "g" (d), [e] "g" (e), [f] "g" (f) :
-		     "r11","rcx","r8","r10","r9","memory" );
+	asm volatile(
+		"movq %[d],%%r10 ; movq %[e],%%r8 ; movq %[f],%%r9 ; syscall"
+		: "=a"(res)
+		: "0"(call), "D"(a), "S"(b), "d"(c), [ d ] "g"(d), [ e ] "g"(e),
+		  [ f ] "g"(f)
+		: "r11", "rcx", "r8", "r10", "r9", "memory");
 	if (res < 0) {
 		errno = -res;
 		res = -1;
@@ -161,31 +162,29 @@ long syscall6(long call, long a, long b, long c, long d, long e, long f)
 /* i386 has buggy syscall6 in glibc too. This is tricky to do
    in inline assembly because it clobbers so many registers. Do it
    out of line. */
-asm(
-"__syscall6:\n"
-"	pushl %ebp\n"
-"	pushl %edi\n"
-"	pushl %esi\n"
-"	pushl %ebx\n"
-"	movl  (0+5)*4(%esp),%eax\n"
-"	movl  (1+5)*4(%esp),%ebx\n"
-"	movl  (2+5)*4(%esp),%ecx\n"
-"	movl  (3+5)*4(%esp),%edx\n"
-"	movl  (4+5)*4(%esp),%esi\n"
-"	movl  (5+5)*4(%esp),%edi\n"
-"	movl  (6+5)*4(%esp),%ebp\n"
-"	int $0x80\n"
-"	popl %ebx\n"
-"	popl %esi\n"
-"	popl %edi\n"
-"	popl %ebp\n"
-"	ret"
-);
+asm("__syscall6:\n"
+    "	pushl %ebp\n"
+    "	pushl %edi\n"
+    "	pushl %esi\n"
+    "	pushl %ebx\n"
+    "	movl  (0+5)*4(%esp),%eax\n"
+    "	movl  (1+5)*4(%esp),%ebx\n"
+    "	movl  (2+5)*4(%esp),%ecx\n"
+    "	movl  (3+5)*4(%esp),%edx\n"
+    "	movl  (4+5)*4(%esp),%esi\n"
+    "	movl  (5+5)*4(%esp),%edi\n"
+    "	movl  (6+5)*4(%esp),%ebp\n"
+    "	int $0x80\n"
+    "	popl %ebx\n"
+    "	popl %esi\n"
+    "	popl %edi\n"
+    "	popl %ebp\n"
+    "	ret");
 extern long __syscall6(long n, long a, long b, long c, long d, long e, long f);
 
 long syscall6(long call, long a, long b, long c, long d, long e, long f)
 {
-	long res = __syscall6(call,a,b,c,d,e,f);
+	long res = __syscall6(call, a, b, c, d, e, f);
 	if (res < 0) {
 		errno = -res;
 		res = -1;
@@ -198,63 +197,65 @@ long syscall6(long call, long a, long b, long c, long d, long e, long f)
 #endif
 
 long WEAK get_mempolicy(int *policy, unsigned long *nmask,
-				unsigned long maxnode, void *addr,
-				unsigned flags)
+			unsigned long maxnode, void *addr, unsigned flags)
 {
-	return syscall(__NR_get_mempolicy, policy, nmask,
-					maxnode, addr, flags);
+	return syscall(__NR_get_mempolicy, policy, nmask, maxnode, addr, flags);
 }
 
 long WEAK mbind(void *start, unsigned long len, int mode,
-	const unsigned long *nmask, unsigned long maxnode, unsigned flags)
+		const unsigned long *nmask, unsigned long maxnode,
+		unsigned flags)
 {
 	return syscall6(__NR_mbind, (long)start, len, mode, (long)nmask,
-				maxnode, flags);
+			maxnode, flags);
 }
 
 long WEAK set_mempolicy(int mode, const unsigned long *nmask,
-				   unsigned long maxnode)
+			unsigned long maxnode)
 {
 	long i;
-	i = syscall(__NR_set_mempolicy,mode,nmask,maxnode);
+	i = syscall(__NR_set_mempolicy, mode, nmask, maxnode);
 	return i;
 }
 
 long WEAK migrate_pages(int pid, unsigned long maxnode,
-	const unsigned long *frommask, const unsigned long *tomask)
+			const unsigned long *frommask,
+			const unsigned long *tomask)
 {
 #if defined(__NR_migrate_pages)
 	return syscall(__NR_migrate_pages, pid, maxnode, frommask, tomask);
 #else
-    errno = ENOSYS;
-    return -1;
+	errno = ENOSYS;
+	return -1;
 #endif
 }
 
-long WEAK move_pages(int pid, unsigned long count,
-	void **pages, const int *nodes, int *status, int flags)
+long WEAK move_pages(int pid, unsigned long count, void **pages,
+		     const int *nodes, int *status, int flags)
 {
-	return syscall(__NR_move_pages, pid, count, pages, nodes, status, flags);
+	return syscall(__NR_move_pages, pid, count, pages, nodes, status,
+		       flags);
 }
 
 /* SLES8 glibc doesn't define those */
-int numa_sched_setaffinity_v1(pid_t pid, unsigned len, const unsigned long *mask)
+int numa_sched_setaffinity_v1(pid_t pid, unsigned len,
+			      const unsigned long *mask)
 {
-	return syscall(__NR_sched_setaffinity,pid,len,mask);
+	return syscall(__NR_sched_setaffinity, pid, len, mask);
 }
 __asm__(".symver numa_sched_setaffinity_v1,numa_sched_setaffinity@libnuma_1.1");
 
 int numa_sched_setaffinity_v2(pid_t pid, struct bitmask *mask)
 {
 	return syscall(__NR_sched_setaffinity, pid, numa_bitmask_nbytes(mask),
-								mask->maskp);
+		       mask->maskp);
 }
 __asm__(".symver numa_sched_setaffinity_v2,numa_sched_setaffinity@@libnuma_1.2");
 
-int numa_sched_getaffinity_v1(pid_t pid, unsigned len, const unsigned long *mask)
+int numa_sched_getaffinity_v1(pid_t pid, unsigned len,
+			      const unsigned long *mask)
 {
-	return syscall(__NR_sched_getaffinity,pid,len,mask);
-
+	return syscall(__NR_sched_getaffinity, pid, len, mask);
 }
 __asm__(".symver numa_sched_getaffinity_v1,numa_sched_getaffinity@libnuma_1.1");
 
@@ -262,9 +263,8 @@ int numa_sched_getaffinity_v2(pid_t pid, struct bitmask *mask)
 {
 	/* len is length in bytes */
 	return syscall(__NR_sched_getaffinity, pid, numa_bitmask_nbytes(mask),
-								mask->maskp);
+		       mask->maskp);
 	/* sched_getaffinity returns sizeof(cpumask_t) */
-
 }
 __asm__(".symver numa_sched_getaffinity_v2,numa_sched_getaffinity@@libnuma_1.2");
 

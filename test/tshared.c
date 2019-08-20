@@ -5,10 +5,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define err(x) perror(x),exit(1)
+#define err(x) perror(x), exit(1)
 
 enum SZ {
-	MEMSZ = 100<<20,
+	MEMSZ = 100 << 20,
 	NTHR = 10,
 };
 
@@ -28,7 +28,7 @@ int main(void)
 	mem = numa_alloc_interleaved(MEMSZ);
 	for (i = 0; i < NTHR; i++) {
 		if (fork() == 0) {
-			for (k = i*pagesz; k < MEMSZ; k += pagesz * NTHR) {
+			for (k = i * pagesz; k < MEMSZ; k += pagesz * NTHR) {
 				mem[k] = 1;
 			}
 			_exit(0);
@@ -39,11 +39,12 @@ int main(void)
 	k = 0;
 	for (i = 0; i < MEMSZ; i += pagesz) {
 		int nd;
-		if (get_mempolicy(&nd, NULL, 0, mem + i, MPOL_F_NODE|MPOL_F_ADDR) < 0)
+		if (get_mempolicy(&nd, NULL, 0, mem + i,
+				  MPOL_F_NODE | MPOL_F_ADDR) < 0)
 			err("get_mempolicy");
 		if (nd != k)
 			printf("offset %d node %d expected %d\n", i, nd, k);
-		k = (k+1)%(max_node+1);
+		k = (k + 1) % (max_node + 1);
 	}
 
 	return 0;
