@@ -322,7 +322,7 @@ static struct handler {
 	{ 'f', "file:",   NULL,    affinity_file  },
 	{ 'b', "block:",  "block", affinity_class },
 	{ 'p', "pci:",    NULL,	   affinity_pci   },
-	{}
+	{},
 };
 
 hidden int resolve_affinity(const char *id, struct bitmask *mask)

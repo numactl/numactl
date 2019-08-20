@@ -59,7 +59,7 @@ struct option opts[] = {
 	{"huge", 0, 0, 'u'},
 	{"touch", 0, 0, 'T'},
 	{"verify", 0, 0, 'V'}, /* undocumented - for debugging */
-	{ 0 }
+	{ 0 },
 };
 
 void usage(void)

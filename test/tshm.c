@@ -55,7 +55,7 @@ void sendreq(int fd, enum cmd cmd, int policy, long offset, long len, nodemask_t
 		.offset = offset,
 		.len = len,
 		.policy = policy,
-		.nodes = nodes
+		.nodes = nodes,
 	};
 	if (write(fd, &req, sizeof(struct req)) != sizeof(struct req))
 		panic("bad req write");

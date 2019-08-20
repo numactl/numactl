@@ -75,7 +75,7 @@ meminfo_t process_meminfo[] = {
 	{ PROCESS_HUGE_INDEX,  "huge", "Huge" },
 	{        1,            "heap", "Heap" },
 	{        2,            "stack", "Stack" },
-	{ PROCESS_PRIVATE_INDEX, "N", "Private" }
+	{ PROCESS_PRIVATE_INDEX, "N", "Private" },
 };
 
 #define PROCESS_MEMINFO_ROWS (sizeof(process_meminfo) / sizeof(process_meminfo[0]))
@@ -127,7 +127,7 @@ meminfo_t system_meminfo[] = {
 	{ 32, "HugePages_Total", "HugePages_Total" },
 	{ 33, "HugePages_Free", "HugePages_Free" },
 	{ 34, "HugePages_Surp", "HugePages_Surp" },
-	{ 35, "KReclaimable", "KReclaimable" }
+	{ 35, "KReclaimable", "KReclaimable" },
 };
 
 #define SYSTEM_MEMINFO_ROWS (sizeof(system_meminfo) / sizeof(system_meminfo[0]))

@@ -86,9 +86,9 @@ static struct policy {
 	int policy;
 	int noarg;
 } policies[] = {
-	{ "interleave", MPOL_INTERLEAVE, },
-	{ "membind",    MPOL_BIND, },
-	{ "preferred",   MPOL_PREFERRED, },
+	{ "interleave", MPOL_INTERLEAVE },
+	{ "membind",    MPOL_BIND },
+	{ "preferred",   MPOL_PREFERRED },
 	{ "default",    MPOL_DEFAULT, 1 },
 	{ NULL },
 };
