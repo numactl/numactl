@@ -243,9 +243,9 @@ void hardware(void)
 	int maxnode = numa_max_node();
 
 	if (numa_available() < 0) {
-                printf("No NUMA available on this system\n");
-                exit(1);
-        }
+		printf("No NUMA available on this system\n");
+		exit(1);
+	}
 
 	for (i=0; i<=maxnode; i++)
 		if (numa_bitmask_isbitset(numa_nodes_ptr, i))

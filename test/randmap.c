@@ -31,14 +31,14 @@ void setpol(unsigned long offset, unsigned long length, int policy, unsigned lon
 	long i, end;
 
 	printf("off:%lx length:%lx policy:%d nodes:%lx\n",
-	       offset, length, policy, nodes);
+		offset, length, policy, nodes);
 
 	if (mbind(map + offset*pagesize, length*pagesize, policy,
 		  &nodes, 8, 0) < 0) {
 		printf("mbind: %s offset %lx length %lx policy %d nodes %lx\n",
-		       strerror(errno),
-		       offset*pagesize, length*pagesize,
-		       policy, nodes);
+			strerror(errno),
+			offset*pagesize, length*pagesize,
+			policy, nodes);
 		return;
 	}
 
@@ -61,11 +61,11 @@ void setpol(unsigned long offset, unsigned long length, int policy, unsigned lon
 			err("get_mempolicy");
 		if (pol2 != pages[i].policy) {
 			printf("%lx: got policy %d expected %d, nodes got %lx expected %lx\n",
-			       i, pol2, pages[i].policy, nodes2, pages[i].mask);
+				i, pol2, pages[i].policy, nodes2, pages[i].mask);
 		}
 		if (policy != MPOL_DEFAULT && nodes2 != pages[i].mask) {
 			printf("%lx: nodes %lx, expected %lx, policy %d\n",
-			       i, nodes2, pages[i].mask, policy);
+				i, nodes2, pages[i].mask, policy);
 		}
 	}
 }

@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 
 	from = numa_parse_nodestring(argv[optind]);
 	if (!from) {
-                printf ("<%s> is invalid\n", argv[optind]);
+		printf ("<%s> is invalid\n", argv[optind]);
 		exit(1);
 	}
 	if (errno) {
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
 
 	to = numa_parse_nodestring(argv[optind+1]);
 	if (!to) {
-                printf ("<%s> is invalid\n", argv[optind+1]);
+		printf ("<%s> is invalid\n", argv[optind+1]);
 		exit(1);
 	}
 	if (errno) {

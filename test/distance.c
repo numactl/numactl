@@ -23,7 +23,7 @@ int main(void)
 		printf("%03d: ", node_to_use[a]);
 		if (numa_distance(node_to_use[a], node_to_use[a]) != 10) {
 			printf("%d: self distance is not 10 (%d)\n",
-			       node_to_use[a], numa_distance(node_to_use[a],node_to_use[a]));
+				node_to_use[a], numa_distance(node_to_use[a],node_to_use[a]));
 			exit(1);
 		}
 		for (b = 0; b < got_nodes; b++) {

@@ -34,9 +34,9 @@ int main(int argc, char **argv)
 	nr_nodes = numa_max_node()+1;
 
 	old_nodes = numa_bitmask_alloc(nr_nodes);
-        new_nodes = numa_bitmask_alloc(nr_nodes);
-        numa_bitmask_setbit(old_nodes, 1);
-        numa_bitmask_setbit(new_nodes, 0);
+	new_nodes = numa_bitmask_alloc(nr_nodes);
+	numa_bitmask_setbit(old_nodes, 1);
+	numa_bitmask_setbit(new_nodes, 0);
 
 	if (nr_nodes < 2) {
 		printf("A minimum of 2 nodes is required for this test.\n");

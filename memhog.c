@@ -106,7 +106,7 @@ int main(int ac, char **av)
 	policy = parse_policy(av[2], av[3]);
 	if (policy != MPOL_DEFAULT)
 		nodes = numa_parse_nodestring(av[3]);
-        if (!nodes) {
+	if (!nodes) {
 		printf ("<%s> is invalid\n", av[3]);
 		exit(1);
 	}

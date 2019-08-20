@@ -90,7 +90,7 @@ static key_t sysvkey(char *name)
 	key = ftok(name, shmid);
 	if (key < 0)
 		nerror("cannot get key for newly created shm key file %s",
-		       name);
+			name);
 	return key;
 }
 
@@ -104,9 +104,9 @@ void attach_sysvshm(char *name, char *opt)
 	if (shmfd < 0 && errno == ENOENT) {
 		if (shmlen == 0)
 			complain(
-                     "need a --length to create a sysv shared memory segment");
+		     "need a --length to create a sysv shared memory segment");
 		fprintf(stderr,
-         "numactl: Creating shared memory segment %s id %ld mode %04o length %.fMB\n",
+	 "numactl: Creating shared memory segment %s id %ld mode %04o length %.fMB\n",
 			name, shmid, shmmode, ((double)shmlen) / (1024*1024) );
 		shmfd = shmget(key, shmlen, IPC_CREAT|shmmode|shmflags);
 		if (shmfd < 0)
@@ -138,7 +138,7 @@ void attach_shared(char *name, char *opt)
 	if (shmfd < 0) {
 		errno = 0;
 		if (shmlen == 0)
-		        complain("need a --length to create a shared file");
+			complain("need a --length to create a shared file");
 		shmfd = open(name, O_RDWR|O_CREAT, shmmode);
 		if (shmfd < 0)
 			nerror("cannot create file %s", name);
@@ -173,9 +173,9 @@ dumppol(unsigned long long start, unsigned long long end, int pol, struct bitmas
 	if (pol == MPOL_DEFAULT)
 		return;
 	printf("%016llx-%016llx: %s ",
-	       shmoffset+start,
-	       shmoffset+end,
-	       policy_name(pol));
+		shmoffset+start,
+		shmoffset+end,
+		policy_name(pol));
 	printmask("", mask);
 }
 

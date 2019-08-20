@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 typedef struct {
-        unsigned long n[NUMA_NUM_NODES/(sizeof(unsigned long)*8)];
+	unsigned long n[NUMA_NUM_NODES/(sizeof(unsigned long)*8)];
 } nodemask_t;
 
 struct bitmask {

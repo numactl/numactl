@@ -25,19 +25,19 @@ int *node_to_use;
 
 int get_node_list()
 {
-        int a, got_nodes = 0, max_node, numnodes;
-        long long free_node_sizes;
+	int a, got_nodes = 0, max_node, numnodes;
+	long long free_node_sizes;
 
-        numnodes = numa_num_configured_nodes();
-        node_to_use = (int *)malloc(numnodes * sizeof(int));
-        max_node = numa_max_node();
-        for (a = 0; a <= max_node; a++) {
-                if (numa_node_size(a, &free_node_sizes) > 0)
-                        node_to_use[got_nodes++] = a;
-        }
-        if(got_nodes != numnodes)
-                return -1;
-        return got_nodes;
+	numnodes = numa_num_configured_nodes();
+	node_to_use = (int *)malloc(numnodes * sizeof(int));
+	max_node = numa_max_node();
+	for (a = 0; a <= max_node; a++) {
+		if (numa_node_size(a, &free_node_sizes) > 0)
+			node_to_use[got_nodes++] = a;
+	}
+	if(got_nodes != numnodes)
+		return -1;
+	return got_nodes;
 }
 
 int main(int argc, char **argv)

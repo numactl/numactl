@@ -300,19 +300,19 @@ int max_node, numnodes;
 
 int get_node_list(void)
 {
-        int a, got_nodes = 0;
-        long long free_node_sizes;
+	int a, got_nodes = 0;
+	long long free_node_sizes;
 
-        numnodes = numa_num_configured_nodes();
-        node_to_use = (int *)malloc(numnodes * sizeof(int));
-        max_node = numa_max_node();
-        for (a = 0; a <= max_node; a++) {
-                if (numa_node_size(a, &free_node_sizes) > 0)
-                        node_to_use[got_nodes++] = a;
-        }
-        if(got_nodes != numnodes)
-                return -1;
-        return 0;
+	numnodes = numa_num_configured_nodes();
+	node_to_use = (int *)malloc(numnodes * sizeof(int));
+	max_node = numa_max_node();
+	for (a = 0; a <= max_node; a++) {
+		if (numa_node_size(a, &free_node_sizes) > 0)
+			node_to_use[got_nodes++] = a;
+	}
+	if(got_nodes != numnodes)
+		return -1;
+	return 0;
 }
 
 void test(enum test type)

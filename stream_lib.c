@@ -99,12 +99,12 @@ void stream_check(void)
 	Vprintf(HLINE);
 	BytesPerWord = sizeof(double);
 	Vprintf("This system uses %d bytes per DOUBLE PRECISION word.\n",
-	       BytesPerWord);
+		BytesPerWord);
 
 	Vprintf(HLINE);
 	Vprintf("Array size = %lu, Offset = %d\n", N, OFFSET);
 	Vprintf("Total memory required = %.1f MB.\n",
-	       (3 * N * BytesPerWord) / 1048576.0);
+		(3 * N * BytesPerWord) / 1048576.0);
 	Vprintf("Each test is run %d times, but only\n", NTIMES);
 	Vprintf("the *best* time for each is used.\n");
 
@@ -120,10 +120,10 @@ void stream_check(void)
 
 	if ((quantum = checktick()) >= 1)
 		Vprintf("Your clock granularity/precision appears to be "
-		       "%d microseconds.\n", quantum);
+			"%d microseconds.\n", quantum);
 	else
 		Vprintf("Your clock granularity appears to be "
-		       "less than one microsecond.\n");
+			"less than one microsecond.\n");
 
 	t = mysecond();
 	for (j = 0; j < N; j++)
@@ -131,7 +131,7 @@ void stream_check(void)
 	t = 1.0E6 * (mysecond() - t);
 
 	Vprintf("Each test below will take on the order"
-	       " of %d microseconds.\n", (int) t);
+		" of %d microseconds.\n", (int) t);
 	Vprintf("   (= %d clock ticks)\n", (int) (t / quantum));
 	Vprintf("Increase the size of the arrays if this shows that\n");
 	Vprintf("you are not getting at least 20 clock ticks per test.\n");
@@ -194,7 +194,7 @@ void stream_test(double *res)
 
 		Vprintf("%s%11.4f  %11.4f  %11.4f  %11.4f\n", label[j],
 			speed,
-		       rmstime[j], mintime[j], maxtime[j]);
+			rmstime[j], mintime[j], maxtime[j]);
 
 		if (res)
 			res[j] = speed;

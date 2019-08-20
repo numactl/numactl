@@ -46,28 +46,28 @@ typedef unsigned u32;
  */
 int bitmap_scnprintf(char *buf, unsigned int buflen, struct bitmask *mask)
 {
-        int i, word, bit, len = 0;
-        unsigned long val;
-        const char *sep = "";
-        int chunksz;
-        u32 chunkmask;
+	int i, word, bit, len = 0;
+	unsigned long val;
+	const char *sep = "";
+	int chunksz;
+	u32 chunkmask;
 
-        chunksz = mask->size & (CHUNKSZ - 1);
-        if (chunksz == 0)
-                chunksz = CHUNKSZ;
+	chunksz = mask->size & (CHUNKSZ - 1);
+	if (chunksz == 0)
+		chunksz = CHUNKSZ;
 
-        i = ALIGN(mask->size, CHUNKSZ) - CHUNKSZ;
-        for (; i >= 0; i -= CHUNKSZ) {
-                chunkmask = ((1ULL << chunksz) - 1);
-                word = i / BITS_PER_LONG;
-                bit = i % BITS_PER_LONG;
-                val = (mask->maskp[word] >> bit) & chunkmask;
-                len += snprintf(buf+len, buflen-len, "%s%0*lx", sep,
-                        (chunksz+3)/4, val);
-                chunksz = CHUNKSZ;
-                sep = ",";
-        }
-        return len;
+	i = ALIGN(mask->size, CHUNKSZ) - CHUNKSZ;
+	for (; i >= 0; i -= CHUNKSZ) {
+		chunkmask = ((1ULL << chunksz) - 1);
+		word = i / BITS_PER_LONG;
+		bit = i % BITS_PER_LONG;
+		val = (mask->maskp[word] >> bit) & chunkmask;
+		len += snprintf(buf+len, buflen-len, "%s%0*lx", sep,
+			(chunksz+3)/4, val);
+		chunksz = CHUNKSZ;
+		sep = ",";
+	}
+	return len;
 }
 
 extern int numa_parse_bitmap(char  *buf, struct bitmask *mask);

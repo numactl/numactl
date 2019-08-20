@@ -99,9 +99,9 @@ numa_init(void)
 
 	set_sizes();
 	/* numa_all_nodes should represent existing nodes on this system */
-        max = numa_num_configured_nodes();
-        for (i = 0; i < max; i++)
-                nodemask_set_compat((nodemask_t *)&numa_all_nodes, i);
+	max = numa_num_configured_nodes();
+	for (i = 0; i < max; i++)
+		nodemask_set_compat((nodemask_t *)&numa_all_nodes, i);
 	memset(&numa_no_nodes, 0, sizeof(numa_no_nodes));
 }
 
@@ -865,7 +865,7 @@ void numa_police_memory(void *mem, size_t size)
 	int pagesize = numa_pagesize_int();
 	unsigned long i;
 	for (i = 0; i < size; i += pagesize)
-        ((volatile char*)mem)[i] = ((volatile char*)mem)[i];
+	((volatile char*)mem)[i] = ((volatile char*)mem)[i];
 }
 
 make_internal_alias(numa_police_memory);
@@ -1073,7 +1073,7 @@ copy_bitmask_to_nodemask(struct bitmask *bmp, nodemask_t *nmp)
 	int max, i;
 
 	memset(nmp, 0, sizeof(nodemask_t));
-        max = (sizeof(nodemask_t)*8);
+	max = (sizeof(nodemask_t)*8);
 	for (i=0; i<bmp->size; i++) {
 		if (i >= max)
 			break;
@@ -1110,7 +1110,7 @@ copy_nodemask_to_bitmask(nodemask_t *nmp, struct bitmask *bmp)
 	int max, i;
 
 	numa_bitmask_clearall(bmp);
-        max = (sizeof(nodemask_t)*8);
+	max = (sizeof(nodemask_t)*8);
 	if (max > bmp->size)
 		max = bmp->size;
 	for (i=0; i<max; i++) {
@@ -1518,7 +1518,7 @@ numa_run_on_node_mask_v1(const nodemask_t *mask)
 		while (size <= CPU_BUFFER_SIZE) {
 			memcpy(bigbuf, cpus, CPU_BYTES(ncpus));
 			memset(bigbuf + CPU_BYTES(ncpus), 0,
-			       CPU_BUFFER_SIZE - CPU_BYTES(ncpus));
+				CPU_BUFFER_SIZE - CPU_BYTES(ncpus));
 			err = numa_sched_setaffinity_v1_int(0, size, (unsigned long *)bigbuf);
 			if (err == 0 || errno != EINVAL)
 				break;

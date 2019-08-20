@@ -23,7 +23,7 @@ int main(int ac, char **av)
 
 	policy = parse_policy(av[1], av[2]);
 
-        nodes = numa_allocate_nodemask();
+	nodes = numa_allocate_nodemask();
 
 	if (av[1] && av[2])
 		nodes = numa_parse_nodestring(av[2]);
