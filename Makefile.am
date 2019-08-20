@@ -14,7 +14,7 @@ noinst_HEADERS = numaint.h util.h
 
 dist_man_MANS = move_pages.2 numa.3 numactl.8 numastat.8 migratepages.8 migspeed.8 memhog.8
 
-EXTRA_DIST = README.md INSTALL.md
+EXTRA_DIST = README.md INSTALL.md LICENSE.GPL2 LICENSE.LGPL2.1
 
 numactl_SOURCES = numactl.c util.c shm.c shm.h
 numactl_LDADD = libnuma.la
