@@ -1,3 +1,8 @@
+#include "numa.h"
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+#include <sys/socket.h>
+
 hidden int rta_put_address(struct nlmsghdr *msg, int type,
 			   struct sockaddr *adr);
 hidden struct rtattr *rta_get(struct nlmsghdr *m, struct rtattr *p, int offset);

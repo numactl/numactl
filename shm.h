@@ -1,3 +1,4 @@
+#include "numa.h"
 
 extern int shmfd;
 extern long shmid;

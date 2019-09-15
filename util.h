@@ -1,3 +1,5 @@
+#include "numa.h"
+
 extern void printmask(char *name, struct bitmask *mask);
 extern int find_first(struct bitmask *mask);
 extern struct bitmask *nodemask(char *s);
