@@ -799,8 +799,10 @@ will be set to
 and \-1 returned. On success 0 is returned.
 
 .BR numa_node_to_cpu_update ()
-Mark the node's cpus bitmask stale, then get the latest bitmask by calling
+Mark cpus bitmask of all nodes stale, then get the latest bitmask by calling
 .BR numa_node_to_cpus ()
+This allows to update the libnuma state after a CPU hotplug event. The application
+is in charge of detecting CPU hotplug events.
 
 .BR numa_node_of_cpu ()
 returns the node that a cpu belongs to. If the user supplies an invalid cpu
