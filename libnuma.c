@@ -793,10 +793,10 @@ long long numa_node_size64(int node, long long *freep)
 
 make_internal_alias(numa_node_size64);
 
-long numa_node_size(int node, long *freep)
+long long numa_node_size(int node, long long *freep)
 {
 	long long f2;
-	long sz = numa_node_size64_int(node, &f2);
+	long long sz = numa_node_size64_int(node, &f2);
 	if (freep)
 		*freep = f2;
 	return sz;

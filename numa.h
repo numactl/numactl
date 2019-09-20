@@ -143,7 +143,7 @@ int numa_preferred(void);
 
 /* Return node size and free memory */
 long long numa_node_size64(int node, long long *freep);
-long numa_node_size(int node, long *freep);
+long long numa_node_size(int node, long long *freep);
 
 int numa_pagesize(void);
 
