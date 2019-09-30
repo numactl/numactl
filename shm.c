@@ -119,7 +119,7 @@ void attach_sysvshm(char *name, char *opt)
 		shmlen = s.shm_segsz;
 	}
 
-	shmptr = shmat(shmfd, NULL, SHM_RDONLY);
+	shmptr = shmat(shmfd, NULL, 0);
 	if (shmptr == (void*)-1)
 		err("shmat");
 	shmptr += shmoffset;
@@ -134,7 +134,7 @@ void attach_shared(char *name, char *opt)
 {
 	struct stat64 st;
 
-	shmfd = open(name, O_RDONLY);
+	shmfd = open(name, O_RDWR);
 	if (shmfd < 0) {
 		errno = 0;
 		if (shmlen == 0)
@@ -160,7 +160,7 @@ void attach_shared(char *name, char *opt)
 
 	/* RED-PEN For shmlen > address space may need to map in pieces.
 	   Left for some poor 32bit soul. */
-	shmptr = mmap64(NULL, shmlen, PROT_READ, MAP_SHARED, shmfd, shmoffset);
+	shmptr = mmap64(NULL, shmlen, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd, shmoffset);
 	if (shmptr == (char*)-1)
 		err("shm mmap");
 
