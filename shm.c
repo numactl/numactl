@@ -151,6 +151,7 @@ void attach_shared(char *name, char *opt)
 			   would be impossible to apply policy then.
 			   need to fix that in the kernel. */
 			perror("ftruncate");
+			exit(1);
 		}
 	}
 
