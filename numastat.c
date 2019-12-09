@@ -29,19 +29,24 @@ end of this file.
 
 */
 
-// Compile with: gcc -O -std=gnu99 -Wall -o numastat numastat.c
+// Compile with: gcc -O -std=gnu99 -Wall -o numastat numastat.c -lnuma
 
 #define __USE_MISC
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include "numaif.h"
 
 #define STRINGIZE(s) #s
 #define STRINGIFY(s) STRINGIZE(s)
@@ -719,6 +724,7 @@ void display_usage_and_exit(void)
 {
         fprintf(stderr, "Usage: %s [-c] [-m] [-n] [-p <PID>|<pattern>] [-s[<node>]] [-v] [-V] [-z] [ <PID>|<pattern>... ]\n", prog_name);
         fprintf(stderr, "-c to minimize column widths\n");
+        fprintf(stderr, "-f <file> to show page cache residency of a file\n");
         fprintf(stderr, "-m to show meminfo-like system-wide memory usage\n");
         fprintf(stderr, "-n to show the numastat statistics info\n");
         fprintf(stderr, "-p <PID>|<pattern> to show process info\n");
@@ -1333,9 +1339,128 @@ void add_pids_from_pattern_search(char *pattern)
         }
 }
 
+void show_file_info(const char *file)
+{
+        printf("\nPer-node page cache info for file %s (in MiB):\n", file);
+
+        int fd = open(file, O_RDONLY);
+        if (fd < 0) {
+                perror("couldn't open file");
+                exit(EXIT_FAILURE);
+        }
+
+        struct stat statbuf;
+        if (fstat(fd, &statbuf) < 0) {
+                perror("couldn't stat file");
+                exit(EXIT_FAILURE);
+        }
+        size_t length = (size_t)statbuf.st_size;
+
+        if (!S_ISREG(statbuf.st_mode)) {
+                fprintf(stderr, "not a regular file\n");
+                exit(EXIT_FAILURE);
+        }
+
+        void *addr = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, 0);
+        if (addr == MAP_FAILED) {
+                perror("couldn't mmap file");
+                exit(EXIT_FAILURE);
+        }
+        close(fd);
+
+        int64_t num_pages = (length + (long)page_size_in_bytes - 1) / (long)page_size_in_bytes;
+
+        unsigned char *mincore_vec = malloc(num_pages);
+        if (mincore_vec == NULL) {
+                perror("malloc failed line: " STRINGIFY(__LINE__));
+                exit(EXIT_FAILURE);
+        }
+
+        if (mincore(addr, length, mincore_vec) < 0) {
+                perror("mincore failed");
+                exit(EXIT_FAILURE);
+        }
+
+        int64_t *node_residency_count = calloc(num_nodes, sizeof(int64_t));
+        if (node_residency_count == NULL) {
+                perror("malloc failed line: " STRINGIFY(__LINE__));
+                exit(EXIT_FAILURE);
+        }
+
+        for (int64_t i = 0; i < num_pages; i++) {
+                if ((mincore_vec[i] & 1) == 0) // Page not resident in memory.
+                        continue;
+
+                int node = -1;
+                if (get_mempolicy(&node, NULL, 0, (char*)addr + i * (long)page_size_in_bytes,
+                                  MPOL_F_ADDR | MPOL_F_NODE) < 0) {
+                        perror("get_mempolicy failed");
+                        exit(EXIT_FAILURE);
+                }
+
+                if (node < 0 || node > num_nodes) {
+                        perror("got invalid NUMA node from get_mempolicy");
+                        exit(EXIT_FAILURE);
+                }
+                node_residency_count[node] += 1;
+        }
+        munmap(addr, length);
+        free(mincore_vec);
+
+        // Now build the table.
+        int header_rows = 2;
+        int header_cols = 1;
+        int data_rows = 1;
+        vtab_t table;
+        init_table(&table, header_rows, header_cols, data_rows, num_nodes + 1);
+
+        set_col_width(&table, 0, 16);
+        set_col_justification(&table, 0, COL_JUSTIFY_LEFT);
+
+        // Set up "Node <N>" column headers over data columns, plus "Total" column
+        for (int node_ix = 0; (node_ix <= num_nodes); node_ix++) {
+                int col = header_cols + node_ix;
+                // Assign header row label and horizontal line for this column...
+                string_assign(&table, 0, col, node_header[node_ix]);
+                repchar_assign(&table, 1, col, '-');
+                // Set column width, decimal places, and right justify data
+                set_col_width(&table, col, 16);
+                int decimal_places = 2;
+                if (compress_display) {
+                        decimal_places = 0;
+                }
+                set_col_decimal_places(&table, col, decimal_places);
+                set_col_justification(&table, col, COL_JUSTIFY_RIGHT);
+        }
+
+        zero_table_data(&table, CELL_TYPE_DOUBLE);
+
+        string_assign(&table, header_rows, 0, "FilePages");
+
+        double total = 0.;
+        for (int i = 0; i < num_nodes; i++) {
+                double value = (node_residency_count[i] * page_size_in_bytes) / (double)MEGABYTE;
+                double_assign(&table, header_rows, header_cols + i, value);
+                total += value;
+        }
+        double_assign(&table, header_rows, header_cols + num_nodes, total);
+        free(node_residency_count);
+
+        // Compress display column widths, if requested
+        if (compress_display) {
+                for (int col = 0; (col < header_cols + num_nodes + 1); col++) {
+                        auto_set_col_width(&table, col, 4, 16);
+                }
+        }
+
+        display_table(&table, screen_width, 0, 0, show_zero_data, show_zero_data);
+        free_table(&table);
+}
+
 int main(int argc, char **argv)
 {
         prog_name = argv[0];
+        char *file = NULL;
         int show_the_system_info = 0;
         int show_the_numastat_info = 0;
         static struct option long_options[] = {
@@ -1344,7 +1469,7 @@ int main(int argc, char **argv)
         };
         int long_option_index = 0;
         int opt;
-        while ((opt = getopt_long(argc, argv, "cmnp:s::vVz?", long_options, &long_option_index)) != -1) {
+        while ((opt = getopt_long(argc, argv, "cf:mnp:s::vVz?", long_options, &long_option_index)) != -1) {
                 switch (opt) {
                 case 0:
                         printf("Unexpected long option %s", long_options[long_option_index].name);
@@ -1356,6 +1481,14 @@ int main(int argc, char **argv)
                         break;
                 case 'c':
                         compress_display = 1;
+                        break;
+                case 'f':
+                        free(file);
+                        file = strdup(optarg);
+                        if (file == NULL) {
+                                perror("strdup failed line: " STRINGIFY(__LINE__));
+                                exit(EXIT_FAILURE);
+                        }
                         break;
                 case 'm':
                         show_the_system_info = 1;
@@ -1416,6 +1549,12 @@ int main(int argc, char **argv)
         // Figure out page sizes
         page_size_in_bytes = (double)sysconf(_SC_PAGESIZE);
         huge_page_size_in_bytes = get_huge_page_size_in_bytes();
+
+        if (file != NULL) {
+                show_file_info(file);
+                free(file);
+        }
+
         // Display the info for the process specifiers
         if (num_pids > 0) {
                 sort_pids_and_remove_duplicates();
