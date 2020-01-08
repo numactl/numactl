@@ -159,7 +159,7 @@ A !N-N notation indicates the inverse of N-N, in other words all cpus
 except N-N.  If used with + notation, specify !+N-N.
 .TP
 .B \-\-localalloc, \-l 
-Always allocate on the current node.
+Try to allocate on the current node of the process, but if memory cannot be allocated there fall back to other nodes.
 .TP
 .B \-\-preferred=node
 Preferably allocate memory on 
