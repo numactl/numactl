@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <assert.h>
 #include "numa.h"
 #include "numaif.h"
 #include "numaint.h"
@@ -154,11 +155,9 @@ void show(void)
 	printf("preferred node: ");
 	switch (policy) {
 	case MPOL_PREFERRED:
-		if (prefnode != -1) {
-			printf("%ld\n", prefnode);
-			break;
-		}
-		/*FALL THROUGH*/
+		assert(prefnode != -1);
+		printf("%ld\n", prefnode);
+		break;
 	case MPOL_DEFAULT:
 		printf("current\n");
 		break;
