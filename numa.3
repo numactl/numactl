@@ -64,7 +64,13 @@ numa \- NUMA policy library
 .sp
 .B int numa_preferred(void);
 .br
+.B int numa_has_preferred_many(void);
+.br
+.B struct bitmask *numa_preferred_many(void);
+.br
 .BI "void numa_set_preferred(int " node );
+.br
+.BI "void numa_set_preferred_many(struct bitmask *" nodemask );
 .br
 .BI "int numa_get_interleave_node(void);
 .br
@@ -427,6 +433,16 @@ allocates memory, unless some other policy overrides this.
 .\" order of the current node's zonelist to return the correct
 .\" node.  Need to tighten this up with the syscall results.
 
+.BR numa_has_preferred_many ()
+Returns > 0 if the system supports multiple preferred nodes.
+
+.BR numa_preferred_many ()
+Returns the current set of preferred nodes. This implies the empty set when the
+policy isn't one used for preference
+.I (PREFERRED, PREFERRED_MANY, BIND).
+The caller is responsible for freeing the mask with
+.BR numa_bitmask_free ().
+
 .BR numa_set_preferred ()
 sets the preferred node for the current task to
 .IR node .
@@ -438,6 +454,16 @@ Passing a
 of \-1 argument specifies local allocation and is equivalent to
 calling
 .BR numa_set_localalloc ().
+
+.BR numa_set_preferred_many ()
+sets the preferred set of nodes for the current task to
+.IR nodemask .
+This is similar to
+.BR numa_set_preferred ()
+with the exception that it utilizes a different kernel interface to specify
+multiple preferred nodes.
+The caller is responsible for freeing the mask with
+.BR numa_bitmask_free ().
 
 .BR numa_get_interleave_mask ()
 returns the current interleave mask if the task's memory allocation policy
