@@ -378,7 +378,7 @@ void test(enum test type)
 		}
 		printf("setting preferred node to %d\n", node_to_use[i]);
 		numa_set_preferred(node_to_use[i]);
-		memtest("memory without policy", numa_alloc(msize));
+		memtest("memory with preferred policy", numa_alloc(msize));
 	}
 
 	numa_set_interleave_mask(numa_all_nodes_ptr);
