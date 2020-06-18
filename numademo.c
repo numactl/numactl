@@ -370,6 +370,18 @@ void test(enum test type)
 				strcat(buf, buf2);
 			}
 		memtest(buf, numa_alloc_interleaved_subset(msize, nodes));
+
+		if (!numa_has_preferred_many())
+			continue;
+
+		sprintf(buf, "memory preferred on");
+		for (k = 0; k < numnodes; k++)
+			if ((1UL<<node_to_use[k]) & mask) {
+				sprintf(buf2, " %d", node_to_use[k]);
+				strcat(buf, buf2);
+			}
+		numa_set_preferred_many(nodes);
+		memtest(buf, numa_alloc(msize));
 	}
 
 	for (i = 0; i < numnodes; i++) {
@@ -442,11 +454,27 @@ void test(enum test type)
 		numa_set_localalloc();
 		memtest("local allocation", numa_alloc(msize));
 
+#define set_pref_many(__i) do {			\
+        numa_bitmask_clearall(nodes);		\
+        numa_bitmask_setbit(nodes, __i);	\
+        numa_set_preferred_many(nodes);		\
+} while (0)
 		numa_set_preferred(node_to_use[(i + 1) % numnodes]);
 		memtest("setting wrong preferred node", numa_alloc(msize));
 		numa_set_preferred(node_to_use[i]);
 		memtest("setting correct preferred node", numa_alloc(msize));
-		numa_set_preferred(-1);
+
+		if (numa_has_preferred_many()) {
+			set_pref_many(node_to_use[(i + 1) % numnodes]);
+			memtest("setting wrong preferred-many nodes",
+					numa_alloc(msize));
+			set_pref_many(node_to_use[i]);
+			memtest("setting correct preferred-many nodes",
+					numa_alloc(msize));
+		}
+#undef set_pref_many
+
+		numa_set_localalloc();
 		if (!delim[0])
 			printf("\n\n\n");
 	}
