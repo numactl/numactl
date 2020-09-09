@@ -18,3 +18,9 @@ extern char *policy_name(int policy);
 #define array_len(x) (sizeof(x)/sizeof(*(x)))
 
 #define round_up(x,y) (((x) + (y) - 1) & ~((y)-1))
+
+#if HAVE_ATTRIBUTE_SYMVER
+#define SYMVER(a,b) __attribute__ ((symver (b)))
+#else
+#define SYMVER(a,b) __asm__ (".symver " #a "," #b);
+#endif
