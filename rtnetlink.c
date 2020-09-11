@@ -1,9 +1,9 @@
 /* Simple LPGLed rtnetlink library */
-#include <sys/socket.h>
-#include <linux/rtnetlink.h>
-#include <linux/netlink.h>
-#include <netinet/in.h>
 #include <errno.h>
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #define hidden __attribute__((visibility("hidden")))
 #include "rtnetlink.h"
@@ -33,8 +33,7 @@ hidden struct rtattr *rta_get(struct nlmsghdr *m, struct rtattr *p, int offset)
 	return rta;
 }
 
-hidden int
-rta_put_address(struct nlmsghdr *msg, int type, struct sockaddr *adr)
+hidden int rta_put_address(struct nlmsghdr *msg, int type, struct sockaddr *adr)
 {
 	switch (adr->sa_family) {
 	case AF_INET: {
@@ -54,8 +53,8 @@ rta_put_address(struct nlmsghdr *msg, int type, struct sockaddr *adr)
 }
 
 /* Assumes no truncation. Make the buffer large enough. */
-hidden int
-rtnetlink_request(struct nlmsghdr *msg, int buflen, struct sockaddr_nl *adr)
+hidden int rtnetlink_request(struct nlmsghdr *msg, int buflen,
+			     struct sockaddr_nl *adr)
 {
 	int rsk;
 	int n;

@@ -4,12 +4,12 @@
  * (C) 2006 Silicon Graphics, Inc.
  *		Christoph Lameter <clameter@sgi.com>
  */
-#include <stdio.h>
-#include <stdlib.h>
+#include <asm/unistd.h>
 #include <numa.h>
 #include <numaif.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <asm/unistd.h>
 
 unsigned int pagesize;
 unsigned int page_count = 32;
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 
 	pagesize = getpagesize();
 
-	nr_nodes = numa_max_node()+1;
+	nr_nodes = numa_max_node() + 1;
 
 	old_nodes = numa_bitmask_alloc(nr_nodes);
 	new_nodes = numa_bitmask_alloc(nr_nodes);
@@ -58,12 +58,13 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	pages = (void *) ((((long)page_base) & ~((long)(pagesize - 1))) + pagesize);
+	pages = (void *)((((long)page_base) & ~((long)(pagesize - 1))) +
+			 pagesize);
 
 	for (i = 0; i < page_count; i++) {
 		if (i != 2)
 			/* We leave page 2 unallocated */
-			pages[ i * pagesize ] = (char) i;
+			pages[i * pagesize] = (char)i;
 		addr[i] = pages + i * pagesize;
 		nodes[i] = 0;
 		status[i] = -123;
@@ -81,9 +82,11 @@ int main(int argc, char **argv)
 	}
 
 	for (i = 0; i < page_count; i++) {
-		printf("Page %d vaddr=%p node=%d\n", i, pages + i * pagesize, status[i]);
+		printf("Page %d vaddr=%p node=%d\n", i, pages + i * pagesize,
+		       status[i]);
 		if (i != 2 && status[i]) {
-			printf("Bad page state. Page %d status %d\n",i, status[i]);
+			printf("Bad page state. Page %d status %d\n", i,
+			       status[i]);
 			exit(1);
 		}
 	}
@@ -91,7 +94,7 @@ int main(int argc, char **argv)
 	/* Move to node zero */
 	printf("\nMoving pages via mbind to node 0 ...\n");
 	rc = mbind(pages, page_count * pagesize, MPOL_BIND, old_nodes->maskp,
-		old_nodes->size + 1, MPOL_MF_MOVE | MPOL_MF_STRICT);
+		   old_nodes->size + 1, MPOL_MF_MOVE | MPOL_MF_STRICT);
 	if (rc < 0) {
 		perror("mbind");
 		errors++;
@@ -99,7 +102,7 @@ int main(int argc, char **argv)
 
 	printf("\nMoving pages via mbind from node 0 to 1 ...\n");
 	rc = mbind(pages, page_count * pagesize, MPOL_BIND, new_nodes->maskp,
-		new_nodes->size + 1, MPOL_MF_MOVE | MPOL_MF_STRICT);
+		   new_nodes->size + 1, MPOL_MF_MOVE | MPOL_MF_STRICT);
 	if (rc < 0) {
 		perror("mbind");
 		errors++;
@@ -108,9 +111,9 @@ int main(int argc, char **argv)
 	numa_move_pages(0, page_count, addr, NULL, status, 0);
 	for (i = 0; i < page_count; i++) {
 		printf("Page %d vaddr=%lx node=%d\n", i,
-			(unsigned long)(pages + i * pagesize), status[i]);
+		       (unsigned long)(pages + i * pagesize), status[i]);
 		if (i != 2) {
-			if (pages[ i* pagesize ] != (char) i) {
+			if (pages[i * pagesize] != (char)i) {
 				printf("*** Page content corrupted.\n");
 				errors++;
 			} else if (status[i] != 1) {

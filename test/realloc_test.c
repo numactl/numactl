@@ -1,21 +1,22 @@
+#include "numa.h"
+#include "numaif.h"
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/mman.h>
-#include "numa.h"
-#include "numaif.h"
+#include <unistd.h>
 
-#define DEFAULT_NR_PAGES	1024
+#define DEFAULT_NR_PAGES 1024
 
 static int parse_int(const char *str)
 {
-	char	*endptr;
-	long	ret = strtol(str, &endptr, 0);
+	char *endptr;
+	long ret = strtol(str, &endptr, 0);
 	if (*endptr != '\0') {
-		fprintf(stderr, "[error] strtol() failed: parse error: %s\n", endptr);
+		fprintf(stderr, "[error] strtol() failed: parse error: %s\n",
+			endptr);
 		exit(1);
 	}
 
@@ -27,15 +28,15 @@ static int parse_int(const char *str)
 		ret = (ret > 0) ? INT_MAX : INT_MIN;
 	}
 
-	return (int) ret;
+	return (int)ret;
 }
 
 int main(int argc, char **argv)
 {
-	char	*mem;
-	int		page_size = numa_pagesize();
-	int		node = 0;
-	int		nr_pages = DEFAULT_NR_PAGES;
+	char *mem;
+	int page_size = numa_pagesize();
+	int node = 0;
+	int nr_pages = DEFAULT_NR_PAGES;
 
 	if (numa_available() < 0) {
 		fprintf(stderr, "numa is not available");
@@ -50,11 +51,11 @@ int main(int argc, char **argv)
 	mem = numa_alloc_onnode(page_size, node);
 
 	/* Store the policy of the newly allocated area */
-	unsigned long	nodemask;
-	int				mode;
-	int				nr_nodes = numa_num_possible_nodes();
+	unsigned long nodemask;
+	int mode;
+	int nr_nodes = numa_num_possible_nodes();
 	if (get_mempolicy(&mode, &nodemask, nr_nodes, mem,
-					  MPOL_F_NODE | MPOL_F_ADDR) < 0) {
+			  MPOL_F_NODE | MPOL_F_ADDR) < 0) {
 		perror("get_mempolicy() failed");
 		exit(1);
 	}
@@ -66,10 +67,11 @@ int main(int argc, char **argv)
 
 	int i;
 	int nr_inplace = 0;
-	int nr_moved   = 0;
+	int nr_moved = 0;
 	for (i = 0; i < nr_pages; i++) {
 		/* Enlarge mem with one more page */
-		char	*new_mem = numa_realloc(mem, (i+1)*page_size, (i+2)*page_size);
+		char *new_mem = numa_realloc(mem, (i + 1) * page_size,
+					     (i + 2) * page_size);
 		if (!new_mem) {
 			perror("numa_realloc() failed");
 			exit(1);
@@ -82,20 +84,20 @@ int main(int argc, char **argv)
 		mem = new_mem;
 
 		/* Check the policy of the realloc'ed area */
-		unsigned long	realloc_nodemask;
-		int				realloc_mode;
-		if (get_mempolicy(&realloc_mode, &realloc_nodemask,
-						  nr_nodes, mem, MPOL_F_NODE | MPOL_F_ADDR) < 0) {
+		unsigned long realloc_nodemask;
+		int realloc_mode;
+		if (get_mempolicy(&realloc_mode, &realloc_nodemask, nr_nodes,
+				  mem, MPOL_F_NODE | MPOL_F_ADDR) < 0) {
 			perror("get_mempolicy() failed");
 			exit(1);
 		}
 
-		assert(realloc_nodemask == nodemask &&
-			   realloc_mode == mode && "policy changed");
+		assert(realloc_nodemask == nodemask && realloc_mode == mode &&
+		       "policy changed");
 	}
 
 	/* Shrink to the original size */
-	mem = numa_realloc(mem, (nr_pages + 1)*page_size, page_size);
+	mem = numa_realloc(mem, (nr_pages + 1) * page_size, page_size);
 	if (!mem) {
 		perror("numa_realloc() failed");
 		exit(1);

@@ -20,22 +20,24 @@
 
 #define _LARGE_FILE_SOURCE 1
 #define _GNU_SOURCE 1
-#include <string.h>
-#include <errno.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <dirent.h>
+#include <errno.h>
 #include <getopt.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/fcntl.h>
+#include <unistd.h>
 
 enum { LOCALLOCAL = 0, LOCALREMOTE = 1, REMOTELOCAL = 2 };
-static int mem[] = { [LOCALLOCAL] = 0xa8, [LOCALREMOTE] = 0x98, [REMOTELOCAL] = 0x68 };
-static int io[] = {  [LOCALLOCAL] = 0xa4, [LOCALREMOTE] = 0x94, [REMOTELOCAL] = 0x64 };
+static int mem[] = {
+	[LOCALLOCAL] = 0xa8, [LOCALREMOTE] = 0x98, [REMOTELOCAL] = 0x68};
+static int io[] = {
+	[LOCALLOCAL] = 0xa4, [LOCALREMOTE] = 0x94, [REMOTELOCAL] = 0x64};
 static int *masks = mem;
 
-#define err(x) perror(x),exit(1)
+#define err(x) perror(x), exit(1)
 
 #define PERFEVTSEL0 0xc0010000
 #define PERFEVTSEL1 0xc0010001
@@ -68,9 +70,9 @@ void usage(void);
 void Vprintf(char *fmt, ...)
 {
 	va_list ap;
-	va_start(ap,fmt);
+	va_start(ap, fmt);
 	if (verbose)
-		vfprintf(stderr,fmt,ap);
+		vfprintf(stderr, fmt, ap);
 	va_end(ap);
 }
 
@@ -78,7 +80,8 @@ unsigned long long rdmsr(int cpu, unsigned long msr)
 {
 	unsigned long long val;
 	if (pread(msrfd[cpu], &val, 8, msr) != 8) {
-		fprintf(stderr, "rdmsr of %lx failed: %s\n", msr, strerror(errno));
+		fprintf(stderr, "rdmsr of %lx failed: %s\n", msr,
+			strerror(errno));
 		exit(1);
 	}
 	return val;
@@ -87,7 +90,8 @@ unsigned long long rdmsr(int cpu, unsigned long msr)
 void wrmsr(int cpu, unsigned long msr, unsigned long long value)
 {
 	if (pwrite(msrfd[cpu], &value, 8, msr) != 8) {
-		fprintf(stderr, "wdmsr of %lx failed: %s\n", msr, strerror(errno));
+		fprintf(stderr, "wdmsr of %lx failed: %s\n", msr,
+			strerror(errno));
 		exit(1);
 	}
 }
@@ -107,7 +111,7 @@ int cpufilter(int cpu)
 		if (cpu == num)
 			return 1;
 		if (*end == ',')
-			s = end+1;
+			s = end + 1;
 		else if (*end == 0)
 			break;
 		else
@@ -127,16 +131,18 @@ void checkcounter(int cpu, int clear)
 			Vprintf("reinit %d\n", cpu);
 			wrmsr(cpu, PERFEVTSEL0 + i, BASE | masks[i - 1]);
 			clear_this = 1;
-		} else if (evtsel == (BASE | (masks[i-1] << 8))) {
+		} else if (evtsel == (BASE | (masks[i - 1] << 8))) {
 			/* everything fine */
 		} else if (force) {
 			Vprintf("reinit force %d\n", cpu);
 			wrmsr(cpu, PERFEVTSEL0 + i, BASE | (masks[i - 1] << 8));
 			clear_this = 1;
 		} else {
-			fprintf(stderr, "perfctr %d cpu %d already used with %Lx\n",
-				i, cpu, evtsel);
-			fprintf(stderr, "Consider using -f if you know what you're doing.\n");
+			fprintf(stderr,
+				"perfctr %d cpu %d already used with %Lx\n", i,
+				cpu, evtsel);
+			fprintf(stderr,
+				"Consider using -f if you know what you're doing.\n");
 			exit(1);
 		}
 		if (clear_this) {
@@ -163,7 +169,8 @@ void setup(int clear)
 		if (*end != 0)
 			continue;
 		if (cpunum > MAXCPU) {
-			fprintf(stderr, "too many cpus %ld %s\n", cpunum, d->d_name);
+			fprintf(stderr, "too many cpus %ld %s\n", cpunum,
+				d->d_name);
 			continue;
 		}
 		if (!cpufilter(cpunum))
@@ -252,9 +259,10 @@ void checkk8(void)
 				bad++;
 		}
 		if (!strncmp("cpu family", line, 10)) {
-			char *s = line + strcspn(line,":");
+			char *s = line + strcspn(line, ":");
 			int family;
-			if (*s == ':') ++s;
+			if (*s == ':')
+				++s;
 			family = strtoul(s, NULL, 0);
 			if (family != 15)
 				bad++;
@@ -273,7 +281,8 @@ void usage(void)
 	fprintf(stderr, "usage: numamon [args] [delay]\n");
 	fprintf(stderr, "       -f forcibly overwrite counters\n");
 	fprintf(stderr, "       -i count IO (default memory)\n");
-	fprintf(stderr, "       -a print absolute counter values (with delay)\n");
+	fprintf(stderr,
+		"       -a print absolute counter values (with delay)\n");
 	fprintf(stderr, "       -s setup counters and exit\n");
 	fprintf(stderr, "       -c clear counters and exit\n");
 	fprintf(stderr, "       -m Print memory traffic (default)\n");
@@ -286,7 +295,7 @@ int main(int ac, char **av)
 {
 	int opt;
 	checkk8();
-	while ((opt = getopt(ac,av,"ifscmaC:v")) != -1) {
+	while ((opt = getopt(ac, av, "ifscmaC:v")) != -1) {
 		switch (opt) {
 		case 'f':
 			force = 1;
@@ -321,7 +330,7 @@ int main(int ac, char **av)
 		delay = strtoul(av[optind], &end, 10);
 		if (*end)
 			usage();
-		if (av[optind+1])
+		if (av[optind + 1])
 			usage();
 	}
 

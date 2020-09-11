@@ -1,0 +1,11 @@
+---
+Language:        Cpp
+# BasedOnStyle:  LLVM
+BraceWrapping:
+  AfterFunction:   true
+BreakBeforeBraces: Custom
+BreakStringLiterals: false
+ContinuationIndentWidth: 8
+IndentWidth:     8
+UseTab:          ForContinuationAndIndentation
+...
