@@ -1,3 +1,4 @@
+dist: bionic
 language: c
 
 env:
@@ -6,6 +7,22 @@ env:
 
 matrix:
   include:
+    - name: "gcc 10"
+      env: MATRIX_ENV="CC=gcc-10 CXX=g++-10"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-10
+    - name: "gcc 9"
+      env: MATRIX_ENV="CC=gcc-9 CXX=g++-9"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-9
     - name: "gcc 8"
       env: MATRIX_ENV="CC=gcc-8 CXX=g++-8"
       addons:
@@ -31,6 +48,7 @@ matrix:
           packages:
             - gcc-6
     - name: "gcc 5"
+      dist: xenial
       env: MATRIX_ENV="CC=gcc-5 CXX=g++-5"
       addons:
         apt:
@@ -39,6 +57,7 @@ matrix:
           packages:
             - gcc-5
     - name: "gcc 4.9"
+      dist: xenial
       env: MATRIX_ENV="CC=gcc-4.9 CXX=g++-4.9"
       addons:
         apt:
