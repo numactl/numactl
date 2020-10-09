@@ -22,5 +22,5 @@ extern char *policy_name(int policy);
 #if HAVE_ATTRIBUTE_SYMVER
 #define SYMVER(a,b) __attribute__ ((symver (b)))
 #else
-#define SYMVER(a,b) __asm__ (".symver " #a "," #b);
+#define SYMVER(a,b) __asm__ (".symver " a "," b);
 #endif
