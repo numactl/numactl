@@ -192,6 +192,10 @@ void numa_set_localalloc(void);
 /* Only allocate memory from the nodes set in mask. 0 to turn off */
 void numa_set_membind(struct bitmask *nodemask);
 
+/* Only allocate memory from the nodes set in mask. Optimize page
+   placement with Linux kernel NUMA balancing if possible. 0 to turn off */
+void numa_set_membind_balancing(struct bitmask *bmp);
+
 /* Return current membind */
 struct bitmask *numa_get_membind(void);
 

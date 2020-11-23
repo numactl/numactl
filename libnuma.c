@@ -1064,6 +1064,20 @@ numa_set_membind_v2(struct bitmask *bmp)
 
 make_internal_alias(numa_set_membind_v2);
 
+void
+numa_set_membind_balancing(struct bitmask *bmp)
+{
+	/* MPOL_F_NUMA_BALANCING: ignore if unsupported */
+	if (set_mempolicy(MPOL_BIND | MPOL_F_NUMA_BALANCING,
+			  bmp->maskp, bmp->size + 1) < 0) {
+		if (errno == EINVAL) {
+			errno = 0;
+			numa_set_membind_v2(bmp);
+		} else
+			numa_error("set_mempolicy");
+	}
+}
+
 /*
  * copy a bitmask map body to a numa.h nodemask_t structure
  */

@@ -146,3 +146,11 @@ libnuma_1.4 {
   local:
     *;
 } libnuma_1.3;
+
+# New interface for membind with NUMA balancing optimization
+libnuma_1.5 {
+  global:
+    numa_set_membind_balancing;
+  local:
+    *;
+} libnuma_1.4;
