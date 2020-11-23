@@ -45,6 +45,7 @@ struct option opts[] = {
 	{"membind", 1, 0, 'm'},
 	{"show", 0, 0, 's' },
 	{"localalloc", 0,0, 'l'},
+	{"balancing", 0, 0, 'b'},
 	{"hardware", 0,0,'H' },
 
 	{"shm", 1, 0, 'S'},
@@ -65,9 +66,10 @@ struct option opts[] = {
 void usage(void)
 {
 	fprintf(stderr,
-		"usage: numactl [--all | -a] [--interleave= | -i <nodes>] [--preferred= | -p <node>]\n"
-		"               [--physcpubind= | -C <cpus>] [--cpunodebind= | -N <nodes>]\n"
-		"               [--membind= | -m <nodes>] [--localalloc | -l] command args ...\n"
+		"usage: numactl [--all | -a] [--balancing | -b] [--interleave= | -i <nodes>]\n"
+		"               [--preferred= | -p <node>] [--physcpubind= | -C <cpus>]\n"
+		"               [--cpunodebind= | -N <nodes>] [--membind= | -m <nodes>]\n"
+		"               [--localalloc | -l] command args ...\n"
 		"       numactl [--show | -s]\n"
 		"       numactl [--hardware | -H]\n"
 		"       numactl [--length | -l <length>] [--offset | -o <offset>] [--shmmode | -M <shmmode>]\n"
@@ -90,6 +92,8 @@ void usage(void)
 		"all numbers and ranges can be made cpuset-relative with +\n"
 		"the old --cpubind argument is deprecated.\n"
 		"use --cpunodebind or --physcpubind instead\n"
+		"use --balancing | -b to enable Linux kernel NUMA balancing\n"
+		"for the process if it is supported by kernel\n"
 		"<length> can have g (GB), m (MB) or k (KB) suffixes\n");
 	exit(1);
 }
@@ -338,6 +342,7 @@ int do_dump = 0;
 int shmattached = 0;
 int did_node_cpu_parse = 0;
 int parse_all = 0;
+int numa_balancing = 0;
 char *shmoption;
 
 void check_cpubind(int flag)
@@ -431,6 +436,10 @@ int main(int ac, char **av)
 			nopolicy();
 			hardware();
 			exit(0);
+		case 'b': /* --balancing  */
+			nopolicy();
+			numa_balancing = 1;
+			break;
 		case 'i': /* --interleave */
 			checknuma();
 			if (parse_all)
@@ -507,6 +516,8 @@ int main(int ac, char **av)
 			numa_set_bind_policy(1);
 			if (shmfd >= 0) {
 				numa_tonodemask_memory(shmptr, shmlen, mask);
+			} else if (numa_balancing) {
+				numa_set_membind_balancing(mask);
 			} else {
 				numa_set_membind(mask);
 			}

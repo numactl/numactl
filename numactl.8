@@ -25,6 +25,8 @@ numactl \- Control NUMA policy for processes or shared memory
 [
 .B \-\-all
 ] [
+.B \-\-balancing
+] [
 .B \-\-interleave nodes
 ] [
 .B \-\-preferred node 
@@ -168,6 +170,12 @@ but if memory cannot be allocated there fall back to other nodes.
 This option takes only a single node number.
 Relative notation may be used.
 .TP
+.B \-\-balancing, \-b
+Enable Linux kernel NUMA balancing for the process if it is supported by kernel.
+This should only be used with
+.I \-\-membind, \-m
+only, otherwise ignored.
+.TP
 .B \-\-show, \-s
 Show NUMA policy settings of the current process. 
 .TP
@@ -277,6 +285,10 @@ Run process on node 0 with memory allocated on node 0 and 1.
 numactl \-\-cpunodebind=0 \-\-membind=0,1 -- process -l
 Run process as above, but with an option (-l) that would be confused with
 a numactl option.
+
+numactl \-\-cpunodebind=0 \-\-balancing \-\-membind=0,1 process
+Run process on node 0 with memory allocated on node 0 and 1.  Optimize the
+page placement with Linux kernel NUMA balancing mechanism if possible.
 
 numactl \-\-cpunodebind=netdev:eth0 \-\-membind=netdev:eth0 network-server
 Run network-server on the node of network device eth0 with its memory

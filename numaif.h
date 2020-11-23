@@ -29,6 +29,9 @@ extern long move_pages(int pid, unsigned long count,
 #define MPOL_LOCAL       4
 #define MPOL_MAX         5
 
+/* Flags for set_mempolicy, specified in mode */
+#define MPOL_F_NUMA_BALANCING	(1 << 13) /* Optimize with NUMA balancing if possible */
+
 /* Flags for get_mem_policy */
 #define MPOL_F_NODE    (1<<0)   /* return next il node or node of address */
 				/* Warning: MPOL_F_NODE is unsupported and

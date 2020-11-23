@@ -80,6 +80,8 @@ numa \- NUMA policy library
 .br
 .BI "void numa_set_membind(struct bitmask *" nodemask );
 .br
+.BI "void numa_set_membind_balancing(struct bitmask *" nodemask );
+.br
 .B struct bitmask *numa_get_membind(void);
 .sp
 .BI "void *numa_alloc_onnode(size_t " size ", int " node );
@@ -528,6 +530,19 @@ time of a page allocation.
 
 .BR numa_set_membind ()
 sets the memory allocation mask.
+The task will only allocate memory from the nodes set in
+.IR nodemask .
+Passing an empty
+.I nodemask
+or a
+.I nodemask
+that contains nodes other than those in the mask returned by
+.IR numa_get_mems_allowed ()
+will result in an error.
+
+.BR numa_set_membind_balancing ()
+sets the memory allocation mask and enable the Linux kernel NUMA
+balancing for the task if the feature is supported by the kernel.
 The task will only allocate memory from the nodes set in
 .IR nodemask .
 Passing an empty
