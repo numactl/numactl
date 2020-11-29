@@ -32,4 +32,8 @@ AC_LANG_WERROR
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([[__attribute__ ((symver ("foo@foo_1"))) void frob (void) { }]])],
                   [AC_DEFINE([HAVE_ATTRIBUTE_SYMVER], [1], [Checking for symver attribute])], [])
 
+PKG_CHECK_VAR(bashcompdir, [bash-completion], [completionsdir], ,
+              bashcompdir="${sysconfdir}/bash_completion.d")
+AC_SUBST(bashcompdir)
+
 AC_OUTPUT

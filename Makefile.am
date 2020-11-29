@@ -160,3 +160,6 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = numa.pc
 EXTRA_DIST += numa.pc.in
 CLEANFILES += numa.pc
+
+bashcompdir = @bashcompdir@
+dist_bashcomp_DATA = numastat.bash
