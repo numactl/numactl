@@ -137,7 +137,7 @@
 
 /* glibc 2.11 seems to have working 6 argument sycall. Use the
    glibc supplied syscall in this case.
-   The version cut-off is rather arbitary and could be probably
+   The version cut-off is rather arbitrary and could be probably
    earlier. */
 
 #define syscall6 syscall

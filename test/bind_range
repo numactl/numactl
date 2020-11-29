@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This simple script checks --all/-a option which is used for
-# supressing of default cpuset awareness of options --cpunodebind,
+# suppressing of default cpuset awareness of options --cpunodebind,
 # --physcpubind, --interleave, --preferred and --membind.
 
 # NOTE: Test needs two nodes and two cpus at least

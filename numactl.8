@@ -83,7 +83,7 @@ with numactl options.
 may be specified as N,N,N or  N-N or N,N-N or  N-N,N-N and so forth.
 Relative
 .I nodes
-may be specifed as +N,N,N or  +N-N or +N,N-N and so forth. The + indicates that
+may be specified as +N,N,N or  +N-N or +N,N-N and so forth. The + indicates that
 the node numbers are relative to the process' set of allowed nodes in its
 current cpuset.
 A !N-N notation indicates the inverse of N-N, in other words all nodes
@@ -152,7 +152,7 @@ Physical
 may be specified as N,N,N or  N-N or N,N-N or  N-N,N-N and so forth.
 Relative
 .I cpus
-may be specifed as +N,N,N or  +N-N or +N,N-N and so forth. The + indicates that
+may be specified as +N,N,N or  +N-N or +N,N-N and so forth. The + indicates that
 the cpu numbers are relative to the process' set of allowed cpus in its
 current cpuset.
 A !N-N notation indicates the inverse of N-N, in other words all cpus
@@ -232,11 +232,11 @@ of the new segment then. Valid units are
 otherwise it specifies bytes.
 .TP
 .B \-\-shmid id
-Create or use an shared memory segment with numeric ID 
+Create or use a shared memory segment with numeric ID
 .I id
 .TP 
 .B \-\-shm shmkeyfile
-Create or use an shared memory segment, with the ID generated
+Create or use a shared memory segment, with the ID generated
 using 
 .I ftok(3) 
 from shmkeyfile
@@ -299,7 +299,7 @@ Reset the policy for the shared memory file
 .I file
 to the default localalloc policy.
 .SH NOTES
-Requires an NUMA policy aware kernel.
+Requires a NUMA policy aware kernel.
 
 Command is not executed using a shell. If you want to use shell metacharacters
 in the child use sh -c as wrapper.
