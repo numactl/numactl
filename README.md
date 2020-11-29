@@ -15,8 +15,8 @@ display NUMA allocation statistics and `memhog`.
 
 In `test/` there is a small regression test suite.
 
-Note that `regress` assumes a unloaded machine with memory free on each node.
-Otherwise you will get spurious failures in the non-strict policies (prefered,
+Note that `regress` assumes an unloaded machine with memory free on each node.
+Otherwise you will get spurious failures in the non-strict policies (preferred,
 interleave.)
 
 See the manpages [`numactl.8`](https://linux.die.net/man/8/numactl) and

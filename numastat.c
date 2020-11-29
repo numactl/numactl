@@ -1493,7 +1493,7 @@ foreach $nd (readdir(NODES)) {
 	next unless $nd =~ /node(\d+)/;
 	# On newer kernels, readdir may enumerate the 'node(\d+) subdirs
 	# in opposite order from older kernels--e.g., node{0,1,2,...}
-	# as opposed to node{N,N-1,N-2,...}.  Accomodate this by
+	# as opposed to node{N,N-1,N-2,...}.  Accommodate this by
 	# switching to new mode so that the stats get emitted in
 	# the same order.
         #print "readdir(NODES) returns $nd\n";

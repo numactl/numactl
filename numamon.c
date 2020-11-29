@@ -261,7 +261,7 @@ void checkk8(void)
 		}
 	}
 	if (bad) {
-		printf("not a opteron cpu\n");
+		printf("not an opteron cpu\n");
 		exit(1);
 	}
 	free(line);

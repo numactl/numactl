@@ -221,7 +221,7 @@ void numa_free(void *mem, size_t size);
 /* Low level functions, primarily for shared memory. All memory
    processed by these must not be touched yet */
 
-/* Interleave an memory area. */
+/* Interleave a memory area. */
 void numa_interleave_memory(void *mem, size_t size, struct bitmask *mask);
 
 /* Allocate a memory area on a specific node. */
