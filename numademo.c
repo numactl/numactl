@@ -312,7 +312,7 @@ int get_node_list(void)
         }
         if(got_nodes != numnodes)
                 return -1;
-        return 0;
+	return got_nodes;
 }
 
 void test(enum test type)
@@ -482,6 +482,7 @@ long memsize(char *s)
 int main(int ac, char **av)
 {
 	int simple_tests = 0;
+	int nr_nodes;
 
 	while (av[1] && av[1][0] == '-') {
 		ac--;
@@ -517,9 +518,15 @@ int main(int ac, char **av)
 		if (!force)
 			exit(1);
 	}
-	if(get_node_list()){
+	nr_nodes = get_node_list();
+	if(nr_nodes == -1){
 		fprintf(stderr, "Configured Nodes does not match available memory nodes\n");
 		exit(1);
+	}
+
+	if (nr_nodes < 2) {
+		printf("A minimum of 2 nodes is required for this test.\n");
+		exit(77);
 	}
 
 	printf("%d nodes available\n", numnodes);
