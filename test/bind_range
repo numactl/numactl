@@ -98,8 +98,8 @@ else
 	HIGHESTCPU=$(grep 'processor' /proc/cpuinfo | tail -n1 | cut -f2 | sed 's/://' )
 fi
 HIGHESTCPU=$(echo $HIGHESTCPU | cut -f2 -d' ')
-HIGHESTNODE=$(numactl -H | grep -Pzo 'node [0-9]* cpus: [0-9]* (.|\n)*node [0-9]* size: [1-9]* MB' | tail -n1 | cut -f2 -d' ')
-LOWESTNODE=$(numactl -H | grep -Pzo 'node [0-9]* cpus: [0-9]* (.|\n)*node [0-9]* size: [1-9]* MB' | head -n1 | cut -f2 -d' ')
+HIGHESTNODE=$(numactl -H | grep -Pzo 'node [0-9]* cpus: [0-9].*(.|\n)node [0-9]* size: [1-9].* MB' | tail -n1 | cut -f2 -d' ')
+LOWESTNODE=$(numactl -H | grep -Pzo 'node [0-9]* cpus: [0-9].*(.|\n)node [0-9]* size: [1-9].* MB' | head -n1 | cut -f2 -d' ')
 
 get_mask
 
