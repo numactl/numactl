@@ -335,7 +335,7 @@ void test(enum test type)
 
 	memtest("memory interleaved on all nodes", numa_alloc_interleaved(msize));
 	for (i = 0; i < numnodes; i++) {
-		if (regression_testing && (node_to_use[i] % fract_nodes)) {
+		if (regression_testing && (i % fract_nodes)) {
 		/* for regression testing (-t) do only every eighth node */
 			continue;
 		}
@@ -386,10 +386,10 @@ void test(enum test type)
 
 	if (numnodes > 0) {
 		numa_bitmask_clearall(nodes);
-		numa_bitmask_setbit(nodes, 0);
-		numa_bitmask_setbit(nodes, 1);
+		numa_bitmask_setbit(nodes, node_to_use[0]);
+		numa_bitmask_setbit(nodes, node_to_use[1]);
 		numa_set_interleave_mask(nodes);
-		memtest("manual interleaving on node 0/1", numa_alloc(msize));
+		memtest("manual interleaving on first two nodes", numa_alloc(msize));
 		printf("current interleave node %d\n", numa_get_interleave_node());
 	}
 
@@ -402,7 +402,7 @@ void test(enum test type)
 	for (i = 0; i < numnodes; i++) {
 		int oldhn = numa_preferred();
 
-		if (regression_testing && (node_to_use[i] % fract_nodes)) {
+		if (regression_testing && (i % fract_nodes)) {
 		/* for regression testing (-t) do only every eighth node */
 			continue;
 		}
@@ -416,9 +416,9 @@ void test(enum test type)
 
 		if (numnodes >= 2) {
 			numa_bitmask_clearall(nodes);
-			numa_bitmask_setbit(nodes, 0);
-			numa_bitmask_setbit(nodes, 1);
-			memtest("memory interleaved on node 0/1",
+			numa_bitmask_setbit(nodes, node_to_use[0]);
+			numa_bitmask_setbit(nodes, node_to_use[1]);
+			memtest("memory interleaved on first two nodes",
 				numa_alloc_interleaved_subset(msize, nodes));
 		}
 
