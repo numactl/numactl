@@ -8,3 +8,4 @@ Description: NUMA policy library
 Version: @VERSION@
 Cflags: -I${includedir}
 Libs: -L${libdir} -lnuma
+Libs.Private: @LIBS@

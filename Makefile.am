@@ -151,6 +151,7 @@ SED_PROCESS = \
         -e 's,@exec_prefix\@,$(exec_prefix),g' \
         -e 's,@libdir\@,$(libdir),g' \
         -e 's,@includedir\@,$(includedir),g' \
+        -e 's,@LIBS\@,$(LIBS),g' \
         < $< > $@ || rm $@
 
 %.pc: %.pc.in Makefile
