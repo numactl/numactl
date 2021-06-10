@@ -17,10 +17,10 @@ hidden char *sysfs_read(char *name)
 	int n;
 	int fd;
 
-	fd = open(name, O_RDONLY);
 	buf = malloc(SYSFS_BLOCK);
 	if (!buf)
 		return NULL;
+	fd = open(name, O_RDONLY);
 	n = read(fd, buf, SYSFS_BLOCK - 1);
 	close(fd);
 	if (n <= 0) {
