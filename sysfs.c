@@ -33,7 +33,7 @@ hidden char *sysfs_read(char *name)
 
 hidden int sysfs_node_read(struct bitmask *mask, char *fmt, ...)
 {
-	int n;
+	int n, ret = 0;
 	va_list ap;
 	char *p, *fn, *m, *end;
 	int num;
@@ -51,12 +51,18 @@ hidden int sysfs_node_read(struct bitmask *mask, char *fmt, ...)
 	m = p;
 	do {
 		num = strtol(m, &end, 0);
-		if (m == end)
-			return -1;
-		if (num < 0)
-			return -2;
-		if (num >= numa_num_task_nodes())
-			return -1;
+		if (m == end) {
+			ret = -1;
+			goto out;
+		}
+		if (num < 0) {
+			ret = -2;
+			goto out;
+		}
+		if (num >= numa_num_task_nodes()) {
+			ret = -1;
+			goto out;
+		}
 		numa_bitmask_setbit(mask, num);
 
 		/* Continuation not supported by kernel yet. */
@@ -64,6 +70,7 @@ hidden int sysfs_node_read(struct bitmask *mask, char *fmt, ...)
 		while (isspace(*m) || *m == ',')
 			m++;
 	} while (isdigit(*m));
+out:
 	free(p);
-	return 0;
+	return ret;
 }
