@@ -271,9 +271,7 @@ void verify_shm(int policy, struct bitmask *nodes)
 	char *p;
 	int ilnode, node;
 	int pol2;
-	struct bitmask *nodes2;
-
-	nodes2 = numa_allocate_nodemask();
+	struct bitmask *nodes2, *tag;
 
 	if (policy == MPOL_INTERLEAVE) {
 		if (get_mempolicy(&ilnode, NULL, 0, shmptr,
@@ -282,6 +280,8 @@ void verify_shm(int policy, struct bitmask *nodes)
 			err("get_mempolicy");
 	}
 
+	nodes2 = numa_allocate_nodemask();
+
 	for (p = shmptr; p - (char *)shmptr < shmlen; p += shm_pagesize) {
 		if (get_mempolicy(&pol2, nodes2->maskp, nodes2->size, p,
 							MPOL_F_ADDR) < 0)
@@ -289,7 +289,7 @@ void verify_shm(int policy, struct bitmask *nodes)
 		if (pol2 != policy) {
 			vwarn(p, "wrong policy %s, expected %s\n",
 			      policy_name(pol2), policy_name(policy));
-			return;
+			goto out;
 		}
 		if (memcmp(nodes2, nodes, numa_bitmask_nbytes(nodes))) {
 			vwarn(p, "mismatched node mask\n");
@@ -307,7 +307,7 @@ void verify_shm(int policy, struct bitmask *nodes)
 			if (node != ilnode) {
 				vwarn(p, "expected interleave node %d, got %d\n",
 				     ilnode,node);
-				return;
+				goto out;
 			}
 			ilnode = interleave_next(ilnode, nodes2);
 			break;
@@ -325,4 +325,6 @@ void verify_shm(int policy, struct bitmask *nodes)
 		}
 	}
 
+out:
+	numa_free_nodemask(nodes2);
 }
