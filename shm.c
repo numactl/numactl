@@ -182,7 +182,7 @@ dumppol(unsigned long long start, unsigned long long end, int pol, struct bitmas
 /* Dump policies in a shared memory segment. */
 void dump_shm(void)
 {
-	struct bitmask *nodes, *prevnodes;
+	struct bitmask *nodes, *prevnodes, *tag;
 	int prevpol = -1, pol;
 	unsigned long long c, start;
 
@@ -193,7 +193,7 @@ void dump_shm(void)
 	}
 
 	nodes = numa_allocate_nodemask();
-	prevnodes = numa_allocate_nodemask();
+	tag = prevnodes = numa_allocate_nodemask();
 
 	for (c = 0; c < shmlen; c += shm_pagesize) {
 		if (get_mempolicy(&pol, nodes->maskp, nodes->size, c+shmptr,
@@ -208,6 +208,8 @@ void dump_shm(void)
 		start = c;
 	}
 	dumppol(start, c, prevpol, prevnodes);
+	numa_free_nodemask(nodes);
+	numa_allocate_nodemask(tag);
 }
 
 static void dumpnode(unsigned long long start, unsigned long long end, int node)
