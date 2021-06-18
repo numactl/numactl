@@ -544,6 +544,7 @@ int main(int ac, char **av)
 			if (nnodes != 1)
 				usage();
 			numa_bitmask_free(mask);
+			mask = NULL;
 			errno = 0;
 			did_node_cpu_parse = 1;
 			numa_set_bind_policy(0);
