@@ -1768,25 +1768,23 @@ out:
 int numa_preferred(void)
 {
 	int policy;
-	int ret;
 	struct bitmask *bmp;
+	/* could read the current CPU from /proc/self/status. Probably
+	   not worth it. */
+	int ret = 0;
 
 	bmp = numa_allocate_nodemask();
 	getpol(&policy, bmp);
-	if (policy == MPOL_PREFERRED || policy == MPOL_BIND) {
-		int i;
-		int max = numa_num_possible_nodes();
-		for (i = 0; i < max ; i++)
-			if (numa_bitmask_isbitset(bmp, i)){
-				ret = i;
-				goto end;
-			}
-	}
-	/* could read the current CPU from /proc/self/status. Probably
-	   not worth it. */
-	ret = 0; /* or random one? */
-end:
-	numa_bitmask_free(bmp);
+
+	if (policy != MPOL_PREFERRED && policy != MPOL_BIND)
+		return ret;
+
+	int i;
+	int max = numa_num_possible_nodes();
+	for (i = 0; i < max ; i++)
+		if (numa_bitmask_isbitset(bmp, i))
+			ret = i;
+
 	return ret;
 }
 
