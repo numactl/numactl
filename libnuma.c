@@ -1765,39 +1765,44 @@ out:
 	return ret;
 }
 
-int numa_preferred(void)
+static struct bitmask *__numa_preferred(void)
 {
 	int policy;
 	struct bitmask *bmp;
-	/* could read the current CPU from /proc/self/status. Probably
-	   not worth it. */
-	int ret = 0;
 
 	bmp = numa_allocate_nodemask();
+	/* could read the current CPU from /proc/self/status. Probably
+	   not worth it. */
+	numa_bitmask_clearall(bmp);
 	getpol(&policy, bmp);
 
 	if (policy != MPOL_PREFERRED && policy != MPOL_BIND)
-		return ret;
+		return bmp;
 
-	int i;
-	int max = numa_num_possible_nodes();
-	for (i = 0; i < max ; i++)
-		if (numa_bitmask_isbitset(bmp, i))
-			ret = i;
+	if (numa_bitmask_weight(bmp) > 1)
+		numa_error(__FILE__);
 
-	return ret;
+	return bmp;
+}
+
+int numa_preferred(void)
+{
+	return find_first(__numa_preferred());
+}
+
+static void __numa_set_preferred(struct bitmask *bmp)
+{
+	int nodes = numa_bitmask_weight(bmp);
+	if (nodes > 1)
+		numa_error(__FILE__);
+	setpol(nodes ? MPOL_PREFERRED : MPOL_LOCAL, bmp);
 }
 
 void numa_set_preferred(int node)
 {
-	struct bitmask *bmp;
-
-	bmp = numa_allocate_nodemask();
-	if (node >= 0) {
-		numa_bitmask_setbit(bmp, node);
-		setpol(MPOL_PREFERRED, bmp);
-	} else
-		setpol(MPOL_LOCAL, bmp);
+	struct bitmask *bmp = numa_allocate_nodemask();
+	numa_bitmask_setbit(bmp, node);
+	__numa_set_preferred(bmp);
 	numa_bitmask_free(bmp);
 }
 
