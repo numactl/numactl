@@ -857,7 +857,7 @@ numa_tonodemask_memory_v2(void *mem, size_t size, struct bitmask *bmp)
 
 void numa_setlocal_memory(void *mem, size_t size)
 {
-	dombind(mem, size, MPOL_PREFERRED, NULL);
+	dombind(mem, size, MPOL_LOCAL, NULL);
 }
 
 void numa_police_memory(void *mem, size_t size)
@@ -1034,7 +1034,7 @@ void *numa_alloc_local(size_t size)
 	if (mem == (char *)-1)
 		mem =  NULL;
 	else
-		dombind(mem, size, MPOL_PREFERRED, NULL);
+		dombind(mem, size, MPOL_LOCAL, NULL);
 	return mem;
 }
 
@@ -1799,13 +1799,13 @@ void numa_set_preferred(int node)
 		numa_bitmask_setbit(bmp, node);
 		setpol(MPOL_PREFERRED, bmp);
 	} else
-		setpol(MPOL_DEFAULT, bmp);
+		setpol(MPOL_LOCAL, bmp);
 	numa_bitmask_free(bmp);
 }
 
 void numa_set_localalloc(void)
 {
-	setpol(MPOL_DEFAULT, numa_no_nodes_ptr);
+	setpol(MPOL_LOCAL, numa_no_nodes_ptr);
 }
 
 SYMVER("numa_bind_v1", "numa_bind@libnuma_1.1")
