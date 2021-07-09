@@ -1070,6 +1070,8 @@ void numa_set_bind_policy(int strict)
 {
 	if (strict)
 		bind_policy = MPOL_BIND;
+	else if (has_preferred_many)
+		bind_policy = MPOL_PREFERRED_MANY;
 	else
 		bind_policy = MPOL_PREFERRED;
 }
@@ -1837,6 +1839,20 @@ void numa_set_preferred(int node)
 int numa_has_preferred_many(void)
 {
 	return has_preferred_many;
+}
+
+void numa_set_preferred_many(struct bitmask *bitmask)
+{
+	if (!has_preferred_many) {
+		numa_error("Unable to handle MANY preferred nodes. Falling back to first node\n");
+		__numa_set_preferred(bitmask);
+	}
+	setpol(MPOL_PREFERRED_MANY, bitmask);
+}
+
+struct bitmask *numa_preferred_many()
+{
+	return __numa_preferred();
 }
 
 void numa_set_localalloc(void)

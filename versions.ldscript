@@ -159,6 +159,8 @@ libnuma_1.5 {
 libnuma_1.6{
   global:
     numa_has_preferred_many;
+    numa_set_preferred_many;
+    numa_preferred_many;
   local:
     *;
 } libnuma_1.5;
