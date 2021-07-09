@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include <sys/mman.h>
 #include <limits.h>
@@ -78,6 +79,8 @@ static int numprocnode = -1;
 static int numproccpu = -1;
 static int nodemask_sz = 0;
 static int cpumask_sz = 0;
+
+static int has_preferred_many = 0;
 
 int numa_exit_on_error = 0;
 int numa_exit_on_warn = 0;
@@ -589,6 +592,30 @@ set_configured_cpus(void)
 		numa_error("sysconf(NPROCESSORS_CONF) failed");
 }
 
+static void
+set_kernel_abi()
+{
+	int oldp;
+	struct bitmask *bmp, *tmp;
+	bmp = numa_allocate_nodemask();
+	tmp = numa_allocate_nodemask();
+
+	if (get_mempolicy(&oldp, bmp->maskp, bmp->size + 1, 0, 0) < 0)
+		goto out;
+
+	/* Assumes there's always a node 0, and it's online */
+	numa_bitmask_setbit(tmp, 0);
+	if (set_mempolicy(MPOL_PREFERRED_MANY, tmp->maskp, tmp->size) == 0) {
+		has_preferred_many++;
+		/* reset the old memory policy */
+		setpol(oldp, bmp);
+	}
+
+out:
+	numa_bitmask_free(tmp);
+	numa_bitmask_free(bmp);
+}
+
 /*
  * Initialize all the sizes.
  */
@@ -601,6 +628,7 @@ set_sizes(void)
 	set_numa_max_cpu();	/* size of kernel cpumask_t */
 	set_configured_cpus();	/* cpus listed in /sys/devices/system/cpu */
 	set_task_constraints(); /* cpus and nodes for current task */
+	set_kernel_abi();	/* man policy supported */
 }
 
 int
@@ -1804,6 +1832,11 @@ void numa_set_preferred(int node)
 	numa_bitmask_setbit(bmp, node);
 	__numa_set_preferred(bmp);
 	numa_bitmask_free(bmp);
+}
+
+int numa_has_preferred_many(void)
+{
+	return has_preferred_many;
 }
 
 void numa_set_localalloc(void)

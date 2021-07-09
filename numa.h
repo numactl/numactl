@@ -186,6 +186,9 @@ static inline void numa_free_nodemask(struct bitmask *b)
 /* Some node to preferably allocate memory from for task. */
 void numa_set_preferred(int node);
 
+/* Returns whether or not the platform supports MPOL_PREFERRED_MANY */
+int numa_has_preferred_many(void);
+
 /* Set local memory allocation policy for task */
 void numa_set_localalloc(void);
 
