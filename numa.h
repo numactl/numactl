@@ -189,6 +189,12 @@ void numa_set_preferred(int node);
 /* Returns whether or not the platform supports MPOL_PREFERRED_MANY */
 int numa_has_preferred_many(void);
 
+/* Set of nodes to preferably allocate memory from for task. */
+void numa_set_preferred_many(struct bitmask *bitmask);
+
+/* Return preferred nodes */
+struct bitmask *numa_preferred_many(void);
+
 /* Set local memory allocation policy for task */
 void numa_set_localalloc(void);
 
