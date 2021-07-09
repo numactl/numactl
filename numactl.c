@@ -554,7 +554,7 @@ int main(int ac, char **av)
 			break;
 		case 'l': /* --local */
 			checknuma();
-			setpolicy(MPOL_DEFAULT);
+			setpolicy(MPOL_LOCAL);
 			errno = 0;
 			if (shmfd >= 0)
 				numa_setlocal_memory(shmptr, shmlen);
