@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <sys/time.h>
 #include "numa.h"
+#include "util.h"
 #ifdef HAVE_STREAM_LIB
 #include "stream_lib.h"
 #endif
@@ -464,19 +465,6 @@ void usage(void)
 		printf(" %s", testname[i]);
 	putchar('\n');
 	exit(1);
-}
-
-/* duplicated to make numademo standalone */
-long memsize(char *s)
-{
-	char *end;
-	long length = strtoul(s,&end,0);
-	switch (toupper(*end)) {
-	case 'G': length *= 1024;  /*FALL THROUGH*/
-	case 'M': length *= 1024;  /*FALL THROUGH*/
-	case 'K': length *= 1024; break;
-	}
-	return length;
 }
 
 int main(int ac, char **av)
