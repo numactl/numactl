@@ -86,6 +86,7 @@ static struct policy {
 	int policy;
 	int noarg;
 } policies[] = {
+	{ "preferred-many", MPOL_PREFERRED_MANY, },
 	{ "local", MPOL_LOCAL, 1 },
 	{ "interleave", MPOL_INTERLEAVE, },
 	{ "membind",    MPOL_BIND, },
@@ -94,7 +95,7 @@ static struct policy {
 	{ NULL },
 };
 
-static char *policy_names[] = { "default", "preferred", "bind", "interleave", "local" };
+static char *policy_names[] = { "default", "preferred", "bind", "interleave", "local", "preferred-many" };
 
 char *policy_name(int policy)
 {
