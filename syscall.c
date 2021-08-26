@@ -117,11 +117,11 @@
 
 #elif defined(__s390x__)
 
-#define __NR_mbind 235
-#define __NR_get_mempolicy 236
-#define __NR_set_mempolicy 237
-#define __NR_migrate_pages 238
-#define __NR_move_pages    239
+#define __NR_mbind 268
+#define __NR_get_mempolicy 269
+#define __NR_set_mempolicy 270
+#define __NR_migrate_pages 287
+#define __NR_move_pages    310
 
 #elif !defined(DEPS_RUN)
 #error "Add syscalls for your architecture or update kernel headers"
