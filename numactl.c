@@ -497,7 +497,7 @@ int main(int ac, char **av)
 			did_node_cpu_parse = 1;
 			numa_sched_setaffinity(0, cpubuf);
 			checkerror("sched_setaffinity");
-			free(cpubuf);
+			numa_bitmask_free(cpubuf);
 			break;
 		}
 		case 'm': /* --membind */
@@ -644,6 +644,8 @@ int main(int ac, char **av)
 			usage();
 		}
 	}
+
+	numa_bitmask_free(mask);
 
 	av += optind;
 	ac -= optind;
