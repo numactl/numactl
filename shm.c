@@ -295,7 +295,7 @@ void verify_shm(int policy, struct bitmask *nodes)
 			      policy_name(pol2), policy_name(policy));
 			goto out;
 		}
-		if (memcmp(nodes2, nodes, numa_bitmask_nbytes(nodes))) {
+		if (memcmp(nodes2->maskp, nodes->maskp, numa_bitmask_nbytes(nodes))) {
 			vwarn(p, "mismatched node mask\n");
 			printmask("expected", nodes);
 			printmask("real", nodes2);
