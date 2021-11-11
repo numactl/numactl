@@ -31,6 +31,8 @@ numactl \- Control NUMA policy for processes or shared memory
 ] [
 .B \-\-preferred node 
 ] [
+.B \-\-preferred-many nodes
+] [
 .B \-\-membind nodes
 ] [ 
 .B \-\-cpunodebind nodes
@@ -176,6 +178,14 @@ This should only be used with
 .I \-\-membind, \-m
 only, otherwise ignored.
 .TP
+.B \-\-preferred-many=node
+Preferably allocate memory on
+.I nodes,
+but if memory cannot be allocated there fall back to other nodes.
+This option takes a mask of preferred nodes where the closest node to local is
+considered most preferred.
+Relative notation may be used.
+.TP
 .B \-\-show, \-s
 Show NUMA policy settings of the current process. 
 .TP
@@ -195,6 +205,7 @@ above (
 .I \-\-interleave, 
 .I \-\-localalloc, 
 .I \-\-preferred,
+.I \-\-preferred-many,
 .I \-\-membind
 ).
 .TP
@@ -296,6 +307,9 @@ also in the same node.
 
 numactl \-\-preferred=1 numactl \-\-show
 Set preferred node 1 and show the resulting state.
+
+numactl \-\-preferred-many=0x3 numactl \-\-show
+Set preferred nodes 1 and 2, and show the resulting state.
 
 numactl --interleave=all --shm /tmp/shmkey 
 Interleave all of the sysv shared memory region specified by

@@ -1806,7 +1806,9 @@ static struct bitmask *__numa_preferred(void)
 	numa_bitmask_clearall(bmp);
 	getpol(&policy, bmp);
 
-	if (policy != MPOL_PREFERRED && policy != MPOL_BIND)
+	if (policy != MPOL_PREFERRED &&
+			policy != MPOL_PREFERRED_MANY &&
+			policy != MPOL_BIND)
 		return bmp;
 
 	if (numa_bitmask_weight(bmp) > 1)
