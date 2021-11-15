@@ -72,6 +72,16 @@
 #define __NR_move_pages xxx
 */
 
+#elif defined(__loongarch__)
+
+//reference to /usr/include/asm-generic/unistd.h
+
+#define __NR_mbind 235
+#define __NR_get_mempolicy 236
+#define __NR_set_mempolicy 237
+#define __NR_migrate_pages 238
+#define __NR_move_pages 239
+
 #elif defined(__mips__)
 
 #if _MIPS_SIM == _ABIO32
