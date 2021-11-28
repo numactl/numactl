@@ -98,7 +98,7 @@ test_nodemap_LDADD = libnuma.la
 test_pagesize_SOURCES = test/pagesize.c
 test_pagesize_LDADD = libnuma.la
 
-test_prefered_SOURCES = test/prefered.c
+test_prefered_SOURCES = test/prefered.c util.c
 test_prefered_LDADD = libnuma.la
 
 test_randmap_SOURCES = test/randmap.c

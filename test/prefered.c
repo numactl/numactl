@@ -10,6 +10,10 @@
 
 #define err(x) perror(x),exit(1)
 
+void usage(void)
+{
+}
+
 int main(void)
 {
 	int max = numa_max_node();
