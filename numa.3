@@ -590,7 +590,7 @@ if the specified
 .I node
 is externally denied to this process, this call will fail.
 This function is relatively slow compared to the
-.IR malloc (3),
+.IR malloc (3)
 family of functions.
 The memory must be freed
 with
@@ -633,8 +633,8 @@ argument will be rounded up to a multiple of the system page size.
 The nodes on which a process is allowed to allocate memory may
 be constrained externally.
 If this is the case, this function may fail.
-This function is relatively slow compare to
-.IR malloc (3),
+This function is relatively slow compared to the
+.IR malloc (3)
 family of functions and should only be used for large areas consisting
 of multiple pages.
 The interleaving works at page level and will only show an effect when the
@@ -650,7 +650,7 @@ bytes of memory with the current NUMA policy.
 The
 .I size
 argument will be rounded up to a multiple of the system page size.
-This function is relatively slow compare to the
+This function is relatively slow compared to the
 .IR malloc (3)
 family of functions.
 The memory must be freed
