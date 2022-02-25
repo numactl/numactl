@@ -128,6 +128,15 @@ numa_fini(void)
 	cleanup_node_cpu_mask_v2();
 }
 
+static int numa_find_first(struct bitmask *mask)
+{
+	int i;
+	for (i = 0; i < mask->size; i++)
+		if (numa_bitmask_isbitset(mask, i))
+			return i;
+	return -1;
+}
+
 /*
  * The following bitmask declarations, bitmask_*() routines, and associated
  * _setbit() and _getbit() routines are:
@@ -1819,7 +1828,7 @@ static struct bitmask *__numa_preferred(void)
 
 int numa_preferred(void)
 {
-	return find_first(__numa_preferred());
+	return numa_find_first(__numa_preferred());
 }
 
 static void __numa_set_preferred(struct bitmask *bmp)
