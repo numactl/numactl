@@ -41,6 +41,9 @@ memhog_LDADD = libnuma.la
 
 libnuma_la_SOURCES = libnuma.c syscall.c distance.c affinity.c affinity.h sysfs.c sysfs.h rtnetlink.c rtnetlink.h versions.ldscript
 libnuma_la_LDFLAGS = -version-info 1:0:0 -Wl,--version-script,$(srcdir)/versions.ldscript -Wl,-init,numa_init -Wl,-fini,numa_fini
+if RISCV64
+libnuma_la_LDFLAGS += -latomic
+endif
 
 check_PROGRAMS = \
 	test/distance \
