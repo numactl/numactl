@@ -34,7 +34,6 @@ end of this file.
 #define __USE_MISC
 #include <ctype.h>
 #include <dirent.h>
-#include <errno.h>
 #include <getopt.h>
 #include <stdint.h>
 #include <stdio.h>
