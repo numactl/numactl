@@ -31,7 +31,7 @@
 #include "numaint.h"
 #include "util.h"
 
-struct option opts[] = {
+static struct option opts[] = {
 	{"help", 0, 0, 'h' },
 	{ 0 }
 };

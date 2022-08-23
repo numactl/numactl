@@ -35,7 +35,6 @@ enum {
 #define MADV_NOHUGEPAGE 15
 #endif
 
-int repeat = 1;
 
 void usage(void)
 {
@@ -73,6 +72,7 @@ int main(int ac, char **av)
 	int i;
 	int fd = -1;
 	bool disable_hugepage = false;
+	int repeat = 1;
 
 	nodes = numa_allocate_nodemask();
 	gnodes = numa_allocate_nodemask();

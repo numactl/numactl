@@ -38,9 +38,9 @@ static inline void clearcache(void *a, unsigned size) {}
 #endif
 #define FRACT_NODES 8
 #define FRACT_MASKS 32
-int fract_nodes;
-int *node_to_use;
-unsigned long msize;
+static int fract_nodes;
+static int *node_to_use;
+static unsigned long msize;
 
 /* Should get this from cpuinfo, but on !x86 it's not there */
 enum {
@@ -57,11 +57,10 @@ enum test {
 	PTRCHASE,
 } thistest;
 
-char *delim = " ";
-int force;
-int regression_testing=0;
+static char *delim = " ";
+static int regression_testing=0;
 
-char *testname[] = {
+static char *testname[] = {
 	"memset",
 	"memcpy",
 	"forward",
@@ -297,12 +296,13 @@ int popcnt(unsigned long val)
 	return cnt;
 }
 
-int max_node, numnodes;
+static int numnodes;
 
 int get_node_list(void)
 {
         int a, got_nodes = 0;
         long long free_node_sizes;
+		int max_node;
 
         numnodes = numa_num_configured_nodes();
         node_to_use = (int *)malloc(numnodes * sizeof(int));
@@ -499,6 +499,7 @@ int main(int ac, char **av)
 {
 	int simple_tests = 0;
 	int nr_nodes;
+	int force = 0;
 
 	while (av[1] && av[1][0] == '-') {
 		ac--;
