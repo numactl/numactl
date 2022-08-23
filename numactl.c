@@ -35,7 +35,7 @@
 
 int exitcode;
 
-struct option opts[] = {
+static struct option opts[] = {
 	{"all", 0, 0, 'a'},
 	{"interleave", 1, 0, 'i' },
 	{"preferred", 1, 0, 'p' },
@@ -342,15 +342,10 @@ void nopolicy(void)
 		usage_msg("specify policy after --shm/--file");
 }
 
-int did_cpubind = 0;
-int did_strict = 0;
-int do_shm = 0;
-int do_dump = 0;
-int shmattached = 0;
-int did_node_cpu_parse = 0;
-int parse_all = 0;
-int numa_balancing = 0;
-char *shmoption;
+
+static int shmattached = 0;
+static int did_node_cpu_parse = 0;
+static char *shmoption;
 
 void check_cpubind(int flag)
 {
@@ -432,6 +427,12 @@ int main(int ac, char **av)
 	char *end;
 	char shortopts[array_len(opts)*2 + 1];
 	struct bitmask *mask = NULL;
+	int did_cpubind = 0;
+	int did_strict = 0;
+	int do_shm = 0;
+	int do_dump = 0;
+	int parse_all = 0;
+	int numa_balancing = 0;
 
 	get_short_opts(opts,shortopts);
 	while ((c = getopt_long(ac, av, shortopts, opts, NULL)) != -1) {

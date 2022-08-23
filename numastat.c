@@ -71,7 +71,7 @@ typedef struct meminfo {
 #define PROCESS_HUGE_INDEX    0
 #define PROCESS_PRIVATE_INDEX 3
 
-meminfo_t process_meminfo[] = {
+static meminfo_t process_meminfo[] = {
         { PROCESS_HUGE_INDEX,  "huge", "Huge" },
         {        1,            "heap", "Heap" },
         {        2,            "stack", "Stack" },
@@ -80,7 +80,7 @@ meminfo_t process_meminfo[] = {
 
 #define PROCESS_MEMINFO_ROWS (sizeof(process_meminfo) / sizeof(process_meminfo[0]))
 
-meminfo_t numastat_meminfo[] = {
+static meminfo_t numastat_meminfo[] = {
         { 0, "numa_hit", "Numa_Hit" },
         { 1, "numa_miss", "Numa_Miss" },
         { 2, "numa_foreign", "Numa_Foreign" },
@@ -91,7 +91,7 @@ meminfo_t numastat_meminfo[] = {
 
 #define NUMASTAT_MEMINFO_ROWS (sizeof(numastat_meminfo) / sizeof(numastat_meminfo[0]))
 
-meminfo_t system_meminfo[] = {
+static meminfo_t system_meminfo[] = {
         {  0, "MemTotal", "MemTotal" },
         {  1, "MemFree", "MemFree" },
         {  2, "MemUsed", "MemUsed" },
@@ -139,7 +139,7 @@ meminfo_t system_meminfo[] = {
 // hash algorithms depend on having some unused buckets.
 
 #define HASH_TABLE_SIZE 151
-int hash_collisions = 0;
+static int hash_collisions = 0;
 
 struct hash_entry {
         char *name;
@@ -693,20 +693,20 @@ void display_table(vtab_p table,
         }
 }
 
-int verbose = 0;
-int num_pids = 0;
-int num_nodes = 0;
-int screen_width = 0;
-int show_zero_data = 1;
-int compress_display = 0;
-int sort_table = 0;
-int sort_table_node = -1;
-int compatibility_mode = 0;
-int pid_array_max_pids = 0;
-int *pid_array = NULL;
-char *prog_name = NULL;
-double page_size_in_bytes = 0;
-double huge_page_size_in_bytes = 0;
+static int verbose = 0;
+static int num_pids = 0;
+static int num_nodes = 0;
+static int screen_width = 0;
+static int show_zero_data = 1;
+static int compress_display = 0;
+static int sort_table = 0;
+static int sort_table_node = -1;
+static int compatibility_mode = 0;
+static int pid_array_max_pids = 0;
+static int *pid_array = NULL;
+static char *prog_name = NULL;
+static double page_size_in_bytes = 0;
+static double huge_page_size_in_bytes = 0;
 
 void display_version_and_exit(void)
 {

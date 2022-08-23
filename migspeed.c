@@ -14,18 +14,10 @@
 #include <unistd.h>
 #include "util.h"
 
-char *memory;
-
-unsigned long pages = 1000;
-
-unsigned long pagesize;
-
-const char *optstr = "hvp:";
-
-char *cmd;
-
-int verbose;
-struct timespec start,end;
+static const char *optstr = "hvp:";
+static char *cmd;
+static int verbose;
+static unsigned long pages = 1000;
 
 void usage(void)
 {
@@ -70,6 +62,9 @@ int main(int argc, char *argv[])
 	double duration, mbytes;
 	struct bitmask *from;
 	struct bitmask *to;
+	char *memory = NULL;
+	unsigned long pagesize;
+	struct timespec start,end;
 
 	pagesize = getpagesize();
 
