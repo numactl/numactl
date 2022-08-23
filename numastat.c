@@ -1114,7 +1114,7 @@ int node_and_digits(const struct dirent *dptr)
         return 1;
 }
 
-static void init_node_ix_map_and_header(int compatibility_mode)
+static void init_node_ix_map_and_header(void)
 {
         // Count directory names of the form: /sys/devices/system/node/node<N>
         struct dirent **namelist;
@@ -1196,7 +1196,7 @@ static void free_node_ix_map_and_header(void)
 
 static double get_huge_page_size_in_bytes(void)
 {
-        double huge_page_size = 0;;
+        double huge_page_size = 0;
         FILE *fs = fopen("/proc/meminfo", "r");
         if (!fs) {
                 perror("Can't open /proc/meminfo");
@@ -1406,7 +1406,7 @@ int main(int argc, char **argv)
         // with the old numastat perl script (which is included at the end of this
         // file for reference)
         compatibility_mode = (argc == 1);
-        init_node_ix_map_and_header(compatibility_mode);	// enumarate the NUMA nodes
+        init_node_ix_map_and_header();	// enumarate the NUMA nodes
         if (compatibility_mode) {
                 show_numastat_info();
                 free_node_ix_map_and_header();

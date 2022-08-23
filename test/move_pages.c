@@ -47,7 +47,6 @@ int main(int argc, char **argv)
 	pagesize = getpagesize();
 
 	nr_nodes = get_node_list();
-
 	if (nr_nodes < 2) {
 		printf("A minimum of 2 nodes is required for this test.\n");
 		exit(77);

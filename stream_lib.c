@@ -197,7 +197,6 @@ void stream_test(double *res)
 
 		if (res)
 			res[j] = speed;
-
 	}
 }
 

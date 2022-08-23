@@ -92,8 +92,8 @@ int main(int argc, char **argv)
 	numa_move_pages(0, page_count, addr, nodes, status, 0);
 
 	printf("\nMigrating the current processes pages ...\n");
+	
 	rc = numa_migrate_pages(0, old_nodes, new_nodes);
-
 	if (rc < 0) {
 		perror("numa_migrate_pages failed");
 		errors++;

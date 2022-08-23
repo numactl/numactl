@@ -48,7 +48,6 @@ static void displaymap(void)
 		if (!strstr(buffer, "bind"))
 			continue ;
 		printf("%s", buffer);
-
 	}
 	fclose(f);
 }
@@ -131,7 +130,6 @@ int main(int argc, char *argv[])
 				pages, pagesize);
 
 	memory = memalign(pagesize, bytes);
-
 	if (!memory) {
 		printf("Out of Memory\n");
 		exit(2);

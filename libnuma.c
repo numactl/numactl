@@ -2061,6 +2061,7 @@ __numa_parse_cpustring(const char *s, struct bitmask *allowed_cpus_ptr)
 	int conf_cpus = numa_num_configured_cpus();
 	char *end;
 	struct bitmask *mask;
+	int i;
 
 	mask = numa_allocate_cpumask();
 
@@ -2076,7 +2077,6 @@ __numa_parse_cpustring(const char *s, struct bitmask *allowed_cpus_ptr)
 	}
 	do {
 		unsigned long arg;
-		int i;
 
 		if (!strcmp(s,"all")) {
 			copy_bitmask_to_bitmask(allowed_cpus_ptr, mask);
@@ -2098,7 +2098,6 @@ __numa_parse_cpustring(const char *s, struct bitmask *allowed_cpus_ptr)
 		if (*s == '-') {
 			char *end2;
 			unsigned long arg2;
-			int i;
 			arg2 = get_nr(++s, &end2, allowed_cpus_ptr, relative);
 			if (end2 == s) {
 				numa_warn(W_cpuparse, "missing cpu argument %s\n", s);
@@ -2120,7 +2119,6 @@ __numa_parse_cpustring(const char *s, struct bitmask *allowed_cpus_ptr)
 	if (s[-1] != '\0')
 		goto err;
 	if (invert) {
-		int i;
 		for (i = 0; i < conf_cpus; i++) {
 			if (numa_bitmask_isbitset(mask, i))
 				numa_bitmask_clearbit(mask, i);
