@@ -23,7 +23,6 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include <assert.h>
 #include "numa.h"
 #include "numaif.h"
 #include "numaint.h"

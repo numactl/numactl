@@ -20,15 +20,11 @@
 
 #define _GNU_SOURCE
 #include <getopt.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdarg.h>
 #include "numa.h"
-#include "numaif.h"
-#include "numaint.h"
 #include "util.h"
 
 static struct option opts[] = {
