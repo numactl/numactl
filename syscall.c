@@ -267,7 +267,6 @@ SYMVER("numa_sched_getaffinity_v1", "numa_sched_getaffinity@libnuma_1.1")
 int numa_sched_getaffinity_v1(pid_t pid, unsigned len, const unsigned long *mask)
 {
 	return syscall(__NR_sched_getaffinity,pid,len,mask);
-
 }
 
 SYMVER("numa_sched_getaffinity_v2", "numa_sched_getaffinity@@libnuma_1.2")
@@ -277,7 +276,6 @@ int numa_sched_getaffinity_v2(pid_t pid, struct bitmask *mask)
 	return syscall(__NR_sched_getaffinity, pid, numa_bitmask_nbytes(mask),
 								mask->maskp);
 	/* sched_getaffinity returns sizeof(cpumask_t) */
-
 }
 
 make_internal_alias(numa_sched_getaffinity_v1);

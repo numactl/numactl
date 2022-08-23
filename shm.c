@@ -168,7 +168,6 @@ void attach_shared(char *name, char *opt)
 	shmptr = mmap64(NULL, shmlen, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd, shmoffset);
 	if (shmptr == (char*)-1)
 		err("shm mmap");
-
 }
 
 static void
@@ -326,7 +325,6 @@ void verify_shm(int policy, struct bitmask *nodes)
 
 		case MPOL_DEFAULT:
 			break;
-
 		}
 	}
 

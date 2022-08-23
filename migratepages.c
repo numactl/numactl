@@ -92,7 +92,6 @@ int main(int argc, char *argv[])
 	}
 
 	rc = numa_migrate_pages(pid, fromnodes, tonodes);
-
 	if (rc < 0) {
 		perror("migrate_pages");
 		return 1;
