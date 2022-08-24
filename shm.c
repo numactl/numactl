@@ -47,18 +47,21 @@ static int shm_pagesize;
 static long huge_page_size(void)
 {
 	size_t len = 0;
+	long huge_size = 0;
 	char *line = NULL;
 	FILE *f = fopen("/proc/meminfo", "r");
 	if (f != NULL) {
 		while (getdelim(&line, &len, '\n', f) > 0) {
 			int ps;
-			if (sscanf(line, "Hugepagesize: %d kB", &ps) == 1)
-				return ps * 1024;
+			if (sscanf(line, "Hugepagesize: %d kB", &ps) == 1) {
+				huge_size = ps * 1024;
+				break;
+			}
 		}
 		free(line);
 		fclose(f);
 	}
-	return getpagesize();
+	return huge_size ? huge_size : getpagesize();
 }
 
 static void check_region(char *opt)
