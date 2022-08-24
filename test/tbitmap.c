@@ -10,7 +10,7 @@
 #include "util.h"
 
 /* For util.c. Fixme. */
-void usage(void)
+static void usage(void)
 {
 	exit(1);
 }

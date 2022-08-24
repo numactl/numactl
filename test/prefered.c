@@ -12,7 +12,7 @@
 
 extern void printmask(char *name, struct bitmask *mask);
 
-void usage(void)
+static void usage(void)
 {
 }
 

@@ -6,9 +6,6 @@ extern int read_sysctl(char *name);
 extern void complain(char *fmt, ...);
 extern void nerror(char *fmt, ...);
 
-/* defined in main module, but called by util.c */
-extern void usage(void);
-
 extern long memsize(char *s);
 extern int parse_policy(char *name, char *arg);
 extern void print_policies(void);

@@ -36,7 +36,7 @@ static struct option opts[] = {
 	{ 0 }
 };
 
-void usage(void)
+static void usage(void)
 {
 	fprintf(stderr,
 		"usage: migratepages pid from-nodes to-nodes\n"
@@ -46,7 +46,7 @@ void usage(void)
 	exit(1);
 }
 
-void checknuma(void)
+static void checknuma(void)
 {
 	static int numa = -1;
 	if (numa < 0) {

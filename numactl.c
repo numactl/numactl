@@ -64,7 +64,7 @@ static struct option opts[] = {
 	{ 0 }
 };
 
-void usage(void)
+static void usage(void)
 {
 	fprintf(stderr,
 		"usage: numactl [--all | -a] [--balancing | -b] [--interleave= | -i <nodes>]\n"
@@ -100,7 +100,7 @@ void usage(void)
 	exit(1);
 }
 
-void usage_msg(char *msg, ...)
+static void usage_msg(char *msg, ...)
 {
 	va_list ap;
 	va_start(ap,msg);
@@ -111,7 +111,7 @@ void usage_msg(char *msg, ...)
 	va_end(ap);
 }
 
-void show_physcpubind(void)
+static void show_physcpubind(void)
 {
 	int ncpus = numa_num_configured_cpus();
 
@@ -132,7 +132,7 @@ void show_physcpubind(void)
 	}
 }
 
-void show(void)
+static void show(void)
 {
 	struct bitmask *membind, *interleave, *cpubind, *preferred;
 	unsigned long cur;
@@ -189,7 +189,7 @@ void show(void)
 	printmask("preferred", preferred);
 }
 
-char *fmt_mem(unsigned long long mem, char *buf)
+static char *fmt_mem(unsigned long long mem, char *buf)
 {
 	if (mem == -1L)
 		sprintf(buf, "<not available>");
@@ -230,7 +230,7 @@ static void print_distances(int maxnode)
 	}
 }
 
-void print_node_cpus(int node)
+static void print_node_cpus(int node)
 {
 	int i, err;
 	struct bitmask *cpus;
@@ -245,7 +245,7 @@ void print_node_cpus(int node)
 	putchar('\n');
 }
 
-void hardware(void)
+static void hardware(void)
 {
 	int i;
 	int numnodes=0;
@@ -309,7 +309,7 @@ void hardware(void)
 	print_distances(maxnode);
 }
 
-void checkerror(char *s)
+static void checkerror(char *s)
 {
 	if (errno) {
 		perror(s);
@@ -317,7 +317,7 @@ void checkerror(char *s)
 	}
 }
 
-void checknuma(void)
+static void checknuma(void)
 {
 	static int numa = -1;
 	if (numa < 0) {
@@ -329,14 +329,14 @@ void checknuma(void)
 
 int set_policy = -1;
 
-void setpolicy(int pol)
+static inline void setpolicy(int pol)
 {
 	if (set_policy != -1)
 		usage_msg("Conflicting policies");
 	set_policy = pol;
 }
 
-void nopolicy(void)
+static inline void nopolicy(void)
 {
 	if (set_policy >= 0)
 		usage_msg("specify policy after --shm/--file");
@@ -347,38 +347,38 @@ static int shmattached = 0;
 static int did_node_cpu_parse = 0;
 static char *shmoption;
 
-void check_cpubind(int flag)
+static inline void check_cpubind(int flag)
 {
 	if (flag)
 		usage_msg("cannot do --cpubind on shared memory\n");
 }
 
-void noshm(char *opt)
+static inline void noshm(char *opt)
 {
 	if (shmattached)
 		usage_msg("%s must be before shared memory specification", opt);
 	shmoption = opt;
 }
 
-void dontshm(char *opt)
+static inline void dontshm(char *opt)
 {
 	if (shmoption)
 		usage_msg("%s shm option is not allowed before %s", shmoption, opt);
 }
 
-void needshm(char *opt)
+static inline void needshm(char *opt)
 {
 	if (!shmattached)
 		usage_msg("%s must be after shared memory specification", opt);
 }
 
-void check_all_parse(int flag)
+static inline void check_all_parse(int flag)
 {
 	if (did_node_cpu_parse)
 		usage_msg("--all/-a option must be before all cpu/node specifications");
 }
 
-void get_short_opts(struct option *o, char *s)
+static void get_short_opts(struct option *o, char *s)
 {
 	*s++ = '+';
 	while (o->name) {
@@ -392,7 +392,7 @@ void get_short_opts(struct option *o, char *s)
 	*s = '\0';
 }
 
-void check_shmbeyond(char *msg)
+static void check_shmbeyond(char *msg)
 {
 	if (shmoffset >= shmlen) {
 		fprintf(stderr,

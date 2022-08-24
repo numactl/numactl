@@ -44,7 +44,7 @@ unsigned long long shmoffset;
 int shmflags;
 static int shm_pagesize;
 
-long huge_page_size(void)
+static long huge_page_size(void)
 {
 	size_t len = 0;
 	char *line = NULL;

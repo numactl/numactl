@@ -63,9 +63,9 @@ int absolute;
 char *cfilter;
 int verbose;
 
-void usage(void);
+static void usage(void);
 
-void Vprintf(char *fmt, ...)
+static void Vprintf(char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap,fmt);
@@ -74,7 +74,7 @@ void Vprintf(char *fmt, ...)
 	va_end(ap);
 }
 
-unsigned long long rdmsr(int cpu, unsigned long msr)
+static unsigned long long rdmsr(int cpu, unsigned long msr)
 {
 	unsigned long long val;
 	if (pread(msrfd[cpu], &val, 8, msr) != 8) {
@@ -84,7 +84,7 @@ unsigned long long rdmsr(int cpu, unsigned long msr)
 	return val;
 }
 
-void wrmsr(int cpu, unsigned long msr, unsigned long long value)
+static void wrmsr(int cpu, unsigned long msr, unsigned long long value)
 {
 	if (pwrite(msrfd[cpu], &value, 8, msr) != 8) {
 		fprintf(stderr, "wdmsr of %lx failed: %s\n", msr, strerror(errno));
@@ -92,7 +92,7 @@ void wrmsr(int cpu, unsigned long msr, unsigned long long value)
 	}
 }
 
-int cpufilter(int cpu)
+static int cpufilter(int cpu)
 {
 	long num;
 	char *end;
@@ -116,7 +116,7 @@ int cpufilter(int cpu)
 	return 0;
 }
 
-void checkcounter(int cpu, int clear)
+static void checkcounter(int cpu, int clear)
 {
 	int i;
 	for (i = 1; i < 4; i++) {
@@ -146,7 +146,7 @@ void checkcounter(int cpu, int clear)
 	}
 }
 
-void setup(int clear)
+static void setup(int clear)
 {
 	DIR *dir;
 	struct dirent *d;
@@ -182,7 +182,7 @@ void setup(int clear)
 	}
 }
 
-void printf_padded(int pad, char *fmt, ...)
+static void printf_padded(int pad, char *fmt, ...)
 {
 	char buf[pad + 1];
 	va_list ap;
@@ -192,7 +192,7 @@ void printf_padded(int pad, char *fmt, ...)
 	va_end(ap);
 }
 
-void print_header(void)
+static void print_header(void)
 {
 	printf_padded(4, "CPU ");
 	printf_padded(16, "LOCAL");
@@ -201,7 +201,7 @@ void print_header(void)
 	putchar('\n');
 }
 
-void print_cpu(int cpu)
+static void print_cpu(int cpu)
 {
 	int i;
 	static unsigned long long lastval[4];
@@ -217,7 +217,7 @@ void print_cpu(int cpu)
 	putchar('\n');
 }
 
-void dumpall(void)
+static void dumpall(void)
 {
 	int cnt = 0;
 	int cpu;
@@ -238,7 +238,7 @@ void dumpall(void)
 	}
 }
 
-void checkk8(void)
+static void checkk8(void)
 {
 	char *line = NULL;
 	size_t size = 0;
@@ -268,7 +268,7 @@ void checkk8(void)
 	fclose(f);
 }
 
-void usage(void)
+static void usage(void)
 {
 	fprintf(stderr, "usage: numamon [args] [delay]\n");
 	fprintf(stderr, "       -f forcibly overwrite counters\n");

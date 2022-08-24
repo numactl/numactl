@@ -6,7 +6,7 @@
 #include "util.h"
 #include "stream_lib.h"
 
-void usage(void)
+static void usage(void)
 {
 	exit(1);
 }
@@ -22,8 +22,10 @@ int main(int ac, char **av)
 	int policy;
 
 	policy = parse_policy(av[1], av[2]);
-
-        nodes = numa_allocate_nodemask();
+	if (policy == MPOL_MAX)
+		usage();
+		
+	nodes = numa_allocate_nodemask();
 
 	if (av[1] && av[2])
 		nodes = numa_parse_nodestring(av[2]);

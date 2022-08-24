@@ -119,7 +119,7 @@ int parse_policy(char *name, char *arg)
 			break;
 	}
 	if (!p || !p->name || (!arg && !p->noarg))
-		usage();
+		return MPOL_MAX;
     return p->policy;
 }
 
