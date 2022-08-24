@@ -146,12 +146,12 @@ struct hash_entry {
         int index;
 } hash_table[HASH_TABLE_SIZE];
 
-void init_hash_table(void)
+static void init_hash_table(void)
 {
         memset(hash_table, 0, sizeof(hash_table));
 }
 
-int hash_ix(char *s)
+static int hash_ix(char *s)
 {
         unsigned int h = 17;
         while (*s) {
@@ -161,7 +161,7 @@ int hash_ix(char *s)
         return (h % HASH_TABLE_SIZE);
 }
 
-int hash_lookup(char *s)
+static int hash_lookup(char *s)
 {
         int ix = hash_ix(s);
         while (hash_table[ix].name) {	// Assumes big table with blank entries
@@ -176,7 +176,7 @@ int hash_lookup(char *s)
         return -1;
 }
 
-int hash_insert(char *s, int i)
+static int hash_insert(char *s, int i)
 {
         int ix = hash_ix(s);
         while (hash_table[ix].name) {	// assumes no duplicate entries
@@ -250,43 +250,43 @@ typedef struct vtab {
 
 #define USUAL_GUTTER_WIDTH 1
 
-void set_row_flag(vtab_p table, int row, int flag)
+static inline void set_row_flag(vtab_p table, int row, int flag)
 {
         table->row_flags[row] |= (uint8_t)flag;
 }
 
-void set_col_flag(vtab_p table, int col, int flag)
+static inline void set_col_flag(vtab_p table, int col, int flag)
 {
         table->col_flags[col] |= (uint8_t)flag;
 }
 
-void clear_row_flag(vtab_p table, int row, int flag)
+static inline void clear_row_flag(vtab_p table, int row, int flag)
 {
         table->row_flags[row] &= (uint8_t)~flag;
 }
 
-void clear_col_flag(vtab_p table, int col, int flag)
+static inline void clear_col_flag(vtab_p table, int col, int flag)
 {
         table->col_flags[col] &= (uint8_t)~flag;
 }
 
-int test_row_flag(vtab_p table, int row, int flag)
+static inline int test_row_flag(vtab_p table, int row, int flag)
 {
         return ((table->row_flags[row] & (uint8_t)flag) != 0);
 }
 
-int test_col_flag(vtab_p table, int col, int flag)
+static inline int test_col_flag(vtab_p table, int col, int flag)
 {
         return ((table->col_flags[col] & (uint8_t)flag) != 0);
 }
 
-void set_col_justification(vtab_p table, int col, int justify)
+static inline void set_col_justification(vtab_p table, int col, int justify)
 {
         table->col_flags[col] &= (uint8_t)~COL_JUSTIFY_MASK;
         table->col_flags[col] |= (uint8_t)(justify & COL_JUSTIFY_MASK);
 }
 
-void set_col_width(vtab_p table, int col, uint8_t width)
+static inline void set_col_width(vtab_p table, int col, uint8_t width)
 {
         if (width >= SMALL_BUF_SIZE) {
                 width = SMALL_BUF_SIZE - 1;
@@ -294,78 +294,78 @@ void set_col_width(vtab_p table, int col, uint8_t width)
         table->col_width[col] = width;
 }
 
-void set_col_decimal_places(vtab_p table, int col, uint8_t places)
+static inline void set_col_decimal_places(vtab_p table, int col, uint8_t places)
 {
         table->col_decimal_places[col] = places;
 }
 
-void set_cell_flag(vtab_p table, int row, int col, int flag)
+static inline void set_cell_flag(vtab_p table, int row, int col, int flag)
 {
         cell_p c_ptr = GET_CELL_PTR(row, col);
         c_ptr->flags |= (uint32_t)flag;
 }
 
-void clear_cell_flag(vtab_p table, int row, int col, int flag)
+static inline void clear_cell_flag(vtab_p table, int row, int col, int flag)
 {
         cell_p c_ptr = GET_CELL_PTR(row, col);
         c_ptr->flags &= (uint32_t)~flag;
 }
 
-int test_cell_flag(vtab_p table, int row, int col, int flag)
+static inline int test_cell_flag(vtab_p table, int row, int col, int flag)
 {
         cell_p c_ptr = GET_CELL_PTR(row, col);
         return ((c_ptr->flags & (uint32_t)flag) != 0);
 }
 
-void string_assign(vtab_p table, int row, int col, char *s)
+static inline void string_assign(vtab_p table, int row, int col, char *s)
 {
         cell_p c_ptr = GET_CELL_PTR(row, col);
         c_ptr->type = CELL_TYPE_STRING;
         c_ptr->s = s;
 }
 
-void repchar_assign(vtab_p table, int row, int col, char c)
+static inline void repchar_assign(vtab_p table, int row, int col, char c)
 {
         cell_p c_ptr = GET_CELL_PTR(row, col);
         c_ptr->type = CELL_TYPE_REPCHAR;
         c_ptr->c[0] = c;
 }
 
-void double_assign(vtab_p table, int row, int col, double d)
+static inline void double_assign(vtab_p table, int row, int col, double d)
 {
         cell_p c_ptr = GET_CELL_PTR(row, col);
         c_ptr->type = CELL_TYPE_DOUBLE;
         c_ptr->d = d;
 }
 
-void long_assign(vtab_p table, int row, int col, int64_t l)
+static inline void long_assign(vtab_p table, int row, int col, int64_t l)
 {
         cell_p c_ptr = GET_CELL_PTR(row, col);
         c_ptr->type = CELL_TYPE_LONG;
         c_ptr->l = l;
 }
 
-void double_addto(vtab_p table, int row, int col, double d)
+static inline void double_addto(vtab_p table, int row, int col, double d)
 {
         cell_p c_ptr = GET_CELL_PTR(row, col);
         c_ptr->type = CELL_TYPE_DOUBLE;
         c_ptr->d += d;
 }
 
-void long_addto(vtab_p table, int row, int col, int64_t l)
+static inline void long_addto(vtab_p table, int row, int col, int64_t l)
 {
         cell_p c_ptr = GET_CELL_PTR(row, col);
         c_ptr->type = CELL_TYPE_LONG;
         c_ptr->l += l;
 }
 
-void clear_assign(vtab_p table, int row, int col)
+static inline void clear_assign(vtab_p table, int row, int col)
 {
         cell_p c_ptr = GET_CELL_PTR(row, col);
         memset(c_ptr, 0, sizeof(cell_t));
 }
 
-void zero_table_data(vtab_p table, int type)
+static void zero_table_data(vtab_p table, int type)
 {
         // Sets data area of table to zeros of specified type
         for (int row = table->header_rows; (row < ALL_TABLE_ROWS); row++) {
@@ -377,7 +377,7 @@ void zero_table_data(vtab_p table, int type)
         }
 }
 
-void sort_rows_descending_by_col(vtab_p table, int start_row, int stop_row, int col)
+static void sort_rows_descending_by_col(vtab_p table, int start_row, int stop_row, int col)
 {
         // Rearrange row_ix_map[] indices so the rows will be in
         // descending order by the value in the specified column
@@ -399,12 +399,12 @@ void sort_rows_descending_by_col(vtab_p table, int start_row, int stop_row, int 
         }
 }
 
-void span(vtab_p table, int first_row, int first_col, int last_row, int last_col)
+static void span(vtab_p table, int first_row, int first_col, int last_row, int last_col)
 {
         // FIXME: implement row / col spannnig someday?
 }
 
-void init_table(vtab_p table, int header_rows, int header_cols, int data_rows, int data_cols)
+static void init_table(vtab_p table, int header_rows, int header_cols, int data_rows, int data_cols)
 {
         // init table sizes
         table->header_rows = header_rows;
@@ -463,7 +463,7 @@ void init_table(vtab_p table, int header_rows, int header_cols, int data_rows, i
         memset(table->col_decimal_places, 0, alloc_size);
 }
 
-void free_cell(vtab_p table, int row, int col)
+static void free_cell(vtab_p table, int row, int col)
 {
         cell_p c_ptr = GET_CELL_PTR(row, col);
         if ((c_ptr->type == CELL_TYPE_STRING)
@@ -474,7 +474,7 @@ void free_cell(vtab_p table, int row, int col)
         memset(c_ptr, 0, sizeof(cell_t));
 }
 
-void free_table(vtab_p table)
+static void free_table(vtab_p table)
 {
         if (table->cell != NULL) {
                 for (int row = 0; (row < ALL_TABLE_ROWS); row++) {
@@ -501,7 +501,7 @@ void free_table(vtab_p table)
         }
 }
 
-char *fmt_cell_data(cell_p c_ptr, int max_width, int decimal_places)
+static char *fmt_cell_data(cell_p c_ptr, int max_width, int decimal_places)
 {
         // Returns pointer to a static buffer, expecting caller to
         // immediately use or copy the contents before calling again.
@@ -536,7 +536,7 @@ char *fmt_cell_data(cell_p c_ptr, int max_width, int decimal_places)
         return buf;
 }
 
-void auto_set_col_width(vtab_p table, int col, int min_width, int max_width)
+static void auto_set_col_width(vtab_p table, int col, int min_width, int max_width)
 {
         int width = min_width;
         for (int row = 0; (row < ALL_TABLE_ROWS); row++) {
@@ -557,7 +557,7 @@ void auto_set_col_width(vtab_p table, int col, int min_width, int max_width)
         table->col_width[col] = (uint8_t)width;
 }
 
-void display_justified_cell(cell_p c_ptr, int row_flags, int col_flags, int width, int decimal_places)
+static void display_justified_cell(cell_p c_ptr, int row_flags, int col_flags, int width, int decimal_places)
 {
         char *p = fmt_cell_data(c_ptr, width, decimal_places);
         int l = strlen(p);
@@ -585,7 +585,7 @@ void display_justified_cell(cell_p c_ptr, int row_flags, int col_flags, int widt
         printf("%s", buf);
 }
 
-void display_table(vtab_p table,
+static void display_table(vtab_p table,
                    int screen_width,
                    int show_unseen_rows,
                    int show_unseen_cols,
@@ -708,14 +708,14 @@ static char *prog_name = NULL;
 static double page_size_in_bytes = 0;
 static double huge_page_size_in_bytes = 0;
 
-void display_version_and_exit(void)
+static void display_version_and_exit(void)
 {
         char *version_string = "20130723";
         printf("%s version: %s: %s\n", prog_name, version_string, __DATE__);
         exit(EXIT_SUCCESS);
 }
 
-void display_usage_and_exit(void)
+static void display_usage_and_exit(void)
 {
         fprintf(stderr, "Usage: %s [-c] [-m] [-n] [-p <PID>|<pattern>] [-s[<node>]] [-v] [-V] [-z] [ <PID>|<pattern>... ]\n", prog_name);
         fprintf(stderr, "-c to minimize column widths\n");
@@ -729,7 +729,7 @@ void display_usage_and_exit(void)
         exit(EXIT_FAILURE);
 }
 
-int get_screen_width(void)
+static int get_screen_width(void)
 {
         int width = 80;
         char *p = getenv("NUMASTAT_WIDTH");
@@ -762,7 +762,7 @@ int get_screen_width(void)
         return width;
 }
 
-char *command_name_for_pid(int pid)
+static char *command_name_for_pid(int pid)
 {
         // Get the PID command name field from /proc/PID/status file.  Return
         // pointer to a static buffer, expecting caller to immediately copy result.
@@ -791,7 +791,7 @@ char *command_name_for_pid(int pid)
         return NULL;
 }
 
-void show_info_from_system_file(char *file, meminfo_p meminfo, int meminfo_rows, int tok_offset)
+static void show_info_from_system_file(char *file, meminfo_p meminfo, int meminfo_rows, int tok_offset)
 {
         // Setup and init table
         vtab_t table;
@@ -904,7 +904,7 @@ void show_info_from_system_file(char *file, meminfo_p meminfo, int meminfo_rows,
         free_table(&table);
 }
 
-void show_numastat_info(void)
+static void show_numastat_info(void)
 {
         if (!compatibility_mode) {
                 printf("\nPer-node numastat info (in MBs):\n");
@@ -912,13 +912,13 @@ void show_numastat_info(void)
         show_info_from_system_file("numastat", numastat_meminfo, NUMASTAT_MEMINFO_ROWS, 0);
 }
 
-void show_system_info(void)
+static void show_system_info(void)
 {
         printf("\nPer-node system memory usage (in MBs):\n");
         show_info_from_system_file("meminfo", system_meminfo, SYSTEM_MEMINFO_ROWS, 2);
 }
 
-void show_process_info(void)
+static void show_process_info(void)
 {
         vtab_t table;
         int header_rows = 2;
@@ -1115,7 +1115,7 @@ int node_and_digits(const struct dirent *dptr)
         return 1;
 }
 
-void init_node_ix_map_and_header(int compatibility_mode)
+static void init_node_ix_map_and_header(int compatibility_mode)
 {
         // Count directory names of the form: /sys/devices/system/node/node<N>
         struct dirent **namelist;
@@ -1180,7 +1180,7 @@ void init_node_ix_map_and_header(int compatibility_mode)
         }
 }
 
-void free_node_ix_map_and_header(void)
+static void free_node_ix_map_and_header(void)
 {
         if (node_ix_map != NULL) {
                 free(node_ix_map);
@@ -1195,7 +1195,7 @@ void free_node_ix_map_and_header(void)
         }
 }
 
-double get_huge_page_size_in_bytes(void)
+static double get_huge_page_size_in_bytes(void)
 {
         double huge_page_size = 0;;
         FILE *fs = fopen("/proc/meminfo", "r");
@@ -1218,7 +1218,7 @@ double get_huge_page_size_in_bytes(void)
         return huge_page_size * KILOBYTE;
 }
 
-int all_digits(char *p)
+static int all_digits(char *p)
 {
         if (p == NULL) {
                 return 0;
@@ -1229,12 +1229,12 @@ int all_digits(char *p)
         return 1;
 }
 
-int starts_with_digit(const struct dirent *dptr)
+static int starts_with_digit(const struct dirent *dptr)
 {
         return (isdigit(dptr->d_name[0]));
 }
 
-void add_pid_to_list(int pid)
+static void add_pid_to_list(int pid)
 {
         if (num_pids < pid_array_max_pids) {
                 pid_array[num_pids++] = pid;
@@ -1260,7 +1260,7 @@ int ascending(const void *p1, const void *p2)
         return *(int *)p1 - *(int *) p2;
 }
 
-void sort_pids_and_remove_duplicates(void)
+static void sort_pids_and_remove_duplicates(void)
 {
         if (num_pids > 1) {
                 qsort(pid_array, num_pids, sizeof(int), ascending);
@@ -1278,7 +1278,7 @@ void sort_pids_and_remove_duplicates(void)
         }
 }
 
-void add_pids_from_pattern_search(char *pattern)
+static void add_pids_from_pattern_search(char *pattern)
 {
         // Search all /proc/<PID>/cmdline files and /proc/<PID>/status:Name fields
         // for matching patterns.  Show the memory details for matching PIDs.

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include "clearcache.h"
 
-unsigned cache_size(void)
+static unsigned cache_size(void)
 {
 	unsigned cs = 0;
 #ifdef _SC_LEVEL1_DCACHE_SIZE
@@ -36,7 +36,7 @@ unsigned cache_size(void)
 	return cs;
 }
 
-void fallback_clearcache(void)
+static void fallback_clearcache(void)
 {
 	static unsigned char *clearmem;
 	unsigned cs = cache_size();

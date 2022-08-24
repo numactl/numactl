@@ -75,7 +75,7 @@ static char *testname[] = {
 	NULL,
 };
 
-void output(char *title, char *result)
+static void output(char *title, char *result)
 {
 	if (!isspace(delim[0]))
 		printf("%s%s%s\n", title,delim, result);
@@ -84,7 +84,7 @@ void output(char *title, char *result)
 }
 
 #ifdef HAVE_STREAM_LIB
-void do_stream(char *name, unsigned char *mem)
+static void do_stream(char *name, unsigned char *mem)
 {
 	int i;
 	char title[100], buf[100];
@@ -122,7 +122,7 @@ static int cmp_node(const void *ap, const void *bp)
 	return a->val - b->val;
 }
 
-void **ptrchase_init(unsigned char *mem)
+static void **ptrchase_init(unsigned char *mem)
 {
 	long i;
 	union node *nodes = (union node *)mem;
@@ -147,7 +147,7 @@ static inline unsigned long long timerfold(struct timeval *tv)
 
 #define LOOPS 10
 
-void memtest(char *name, unsigned char *mem)
+static void memtest(char *name, unsigned char *mem)
 {
 	long k;
 	struct timeval start, end, res;
@@ -285,7 +285,7 @@ void memtest(char *name, unsigned char *mem)
 	numa_free(mem, msize);
 }
 
-int popcnt(unsigned long val)
+static int popcnt(unsigned long val)
 {
 	int i = 0, cnt = 0;
 	while (val >> i) {
@@ -298,7 +298,7 @@ int popcnt(unsigned long val)
 
 static int numnodes;
 
-int get_node_list(void)
+static int get_node_list(void)
 {
         int a, got_nodes = 0;
         long long free_node_sizes;
@@ -316,7 +316,7 @@ int get_node_list(void)
 	return got_nodes;
 }
 
-void test(enum test type)
+static void test(enum test type)
 {
 	unsigned long mask;
 	int i, k;
@@ -482,7 +482,7 @@ void test(enum test type)
 	/* numa_run_on_node_mask is not tested */
 }
 
-void usage(void)
+static void usage(void)
 {
 	int i;
 	printf("usage: numademo [-S] [-f] [-c] [-e] [-t] msize[kmg] {tests}\nNo tests means run all.\n");

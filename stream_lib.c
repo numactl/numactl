@@ -59,7 +59,7 @@ long N = 8000000;
  *
  */
 
-int checktick(void);
+static int checktick(void);
 
 # define HLINE "-------------------------------------------------------------\n"
 
@@ -204,7 +204,7 @@ void stream_test(double *res)
 
 # define	M	20
 
-int checktick(void)
+static int checktick(void)
 {
 	int i, minDelta, Delta;
 	double t1, t2, timesfound[M];
