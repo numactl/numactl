@@ -398,11 +398,6 @@ static void sort_rows_descending_by_col(vtab_p table, int start_row, int stop_ro
         }
 }
 
-static void span(vtab_p table, int first_row, int first_col, int last_row, int last_col)
-{
-        // FIXME: implement row / col spannnig someday?
-}
-
 static void init_table(vtab_p table, int header_rows, int header_cols, int data_rows, int data_cols)
 {
         // init table sizes
