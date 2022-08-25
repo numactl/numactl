@@ -3,12 +3,6 @@
 #include "numa.h"
 #include "util.h"
 
-/* For util.c. Fixme. */
-static void usage(void)
-{
-	exit(1);
-}
-
 int main(int ac, char **av)
 {
 	int err = 0;

@@ -12,10 +12,6 @@
 
 extern void printmask(char *name, struct bitmask *mask);
 
-static void usage(void)
-{
-}
-
 int main(void)
 {
 	int max = numa_max_node();

@@ -9,12 +9,6 @@
 #include "numa.h"
 #include "util.h"
 
-/* For util.c. Fixme. */
-static void usage(void)
-{
-	exit(1);
-}
-
 #define ALIGN(x,a) (((x)+(a)-1)&~((a)-1))
 
 #define test_bit(i,p)  ((p)[(i) / BITS_PER_LONG] &   (1UL << ((i)%BITS_PER_LONG)))
