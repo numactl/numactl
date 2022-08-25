@@ -107,7 +107,7 @@ int main(int ac, char **av)
 	if (policy == MPOL_MAX)
 		usage();
 
-	if (policy != MPOL_DEFAULT)
+	if (policy != MPOL_DEFAULT && policy != MPOL_LOCAL)
 		nodes = numa_parse_nodestring(av[3]);
         if (!nodes) {
 		printf ("<%s> is invalid\n", av[3]);
