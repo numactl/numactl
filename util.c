@@ -111,16 +111,20 @@ int parse_policy(char *name, char *arg)
 {
 	int k;
 	struct policy *p = NULL;
+	int found = 0;
+
 	if (!name)
 		return MPOL_DEFAULT;
 	
 	while (*name == '-') name++;
 	for (k = 0; policies[k].name; k++) {
 		p = &policies[k];
-		if (!strcmp(p->name, name))
+		if (!strcmp(p->name, name)) {
+			found = 1;
 			break;
+		}
 	}
-	if (!p || !p->name || (!arg && !p->noarg))
+	if (!found || !p || !p->name || (!arg && !p->noarg))
 		return MPOL_MAX;
     return p->policy;
 }
