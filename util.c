@@ -113,6 +113,8 @@ int parse_policy(char *name, char *arg)
 	struct policy *p = NULL;
 	if (!name)
 		return MPOL_DEFAULT;
+	
+	while (*name == '-') name++;
 	for (k = 0; policies[k].name; k++) {
 		p = &policies[k];
 		if (!strcmp(p->name, name))
