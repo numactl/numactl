@@ -18,7 +18,13 @@ jobs:
       run: ./autogen.sh && ./configure
       
     - name: Install dependencies
-      run: make
+      run: make 
+      
+    - name: Werror run
+      run: make clean ; CFLAGS="-O2 -Wall -Werror" make
+      
+    - name: clang run
+      run: make clean ; CFLAGS="-O2 -Wall -Werror" CC=clang make 
       
     - name: Run check
       run: make check
