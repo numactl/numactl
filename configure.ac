@@ -1,5 +1,5 @@
 AC_PREREQ([2.64])
-AC_INIT([numactl], [2.0.14])
+AC_INIT([numactl], m4_normalize(m4_include([VERSION])))
 
 AC_CONFIG_SRCDIR([numactl.c])
 AC_CONFIG_MACRO_DIR([m4])
