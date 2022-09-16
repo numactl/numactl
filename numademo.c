@@ -301,8 +301,8 @@ static int numnodes;
 static int get_node_list(void)
 {
         int a, got_nodes = 0;
-        long long free_node_sizes;
-		int max_node;
+	int max_node;
+        long free_node_sizes;
 
         numnodes = numa_num_configured_nodes();
         node_to_use = (int *)malloc(numnodes * sizeof(int));
