@@ -1828,7 +1828,14 @@ static struct bitmask *__numa_preferred(void)
 
 int numa_preferred(void)
 {
-	return numa_find_first(__numa_preferred());
+	int first_node = 0;
+	struct bitmask *bmp;
+
+	bmp = __numa_preferred();
+	first_node = numa_find_first(bmp);
+	numa_bitmask_free(bmp);
+	
+	return first_node;
 }
 
 static void __numa_set_preferred(struct bitmask *bmp)
