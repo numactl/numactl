@@ -1854,9 +1854,14 @@ int numa_has_preferred_many(void)
 
 void numa_set_preferred_many(struct bitmask *bitmask)
 {
+	int first_node = 0;
+
 	if (!has_preferred_many) {
-		numa_error("Unable to handle MANY preferred nodes. Falling back to first node\n");
-		__numa_set_preferred(bitmask);
+		numa_warn(W_nodeparse,
+			"Unable to handle MANY preferred nodes. Falling back to first node\n");
+		first_node = numa_find_first(bitmask);
+		numa_set_preferred(first_node);
+		return;
 	}
 	setpol(MPOL_PREFERRED_MANY, bitmask);
 }
