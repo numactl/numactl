@@ -1,0 +1,43 @@
+name: "cut-release-tag"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (leave blank for auto-increment)'
+        required: false
+jobs:
+  cut_release_tag:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install deps
+        run: |
+          sudo apt-get install python3-semver -y
+      - name: Checkout code 
+        uses: actions/checkout@v3
+      - name: Update VERSION file on checkout 
+        run: |
+          set -xeu -o pipefail
+          CURRENT_VERSION=$(cat VERSION)
+          echo "Current Version: $CURRENT_VERSION"
+          if [ -z "$NEW_VERSION" ]; then
+             NEW_VERSION=$(pysemver bump patch "$CURRENT_VERSION")
+          fi
+          echo $NEW_VERSION > VERSION
+          echo "::set-output name=NEW_VERSION::$NEW_VERSION" 
+        id: bump-version-file  
+        env:
+          NEW_VERSION: ${{ inputs.version }}
+      - name: Commit VERSION file 
+        uses: EndBug/add-and-commit@v9
+        id: commit-version
+        with:
+          add: 'VERSION'
+          message: "Release numactl ${{ steps.bump-version-file.outputs.NEW_VERSION }}"
+          committer_name: GitHub Actions
+          committer_email: actions@github.com
+      - uses: rickstaa/action-create-tag@v1
+        with:
+          tag: "v${{ steps.bump-version-file.outputs.NEW_VERSION }}"
+          message: "Release numactl ${{ steps.bump-version-file.outputs.NEW_VERSION }}"
+          commit_sha: "${{ steps.commit-version.outputs.commit_sha }}"
