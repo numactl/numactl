@@ -1,11 +1,7 @@
-name: "cut-release"
+name: Create GitHub release from pushed tag
 on:
-  workflow_run:
-    workflows: [cut-release-tag]
-    types:
-      - completed
   push:
-    tags:        
+    tags:
       - v*
 jobs:
   cut_release:
@@ -13,27 +9,18 @@ jobs:
     steps:
       - name: Install deps
         run: |
-          sudo apt-get install build-essential python3-semver fakeroot -y
-      - name: Checkout code 
+          sudo apt-get install -y build-essential fakeroot
+      - name: Checkout code
         uses: actions/checkout@v3
       - name: "Build & test"
         run: |
           ./autogen.sh
           ./configure
           fakeroot make distcheck
-      - name: Read release version
-        id: read-version-file
-        run: | 
-          set -xeu -o pipefail
-          CURRENT_VERSION=$(cat VERSION)
-          echo "::set-output name=VERSION::$CURRENT_VERSION" 
       - name: Create Release
-        id: create_release
         uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "v${{ steps.read-version-file.outputs.VERSION }}"
-          draft: true
+          draft: false
           prerelease: false
-          files: |
-            numactl-*.tar.gz
+          files: numactl-*.tar.gz
