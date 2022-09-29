@@ -1,0 +1,26 @@
+name: Create GitHub release from pushed tag
+on:
+  push:
+    tags:
+      - v*
+jobs:
+  cut_release:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Install deps
+        run: |
+          sudo apt-get install -y build-essential fakeroot
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: "Build & test"
+        run: |
+          ./autogen.sh
+          ./configure
+          fakeroot make distcheck
+      - name: Create Release
+        uses: marvinpinto/action-automatic-releases@v1.2.1
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          draft: false
+          prerelease: false
+          files: numactl-*.tar.gz
