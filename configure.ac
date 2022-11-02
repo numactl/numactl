@@ -27,6 +27,8 @@ AM_CONDITIONAL([RISCV64], [test x"${target_cpu}" = x"riscv64"])
 
 AC_CONFIG_FILES([Makefile])
 
+AC_SEARCH_LIBS([__atomic_fetch_and_1], [atomic])
+
 # GCC tries to be "helpful" and only issue a warning for unrecognized
 # attributes.  So we compile the test with Werror, so that if the
 # attribute is not recognized the compilation fails
