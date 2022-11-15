@@ -367,13 +367,11 @@ set_configured_nodes(void)
 	}
 }
 
-/*
- * Convert the string length of an ascii hex mask to the number
- * of bits represented by that mask.
- */
-static int s2nbits(const char *s)
+static inline int is_digit(char s)
 {
-	return strlen(s) * 32 / 9;
+	return (s >= '0' && s <= '9')
+		|| (s >= 'a' && s <= 'f')
+		|| (s >= 'A' && s <= 'F');
 }
 
 /* Is string 'pre' a prefix of string 's'? */
@@ -395,6 +393,8 @@ set_nodemask_size(void)
 {
 	FILE *fp;
 	char *buf = NULL;
+	char *tmp_buf = NULL;
+	int digit_len = 0;
 	size_t bufsize = 0;
 
 	if ((fp = fopen(mask_size_file, "r")) == NULL)
@@ -402,8 +402,14 @@ set_nodemask_size(void)
 
 	while (getline(&buf, &bufsize, fp) > 0) {
 		if (strprefix(buf, nodemask_prefix)) {
-			nodemask_sz = s2nbits(buf + strlen(nodemask_prefix));
-			break;
+			tmp_buf = buf;
+			tmp_buf += strlen(nodemask_prefix);
+			while (*tmp_buf != '\n' && *tmp_buf != '\0') {
+				if (is_digit(*tmp_buf))
+					digit_len++;
+				tmp_buf++;
+			}
+			nodemask_sz = digit_len * 4;
 		}
 	}
 	free(buf);
