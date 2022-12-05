@@ -57,6 +57,10 @@ end of this file.
 int *node_ix_map = NULL;
 char **node_header;
 
+//Vma Kernel Pagesize string
+#define VM_PGSZ_STR "kernelpagesize_kB="
+#define VM_PGSZ_STRLEN 18
+
 // Structure to organize memory info from /proc/<PID>/numa_maps for a specific
 // process, or from /sys/devices/system/node/node?/meminfo for system-wide
 // data. Tables are defined below for each process and for system-wide data.
@@ -997,6 +1001,8 @@ static void show_process_info(void)
                 // amount.
                 while (fgets(buf, BUF_SIZE, fs)) {
                         int category = PROCESS_PRIVATE_INDEX;	// init category to the catch-all...
+			int node_num = 0;
+			int node_pages = 0;
                         const char *delimiters = " \t\r\n";
                         char *p = strtok(buf, delimiters);
                         while (p) {
@@ -1015,17 +1021,17 @@ static void show_process_info(void)
                                 // node number and accumulate the number of pages in the specific
                                 // category (and also add to the total).
                                 if (p[0] == 'N') {
-                                        int node_num = (int)strtol(&p[1], &p, 10);
+                                        node_num = (int)strtol(&p[1], &p, 10);
                                         if (p[0] != '=') {
                                                 perror("node value parse error");
                                                 exit(EXIT_FAILURE);
                                         }
-                                        double value = (double)strtol(&p[1], &p, 10);
-                                        double multiplier = page_size_in_bytes;
-                                        if (category == PROCESS_HUGE_INDEX) {
-                                                multiplier = huge_page_size_in_bytes;
-                                        }
-                                        value *= multiplier;
+                                        node_pages = (double)strtol(&p[1], &p, 10);
+				}
+
+				if (!strncmp(p, VM_PGSZ_STR, VM_PGSZ_STRLEN)) {
+                                        double multiplier = (double)strtol(&p[VM_PGSZ_STRLEN], &p, 10);
+                                        double value = node_pages * multiplier * KILOBYTE;
                                         value /= (double)MEGABYTE;
                                         // Add value to data cell, total_col, and total_row
                                         int tmp_row;
