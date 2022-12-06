@@ -123,10 +123,12 @@ static meminfo_t system_meminfo[] = {
         { 29, "AnonHugePages", "AnonHugePages" },
         { 30, "ShmemHugePages", "ShmemHugePages" },
         { 31, "ShmemPmdMapped", "ShmemPmdMapped" },
-        { 32, "HugePages_Total", "HugePages_Total" },
-        { 33, "HugePages_Free", "HugePages_Free" },
-        { 34, "HugePages_Surp", "HugePages_Surp" },
-        { 35, "KReclaimable", "KReclaimable" }
+        { 32, "FileHugePages", "FileHugePages" },
+        { 33, "FilePmdMapped", "FilePmdMapped" },
+        { 34, "HugePages_Total", "HugePages_Total" },
+        { 35, "HugePages_Free", "HugePages_Free" },
+        { 36, "HugePages_Surp", "HugePages_Surp" },
+        { 37, "KReclaimable", "KReclaimable" }
 };
 
 #define SYSTEM_MEMINFO_ROWS (sizeof(system_meminfo) / sizeof(system_meminfo[0]))
