@@ -106,6 +106,9 @@ numa_init(void)
         for (i = 0; i < max; i++)
                 nodemask_set_compat((nodemask_t *)&numa_all_nodes, i);
 	memset(&numa_no_nodes, 0, sizeof(numa_no_nodes));
+
+	/* clear errno */
+	errno = 0;
 }
 
 static void cleanup_node_cpu_mask_v2(void);
