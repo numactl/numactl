@@ -549,6 +549,12 @@ int main(int ac, char **av)
 			numa_set_bind_policy(0);
 			if (shmfd >= 0) {
 				numa_tonode_memory(shmptr, shmlen, node);
+				/* Correspond to numa_set_bind_policy function */
+				if (numa_has_preferred_many()) {
+					setpolicy(MPOL_PREFERRED_MANY);
+				} else {
+					setpolicy(MPOL_PREFERRED);
+				}
 			} else if (c == 'p') {
 				if (numa_bitmask_weight(mask) != 1)
 					usage();
