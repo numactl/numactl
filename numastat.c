@@ -41,6 +41,9 @@ end of this file.
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <errno.h>
 
 #define STRINGIZE(s) #s
 #define STRINGIFY(s) STRINGIZE(s)
@@ -50,6 +53,8 @@ end of this file.
 
 #define BUF_SIZE 2048
 #define SMALL_BUF_SIZE 128
+#define PATH_LEN 128
+#define DNAME_LEN 64
 
 // Don't assume nodes are sequential or contiguous.
 // Need to discover and map node numbers.
@@ -794,6 +799,88 @@ static char *command_name_for_pid(int pid)
         return NULL;
 }
 
+/* update hugepages info from /sys/devices/system/node/node$/hugepages/hugepages-$ */
+static double update_hugepages_info(int node_ix, const char *token)
+{
+        char *fname;
+        DIR *d = NULL;
+        struct dirent *dp = NULL;
+        struct stat st;
+        char top_path[64];
+
+        if (!strncmp(token, "HugePages_Total", 15)) {
+                fname = "nr_hugepages";
+        } else if(!strncmp(token, "HugePages_Free", 14)) {
+                fname = "free_hugepages";
+        } else if (!strncmp(token, "HugePages_Surp", 14)) {
+                fname = "surplus_hugepages";
+        } else {
+                return -EINVAL;
+        }
+
+        snprintf(top_path, sizeof(top_path), "/sys/devices/system/node/node%d/hugepages", node_ix);
+
+        if(stat(top_path, &st) < 0 || !S_ISDIR(st.st_mode)) {
+                printf("invalid path: %s\n", top_path);
+                return -ENOENT;
+        }
+
+        if(!(d = opendir(top_path))) {
+                fprintf(stderr, "opendir[%s] error: %s\n", top_path, strerror(errno));
+                return -ENOENT;
+        }
+
+        const char *delimiters = "-";
+        double total = 0;
+        char *huge_dname;
+        char *fpath;
+        char *buf;
+
+        huge_dname = (char *)malloc(DNAME_LEN);
+        fpath = (char *)malloc(PATH_LEN);
+        buf = (char *)malloc(SMALL_BUF_SIZE);
+
+        /* Traversing directories /sys/devices/system/node/node%d/hugepages */
+        while((dp = readdir(d)) != NULL) {
+                if((!strncmp(dp->d_name, ".", 1)) || (!strncmp(dp->d_name, "..", 2)))
+                        continue;
+
+                if ((dp->d_type != DT_DIR) || strncmp(dp->d_name, "hugepages-", 10))
+                        continue;
+
+                /* Get huge pages size from d_name d_name: example hugepages-1048576kB */
+                memset(huge_dname, 0, DNAME_LEN);
+                memcpy(huge_dname, dp->d_name, strlen(dp->d_name));
+
+                /* Example: /sys/devices/system/node/node%d/hugepages/hugepages-1048576kB/nr_hugepages */
+                snprintf(fpath, PATH_LEN, "%s/%s/%s", top_path, huge_dname, fname);
+
+                char *pagesz_str = strtok(huge_dname, delimiters);
+                pagesz_str = strtok(NULL, pagesz_str);
+                memset(strstr(pagesz_str, "kB"), 0, 2);
+                unsigned long hugepage_size = strtol(pagesz_str, NULL, 10);
+                hugepage_size *= KILOBYTE;
+
+                /* Get the number of pages */
+                FILE *fs = fopen(fpath, "r");
+                if (!fs) {
+                        printf("cannot open %s: %s\n", fpath, strerror(errno));
+                        continue;
+                }
+                fgets(buf, SMALL_BUF_SIZE, fs);
+                unsigned long nr_pages = strtol(buf, NULL, 10);
+                fclose(fs);
+
+                total += nr_pages * hugepage_size;
+        }
+        closedir(d);
+        free(huge_dname);
+        free(fpath);
+        free(buf);
+
+        return total;
+}
+
 static void show_info_from_system_file(char *file, meminfo_p meminfo, int meminfo_rows, int tok_offset)
 {
         // Setup and init table
@@ -873,7 +960,14 @@ static void show_info_from_system_file(char *file, meminfo_p meminfo, int meminf
                                         if (tokens < 4) {
                                                 multiplier = page_size_in_bytes;
                                         } else if (!strncmp("HugePages", tok[2], 9)) {
-                                                multiplier = huge_page_size_in_bytes;
+                                                /* update hugepages info more detail from sysfs/hugepages directory */
+                                                double new = update_hugepages_info(node_ix_map[node_ix], tok[2]);
+                                                if (new > 0) {
+                                                        value = new;
+                                                } else {
+                                                        /* fall back old way */
+                                                        multiplier = huge_page_size_in_bytes;
+                                                }
                                         } else if (!strncmp("kB", tok[4], 2)) {
                                                 multiplier = KILOBYTE;
                                         }
