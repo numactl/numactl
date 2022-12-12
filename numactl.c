@@ -548,7 +548,7 @@ int main(int ac, char **av)
 			did_node_cpu_parse = 1;
 			numa_set_bind_policy(0);
 			if (shmfd >= 0) {
-				numa_tonode_memory(shmptr, shmlen, node);
+				numa_tonode_memory(shmptr, shmlen, find_first(mask));
 				/* Correspond to numa_set_bind_policy function */
 				if (numa_has_preferred_many()) {
 					setpolicy(MPOL_PREFERRED_MANY);
