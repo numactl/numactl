@@ -14,6 +14,9 @@ LT_INIT
 
 AC_PROG_CC
 
+# Check for enabling LFS support
+AC_SYS_LARGEFILE
+
 # Override CFLAGS so that we can specify custom CFLAGS for numademo.
 AX_AM_OVERRIDE_VAR([CFLAGS])
 
