@@ -422,7 +422,6 @@ static struct bitmask *numactl_parse_nodestring(char *s, int flag)
 int main(int ac, char **av)
 {
 	int c;
-	long node=-1;
 	char *end;
 	char shortopts[array_len(opts)*2 + 1];
 	struct bitmask *mask = NULL;
