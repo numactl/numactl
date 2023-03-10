@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "master", "action-1" ]
 
+permissions:
+  contents: read
+
 jobs:
   build:
 
