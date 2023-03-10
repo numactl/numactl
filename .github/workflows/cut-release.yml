@@ -3,9 +3,13 @@ on:
   push:
     tags:
       - v*
+permissions:
+  contents: read
 jobs:
   cut_release:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
       - name: Install deps
         run: |
