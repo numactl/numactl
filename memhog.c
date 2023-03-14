@@ -38,7 +38,7 @@ enum {
 
 static void usage(void)
 {
-	printf("memhog [-fFILE] [-rNUM] size[kmg] [policy [nodeset]]\n");
+	printf("memhog [-fFILE] [-rNUM] [-H] size[kmg] [policy [nodeset]]\n");
 	printf("-f mmap is backed by FILE\n");
 	printf("-rNUM repeat memset NUM times\n");
 	printf("-H disable transparent hugepages\n");
