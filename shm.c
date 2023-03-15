@@ -205,11 +205,12 @@ void dump_shm(void)
 		if (get_mempolicy(&pol, nodes->maskp, nodes->size, c+shmptr,
 						MPOL_F_ADDR) < 0)
 			err("get_mempolicy on shm");
-		if (pol == prevpol)
+		if (pol == prevpol && numa_bitmask_equal(prevnodes, nodes))
 			continue;
 		if (prevpol != -1)
 			dumppol(start, c, prevpol, prevnodes);
-		prevnodes = nodes;
+
+		copy_bitmask_to_bitmask(nodes, prevnodes);
 		prevpol = pol;
 		start = c;
 	}
