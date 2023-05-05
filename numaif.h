@@ -22,13 +22,15 @@ extern long move_pages(int pid, unsigned long count,
 		void **pages, const int *nodes, int *status, int flags);
 
 /* Policies */
-#define MPOL_DEFAULT     0
-#define MPOL_PREFERRED   1
-#define MPOL_BIND        2
-#define MPOL_INTERLEAVE  3
-#define MPOL_LOCAL       4
-#define MPOL_PREFERRED_MANY   5
-#define MPOL_MAX         6
+enum {
+        MPOL_DEFAULT,
+        MPOL_PREFERRED,
+        MPOL_BIND,
+        MPOL_INTERLEAVE,
+        MPOL_LOCAL,
+        MPOL_PREFERRED_MANY,
+        MPOL_MAX,       /* always last member of enum */
+};
 
 /* Flags for set_mempolicy, specified in mode */
 #define MPOL_F_NUMA_BALANCING	(1 << 13) /* Optimize with NUMA balancing if possible */
