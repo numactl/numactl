@@ -63,10 +63,10 @@ int main(int argc, char **argv)
 
 	printf("pages=%d (%s)\n", page_count, argv[1]);
 
-	page_base = malloc((pagesize + 1) * page_count);
+	page_base = malloc(pagesize * (page_count+1));
 	addr = malloc(sizeof(char *) * page_count);
-	status = malloc(sizeof(int *) * page_count);
-	nodes = malloc(sizeof(int *) * page_count);
+	status = malloc(sizeof(int) * page_count);
+	nodes = malloc(sizeof(int) * page_count);
 	if (!page_base || !addr || !status || !nodes) {
 		printf("Unable to allocate memory\n");
 		exit(1);
