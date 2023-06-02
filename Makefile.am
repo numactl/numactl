@@ -34,7 +34,7 @@ migratepages_SOURCES = migratepages.c util.c
 migratepages_LDADD = libnuma.la
 
 migspeed_SOURCES = migspeed.c util.c
-migspeed_LDADD = libnuma.la -lrt
+migspeed_LDADD = libnuma.la 
 
 memhog_SOURCES = memhog.c util.c
 memhog_LDADD = libnuma.la
