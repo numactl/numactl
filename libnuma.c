@@ -616,13 +616,11 @@ set_kernel_abi()
 	int oldp;
 	struct bitmask *bmp, *tmp;
 	bmp = numa_allocate_nodemask();
-	tmp = numa_allocate_nodemask();
+	tmp = numa_get_mems_allowed();
 
 	if (get_mempolicy(&oldp, bmp->maskp, bmp->size + 1, 0, 0) < 0)
 		goto out;
 
-	/* Assumes there's always a node 0, and it's online */
-	numa_bitmask_setbit(tmp, 0);
 	if (set_mempolicy(MPOL_PREFERRED_MANY, tmp->maskp, tmp->size) == 0) {
 		has_preferred_many++;
 		/* reset the old memory policy */
