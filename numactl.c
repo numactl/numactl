@@ -242,6 +242,8 @@ static void print_node_cpus(int node)
 				printf(" %d", i);
 	}
 	putchar('\n');
+
+	numa_free_cpumask(cpus);
 }
 
 static void hardware(void)
