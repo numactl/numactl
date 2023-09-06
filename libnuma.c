@@ -302,6 +302,9 @@ WEAK void numa_warn(int num, char *fmt, ...)
 	fputc('\n', stderr);
 	va_end(ap);
 
+	if (numa_exit_on_warn)
+		exit(1);
+
 	errno = olde;
 }
 
