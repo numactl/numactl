@@ -229,21 +229,62 @@ static void print_distances(int maxnode)
 	}
 }
 
-static void print_node_cpus(int node)
-{
-	int i, err;
-	struct bitmask *cpus;
+static void print_node_cpus(int node) {
+    int i, err, start_range, end_range, first_print;
+    struct bitmask *cpus;
 
-	cpus = numa_allocate_cpumask();
-	err = numa_node_to_cpus(node, cpus);
-	if (err >= 0) {
-		for (i = 0; i < cpus->size; i++)
-			if (numa_bitmask_isbitset(cpus, i))
-				printf(" %d", i);
-	}
-	putchar('\n');
+    cpus = numa_allocate_cpumask();
+    err = numa_node_to_cpus(node, cpus);
+    if (err < 0) {
+        numa_free_cpumask(cpus);
+        return;
+    }
 
-	numa_free_cpumask(cpus);
+    start_range = -1;
+    end_range = -1;
+    first_print = 1; // Flag to check if we need to print a comma
+
+    for (i = 0; i < cpus->size; i++) {
+        if (numa_bitmask_isbitset(cpus, i)) {
+            if (start_range == -1) {
+                // Start of a new range
+                start_range = i;
+            }
+            end_range = i; // Extend the range
+        } else {
+            if (start_range != -1) {
+                // We've reached the end of a range, let's print it
+                if (!first_print) {
+                    printf(",");
+                }
+                if (start_range == end_range) {
+                    // Range consists of a single CPU
+                    printf(" %d", start_range);
+                } else {
+                    // Range includes multiple CPUs
+                    printf(" %d-%d", start_range, end_range);
+                }
+                first_print = 0; // We've printed, so clear the flag
+                start_range = -1; // Reset the range
+            }
+        }
+    }
+
+    // Handle the last range, if it hasn't been printed yet
+    if (start_range != -1) {
+        if (!first_print) {
+            printf(",");
+        }
+        if (start_range == end_range) {
+            printf(" %d", start_range);
+        } else {
+            printf(" %d-%d", start_range, end_range);
+        }
+    }
+
+    putchar('\n');
+
+    numa_free_cpumask(cpus);
 }
 
 static void hardware(void)
