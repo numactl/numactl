@@ -229,62 +229,53 @@ static void print_distances(int maxnode)
 	}
 }
 
-static void print_node_cpus(int node) {
-    int i, err, start_range, end_range, first_print;
+static void print_node_cpus(int node)
+{
+    int i = 0, err, start, segment = 0;
     struct bitmask *cpus;
 
     cpus = numa_allocate_cpumask();
     err = numa_node_to_cpus(node, cpus);
     if (err < 0) {
-        numa_free_cpumask(cpus);
-        return;
+        goto out; // If there's an error, we jump to cleanup.
     }
 
-    start_range = -1;
-    end_range = -1;
-    first_print = 1; // Flag to check if we need to print a comma
+    // Main loop over each CPU in the bitmask.
+    while (i < cpus->size) {
+        start = -1;
 
-    for (i = 0; i < cpus->size; i++) {
-        if (numa_bitmask_isbitset(cpus, i)) {
-            if (start_range == -1) {
-                // Start of a new range
-                start_range = i;
-            }
-            end_range = i; // Extend the range
-        } else {
-            if (start_range != -1) {
-                // We've reached the end of a range, let's print it
-                if (!first_print) {
-                    printf(",");
-                }
-                if (start_range == end_range) {
-                    // Range consists of a single CPU
-                    printf(" %d", start_range);
-                } else {
-                    // Range includes multiple CPUs
-                    printf(" %d-%d", start_range, end_range);
-                }
-                first_print = 0; // We've printed, so clear the flag
-                start_range = -1; // Reset the range
-            }
+        // If the bit is set, we're in a range of available CPUs.
+        while (i < cpus->size && numa_bitmask_isbitset(cpus, i)) {
+            if (start == -1) start = i; // We've found the start of a range.
+            i++;
         }
-    }
 
-    // Handle the last range, if it hasn't been printed yet
-    if (start_range != -1) {
-        if (!first_print) {
+        // If start is still -1, the current bit wasn't set, and we move to the next iteration.
+        if (start == -1) {
+            i++;
+            continue;
+        }
+
+        // Formatting the output: we put a comma before all segments, except the first.
+        if (segment) {
             printf(",");
         }
-        if (start_range == end_range) {
-            printf(" %d", start_range);
+
+        int end = i - 1; // The end of the current range.
+        if (start == end) {
+            // If it's a single CPU (no range), we print it directly.
+            printf(" %d", start);
         } else {
-            printf(" %d-%d", start_range, end_range);
+            // Otherwise, we print the range.
+            printf(" %d-%d", start, end);
         }
+        segment++; // Update the count of printed segments.
     }
 
-    putchar('\n');
+    putchar('\n'); // Newline for cleaner output formatting.
 
-    numa_free_cpumask(cpus);
+out:
+    numa_free_cpumask(cpus); // Cleanup the allocated bitmask.
 }
 
 static void hardware(void)
