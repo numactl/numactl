@@ -165,7 +165,7 @@ except N-N.  If used with + notation, specify !+N-N.
 .B \-\-localalloc, \-l 
 Try to allocate on the current node of the process, but if memory cannot be allocated there fall back to other nodes.
 .TP
-.B \-\-preferred=node
+.B \-\-preferred=node, \-p node
 Preferably allocate memory on 
 .I node,
 but if memory cannot be allocated there fall back to other nodes.
@@ -178,7 +178,7 @@ This should only be used with
 .I \-\-membind, \-m
 only, otherwise ignored.
 .TP
-.B \-\-preferred-many=node
+.B \-\-preferred-many=nodes, \-P nodes
 Preferably allocate memory on
 .I nodes,
 but if memory cannot be allocated there fall back to other nodes.
