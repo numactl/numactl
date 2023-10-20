@@ -31,11 +31,6 @@ static void parse_numbers(char *s, int *iptr)
 	int i, d, j;
 	char *end;
 	int maxnode = numa_max_node();
-	int numnodes = 0;
-
-	for (i = 0; i <= maxnode; i++)
-		if (numa_bitmask_isbitset(numa_nodes_ptr, i))
-			numnodes++;
 
 	for (i = 0, j = 0; i <= maxnode; i++, j++) {
 		d = strtoul(s, &end, 0);
