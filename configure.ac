@@ -20,13 +20,10 @@ AC_SYS_LARGEFILE
 # Override CFLAGS so that we can specify custom CFLAGS for numademo.
 AX_AM_OVERRIDE_VAR([CFLAGS])
 
-AX_TLS
+AX_TLS([:],[:])
 
 AX_CHECK_COMPILE_FLAG([-ftree-vectorize], [tree_vectorize="true"])
 AM_CONDITIONAL([HAVE_TREE_VECTORIZE], [test x"${tree_vectorize}" = x"true"])
-
-AC_CANONICAL_TARGET
-AM_CONDITIONAL([RISCV64], [test x"${target_cpu}" = x"riscv64"])
 
 AC_CONFIG_FILES([Makefile])
 
