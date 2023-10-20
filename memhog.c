@@ -15,10 +15,10 @@
    on your Linux system; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
 
+#include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/mman.h>
-#include <sys/fcntl.h>
 #include <string.h>
 #include <stdbool.h>
 #include "numa.h"
