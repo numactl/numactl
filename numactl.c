@@ -231,7 +231,7 @@ static void print_distances(int maxnode)
 
 static void print_node_cpus(int node)
 {
-    int i = 0, err, start, segment = 0;
+    int i = 0, err, start, segment = 0, count = 0;
     struct bitmask *cpus;
 
     cpus = numa_allocate_cpumask();
@@ -262,6 +262,7 @@ static void print_node_cpus(int node)
         }
 
         int end = i - 1; // The end of the current range.
+	count += (end - start) + 1;
         if (start == end) {
             // If it's a single CPU (no range), we print it directly.
             printf(" %d", start);
@@ -272,7 +273,7 @@ static void print_node_cpus(int node)
         segment++; // Update the count of printed segments.
     }
 
-    putchar('\n'); // Newline for cleaner output formatting.
+    printf(" (%d)\n", count); // Newline for cleaner output formatting.
 
 out:
     numa_free_cpumask(cpus); // Cleanup the allocated bitmask.
