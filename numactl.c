@@ -237,46 +237,41 @@ static void print_node_cpus(int node)
     cpus = numa_allocate_cpumask();
     err = numa_node_to_cpus(node, cpus);
     if (err < 0) {
-        goto out; // If there's an error, we jump to cleanup.
+        goto out;
     }
 
-    // Main loop over each CPU in the bitmask.
     while (i < cpus->size) {
         start = -1;
 
-        // If the bit is set, we're in a range of available CPUs.
+	// Find the start and end of a range of available CPUs.
         while (i < cpus->size && numa_bitmask_isbitset(cpus, i)) {
-            if (start == -1) start = i; // We've found the start of a range.
+            if (start == -1) start = i;
             i++;
         }
 
-        // If start is still -1, the current bit wasn't set, and we move to the next iteration.
         if (start == -1) {
             i++;
             continue;
         }
 
-        // Formatting the output: we put a comma before all segments, except the first.
         if (segment) {
             printf(",");
         }
 
-        int end = i - 1; // The end of the current range.
+        int end = i - 1;
 	count += (end - start) + 1;
         if (start == end) {
-            // If it's a single CPU (no range), we print it directly.
             printf(" %d", start);
         } else {
-            // Otherwise, we print the range.
             printf(" %d-%d", start, end);
         }
-        segment++; // Update the count of printed segments.
+        segment++;
     }
 
-    printf(" (%d)\n", count); // Newline for cleaner output formatting.
+    printf(" (%d)\n", count);
 
 out:
-    numa_free_cpumask(cpus); // Cleanup the allocated bitmask.
+    numa_free_cpumask(cpus); 
 }
 
 static void hardware(void)
