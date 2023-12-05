@@ -31,7 +31,8 @@ extern int set_mempolicy_home_node(void *start, unsigned long len,
 #define MPOL_INTERLEAVE  3
 #define MPOL_LOCAL       4
 #define MPOL_PREFERRED_MANY   5
-#define MPOL_MAX         6
+#define MPOL_WEIGHTED_INTERLEAVE   6
+#define MPOL_MAX         7
 
 /* Flags for set_mempolicy, specified in mode */
 #define MPOL_F_NUMA_BALANCING	(1 << 13) /* Optimize with NUMA balancing if possible */
