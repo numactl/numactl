@@ -1033,6 +1033,15 @@ numa_set_interleave_mask_v2(struct bitmask *bmp)
 		setpol(MPOL_INTERLEAVE, bmp);
 }
 
+void
+numa_set_weighted_interleave_mask(struct bitmask *bmp)
+{
+	if (numa_bitmask_equal(bmp, numa_no_nodes_ptr))
+		setpol(MPOL_DEFAULT, bmp);
+	else
+		setpol(MPOL_WEIGHTED_INTERLEAVE, bmp);
+}
+
 SYMVER("numa_get_interleave_mask_v1", "numa_get_interleave_mask@libnuma_1.1")
 nodemask_t
 numa_get_interleave_mask_v1(void)
