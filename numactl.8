@@ -311,8 +311,8 @@ Set preferred node 1 and show the resulting state.
 numactl \-\-preferred-many=0x3 numactl \-\-show
 Set preferred nodes 1 and 2, and show the resulting state.
 
-numactl --interleave=all --shm /tmp/shmkey 
-Interleave all of the sysv shared memory region specified by
+numactl --length 1g --shm /tmp/shmkey --interleave=all
+Interleave all of the sysv shared memory region of size 1g specified by
 /tmp/shmkey over all nodes.
 
 Place a tmpfs file on 2 nodes:
