@@ -237,57 +237,55 @@ static void print_distances(int maxnode)
 
 static void print_node_cpus(int node)
 {
-    int i = 0, err, start, segment = 0, count = 0;
-    struct bitmask *cpus;
+        int i = 0, err, start, segment = 0, count = 0;
+        struct bitmask *cpus;
 
-    cpus = numa_allocate_cpumask();
-    err = numa_node_to_cpus(node, cpus);
-    if (err < 0) {
-        goto out;
-    }
-
-    while (i < cpus->size) {
-        if (!cpu_compress) {
-	    if (numa_bitmask_isbitset(cpus, i))
-                printf(" %d", i);
-	    i++;
-	    continue;
-	}
-
-        start = -1;
-
-	// Find the start and end of a range of available CPUs.
-        while (i < cpus->size && numa_bitmask_isbitset(cpus, i)) {
-            if (start == -1) start = i;
-            i++;
+        cpus = numa_allocate_cpumask();
+        err = numa_node_to_cpus(node, cpus);
+        if (err < 0) {
+                goto out;
         }
 
-        if (start == -1) {
-            i++;
-            continue;
+        while (i < cpus->size) {
+                if (!cpu_compress) {
+                        if (numa_bitmask_isbitset(cpus, i))
+                        printf(" %d", i);
+                        i++;
+                        continue;
+                }
+
+                start = -1;
+
+                // Find the start and end of a range of available CPUs.
+                while (i < cpus->size && numa_bitmask_isbitset(cpus, i)) {
+                        if (start == -1) start = i;
+                        i++;
+                }
+                if (start == -1) {
+                        i++;
+                        continue;
+                }
+                if (segment) {
+                        printf(",");
+                }
+
+                int end = i - 1;
+                count += (end - start) + 1;
+                if (start == end) {
+                        printf(" %d", start);
+                } else {
+                        printf(" %d-%d", start, end);
+                }
+                segment++;
         }
 
-        if (segment) {
-            printf(",");
-        }
-
-        int end = i - 1;
-	count += (end - start) + 1;
-        if (start == end) {
-            printf(" %d", start);
-        } else {
-            printf(" %d-%d", start, end);
-        }
-        segment++;
-    }
-
-    if (!cpu_compress)
-        printf("\n");
-    else
-        printf(" (%d)\n", count);
+        if (!cpu_compress)
+                printf("\n");
+        else
+                printf(" (%d)\n", count);
 
 out:
-    numa_free_cpumask(cpus); 
+        numa_free_cpumask(cpus);
 }
 
 static void hardware(void)
