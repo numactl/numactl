@@ -273,16 +273,6 @@ static inline void set_col_flag(vtab_p table, int col, int flag)
         table->col_flags[col] |= (uint8_t)flag;
 }
 
-static inline void clear_row_flag(vtab_p table, int row, int flag)
-{
-        table->row_flags[row] &= (uint8_t)~flag;
-}
-
-static inline void clear_col_flag(vtab_p table, int col, int flag)
-{
-        table->col_flags[col] &= (uint8_t)~flag;
-}
-
 static inline int test_row_flag(vtab_p table, int row, int flag)
 {
         return ((table->row_flags[row] & (uint8_t)flag) != 0);
@@ -318,18 +308,6 @@ static inline void set_cell_flag(vtab_p table, int row, int col, int flag)
         c_ptr->flags |= (uint32_t)flag;
 }
 
-static inline void clear_cell_flag(vtab_p table, int row, int col, int flag)
-{
-        cell_p c_ptr = GET_CELL_PTR(row, col);
-        c_ptr->flags &= (uint32_t)~flag;
-}
-
-static inline int test_cell_flag(vtab_p table, int row, int col, int flag)
-{
-        cell_p c_ptr = GET_CELL_PTR(row, col);
-        return ((c_ptr->flags & (uint32_t)flag) != 0);
-}
-
 static inline void string_assign(vtab_p table, int row, int col, char *s)
 {
         cell_p c_ptr = GET_CELL_PTR(row, col);
@@ -351,31 +329,11 @@ static inline void double_assign(vtab_p table, int row, int col, double d)
         c_ptr->d = d;
 }
 
-static inline void long_assign(vtab_p table, int row, int col, int64_t l)
-{
-        cell_p c_ptr = GET_CELL_PTR(row, col);
-        c_ptr->type = CELL_TYPE_LONG;
-        c_ptr->l = l;
-}
-
 static inline void double_addto(vtab_p table, int row, int col, double d)
 {
         cell_p c_ptr = GET_CELL_PTR(row, col);
         c_ptr->type = CELL_TYPE_DOUBLE;
         c_ptr->d += d;
-}
-
-static inline void long_addto(vtab_p table, int row, int col, int64_t l)
-{
-        cell_p c_ptr = GET_CELL_PTR(row, col);
-        c_ptr->type = CELL_TYPE_LONG;
-        c_ptr->l += l;
-}
-
-static inline void clear_assign(vtab_p table, int row, int col)
-{
-        cell_p c_ptr = GET_CELL_PTR(row, col);
-        memset(c_ptr, 0, sizeof(cell_t));
 }
 
 static void zero_table_data(vtab_p table, int type)
