@@ -349,7 +349,6 @@ set_configured_nodes(void)
 {
 	DIR *d;
 	struct dirent *de;
-	long long freep;
 
 	numa_memnode_ptr = numa_allocate_nodemask();
 	numa_nodes_ptr = numa_allocate_nodemask();
@@ -364,8 +363,7 @@ set_configured_nodes(void)
 				continue;
 			nd = strtoul(de->d_name+4, NULL, 0);
 			numa_bitmask_setbit(numa_nodes_ptr, nd);
-			if (numa_node_size64(nd, &freep) > 0)
-				numa_bitmask_setbit(numa_memnode_ptr, nd);
+			numa_bitmask_setbit(numa_memnode_ptr, nd);
 			if (maxconfigurednode < nd)
 				maxconfigurednode = nd;
 		}
@@ -801,7 +799,7 @@ long long numa_node_size64(int node, long long *freep)
 	int required = freep ? 2 : 1;
 
 	if (freep)
-		*freep = -1;
+		*freep = 0;
 	sprintf(fn,"/sys/devices/system/node/node%d/meminfo", node);
 	f = fopen(fn, "r");
 	if (!f)
