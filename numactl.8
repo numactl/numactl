@@ -44,7 +44,7 @@ numactl \- Control NUMA policy for processes or shared memory
 .br
 .B numactl \-\-show
 .br
-.B numactl \-\-hardware
+.B numactl \-\-hardware [\-\-cpu-compress]
 .br
 .B numactl 
 [
@@ -190,7 +190,9 @@ Relative notation may be used.
 Show NUMA policy settings of the current process. 
 .TP
 .B \-\-hardware, \-H
-Show inventory of available nodes on the system.
+Show inventory of available nodes on the system. When the
+.B \-\-cpu-compress
+option is set show cpu ranges. This is not default not break any existing scripts.
 .TP 0
 Numactl can set up policy for a SYSV shared memory segment or a file in shmfs/hugetlbfs.
  

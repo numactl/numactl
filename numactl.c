@@ -33,6 +33,11 @@
 #define ALL 1
 
 int exitcode;
+int cpu_compress;
+
+enum {
+	CPU_COMPRESS = 300,
+};
 
 static struct option opts[] = {
 	{"all", 0, 0, 'a'},
@@ -59,6 +64,7 @@ static struct option opts[] = {
 	{"shmid", 1, 0, 'I'},
 	{"huge", 0, 0, 'u'},
 	{"touch", 0, 0, 'T'},
+        {"cpu-compress", 0, 0, CPU_COMPRESS },
 	{"verify", 0, 0, 'V'}, /* undocumented - for debugging */
 	{ 0 }
 };
@@ -72,7 +78,7 @@ static void usage(void)
 		"               [--membind= | -m <nodes>] [--localalloc | -l] command args ...\n"
 		"               [--localalloc | -l] command args ...\n"
 		"       numactl [--show | -s]\n"
-		"       numactl [--hardware | -H]\n"
+		"       numactl [--hardware | -H] [--cpu-compress]\n"
 		"       numactl [--length | -L <length>] [--offset | -o <offset>] [--shmmode | -M <shmmode>]\n"
 		"               [--strict | -t]\n"
 		"               [--shmid | -I <id>] --shm | -S <shmkeyfile>\n"
@@ -241,6 +247,13 @@ static void print_node_cpus(int node)
     }
 
     while (i < cpus->size) {
+        if (!cpu_compress) {
+	    if (numa_bitmask_isbitset(cpus, i))
+                printf(" %d", i);
+	    i++;
+	    continue;
+	}
+
         start = -1;
 
 	// Find the start and end of a range of available CPUs.
@@ -268,7 +281,10 @@ static void print_node_cpus(int node)
         segment++;
     }
 
-    printf(" (%d)\n", count);
+    if (!cpu_compress)
+        printf("\n");
+    else
+        printf(" (%d)\n", count);
 
 out:
     numa_free_cpumask(cpus); 
@@ -461,6 +477,7 @@ int main(int ac, char **av)
 	int do_dump = 0;
 	int parse_all = 0;
 	int numa_balancing = 0;
+	int do_hardware = 0;
 
 	get_short_opts(opts,shortopts);
 	while ((c = getopt_long(ac, av, shortopts, opts, NULL)) != -1) {
@@ -470,8 +487,8 @@ int main(int ac, char **av)
 			exit(0);
 		case 'H': /* --hardware */
 			nopolicy();
-			hardware();
-			exit(0);
+			do_hardware = 1;
+			break;
 		case 'b': /* --balancing  */
 			nopolicy();
 			numa_balancing = 1;
@@ -684,9 +701,17 @@ int main(int ac, char **av)
 			check_all_parse(did_node_cpu_parse);
 			parse_all = 1;
 			break;
+		case CPU_COMPRESS:
+			cpu_compress = 1;
+			break;
 		default:
 			usage();
 		}
+	}
+
+	if (do_hardware) {
+		hardware();
+		exit(0);
 	}
 
 	numa_bitmask_free(mask);
