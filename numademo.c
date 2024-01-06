@@ -154,6 +154,7 @@ static void memtest(char *name, unsigned char *mem)
 	unsigned long long max, min, sum, r;
 	int i;
 	char title[128], result[128];
+	unsigned long factor = 1;
 
 	if (!mem) {
 		fprintf(stderr,
@@ -202,6 +203,7 @@ static void memtest(char *name, unsigned char *mem)
 			gettimeofday(&start,NULL);
 			memcpy(mem, mem + msize/2, msize/2);
 			gettimeofday(&end,NULL);
+			factor = 2;
 			break;
 
 		case FORWARD:
@@ -261,7 +263,7 @@ static void memtest(char *name, unsigned char *mem)
 		sum += r;
 	}
 	sprintf(title, "%s%s%s", name, delim, testname[thistest]);
-#define H(t) (((double)msize) / ((double)t))
+#define H(t) (((double)msize/factor) / ((double)t))
 #define D3 delim,delim,delim
 	sprintf(result, "Avg%s%.2f%sMB/s%sMax%s%.2f%sMB/s%sMin%s%.2f%sMB/s",
 		delim,
