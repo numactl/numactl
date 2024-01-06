@@ -91,13 +91,7 @@ function reset_mask
 	#echo -e "\taffinity of shell was reset to" $old_mask
 }
 
-ARCH=`uname -m`
-if [ ${ARCH} != "s390x" ]; then
-	HIGHESTCPU=$(grep 'processor' /proc/cpuinfo | tail -n1 | cut -f2 -d':')
-else
-	HIGHESTCPU=$(grep 'processor' /proc/cpuinfo | tail -n1 | cut -f2 | sed 's/://' )
-fi
-HIGHESTCPU=$(echo $HIGHESTCPU | cut -f2 -d' ')
+HIGHESTCPU=$(ls /sys/bus/cpu/devices | sed s/cpu// | sort -n | tail -1)
 HIGHESTNODE=$(numactl -H | grep -Pzo 'node [0-9]* cpus: [0-9].*(.|\n)node [0-9]* size: [1-9].* MB' | tail -n1 | cut -f2 -d' ')
 LOWESTNODE=$(numactl -H | grep -Pzo 'node [0-9]* cpus: [0-9].*(.|\n)node [0-9]* size: [1-9].* MB' | head -n1 | cut -f2 -d' ')
 

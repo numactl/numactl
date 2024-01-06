@@ -7,7 +7,7 @@ testdir=`dirname "$0"`
 : ${builddir:=${srcdir}}
 export PATH=${builddir}:$PATH
 
-numcpus=$(grep -c processor /proc/cpuinfo)
+numcpus=$(nproc)
 numnodes=$(ls -1d /sys/devices/system/node/node[0-9]* | wc -l)
 
 nccpus=$(numactl --hardware | grep cpus | sed 's/node.*cpus://' | wc -w ) 
