@@ -37,6 +37,7 @@ int cpu_compress;
 
 enum {
 	CPU_COMPRESS = 300,
+	OPT_VERSION,
 };
 
 static struct option opts[] = {
@@ -66,6 +67,7 @@ static struct option opts[] = {
 	{"touch", 0, 0, 'T'},
         {"cpu-compress", 0, 0, CPU_COMPRESS },
 	{"verify", 0, 0, 'V'}, /* undocumented - for debugging */
+	{"version", 0, 0, OPT_VERSION },
 	{ 0 }
 };
 
@@ -79,6 +81,7 @@ static void usage(void)
 		"               [--localalloc | -l] command args ...\n"
 		"       numactl [--show | -s]\n"
 		"       numactl [--hardware | -H] [--cpu-compress]\n"
+		"       numactl [--version]\n"
 		"       numactl [--length | -L <length>] [--offset | -o <offset>] [--shmmode | -M <shmmode>]\n"
 		"               [--strict | -t]\n"
 		"               [--shmid | -I <id>] --shm | -S <shmkeyfile>\n"
@@ -702,6 +705,10 @@ int main(int ac, char **av)
 		case CPU_COMPRESS:
 			cpu_compress = 1;
 			break;
+		case OPT_VERSION:
+			nopolicy();
+			printf("%s\n", VERSION);
+			exit(0);
 		default:
 			usage();
 		}

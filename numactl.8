@@ -46,6 +46,8 @@ numactl \- Control NUMA policy for processes or shared memory
 .br
 .B numactl \-\-hardware [\-\-cpu-compress]
 .br
+.B numactl \-\-version
+.br
 .B numactl 
 [
 .B \-\-huge
@@ -195,8 +197,12 @@ Show inventory of available nodes on the system. When the
 option is set show cpu ranges. This is not default not break any existing scripts.
 .TP 0
 Numactl can set up policy for a SYSV shared memory segment or a file in shmfs/hugetlbfs.
+.TP
+.B \-\-version
+print the version of the numactl package and exit.
+.TP
  
-This policy is persistent and will be used by
+The following policy settings are persistent and will be used by
 all mappings from that shared memory. The order of options matters here.
 The specification must at least include either of 
 .I \-\-shm, 

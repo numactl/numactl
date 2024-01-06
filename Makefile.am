@@ -16,8 +16,9 @@ dist_man_MANS = move_pages.2 numa.3 numactl.8 numastat.8 migratepages.8 migspeed
 
 EXTRA_DIST = README.md INSTALL.md LICENSE.GPL2 LICENSE.LGPL2.1
 
-numactl_SOURCES = numactl.c util.c shm.c shm.h
+numactl_SOURCES = numactl.c util.c shm.c shm.h VERSION
 numactl_LDADD = libnuma.la
+numactl_CFLAGS = $(AM_CFLAGS) -DVERSION=\"$(shell cat ${srcdir}/VERSION)\"
 
 numastat_SOURCES = numastat.c
 numastat_CFLAGS = $(AM_CFLAGS) -std=gnu99
