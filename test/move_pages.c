@@ -26,7 +26,7 @@ int *node_to_use;
 int get_node_list()
 {
         int a, got_nodes = 0, max_node, numnodes;
-        long long free_node_sizes;
+        long free_node_sizes;
 
         numnodes = numa_num_configured_nodes();
         node_to_use = (int *)malloc(numnodes * sizeof(int));
