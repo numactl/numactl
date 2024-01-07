@@ -757,7 +757,8 @@ apply here too.
 .BR numa_police_memory ()
 locates memory with the current NUMA policy. The constraints described for
 .BR numa_interleave_memory ()
-apply here too.
+apply here too. The function will read-modify-write parts of the memory, and it's the callers
+responsibility to avoid data races with parallel threads.
 
 .BR numa_distance ()
 reports the distance in the machine topology between two nodes.
