@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <numa.h>
+#include "numacomat1.h"
 
 int main(int argc, char *argv[])
 {
