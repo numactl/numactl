@@ -49,7 +49,7 @@ void complain(char *fmt, ...)
 	va_start(ap, fmt);
 	fprintf(stderr, "numactl: ");
 	vfprintf(stderr,fmt,ap);
-	putchar('\n');
+	fputc('\n', stderr);
 	va_end(ap);
 	exit(1);
 }
