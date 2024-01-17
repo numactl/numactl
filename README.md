@@ -1,6 +1,6 @@
 # numactl
 
-![build test](https://github.com/numactl/numactl/workflows/makefile/badge.svg)
+![build test](https://github.com/numactl/numactl/workflows/Makefile%20CI/badge.svg)
 
 Simple NUMA policy support. It consists of a numactl program to run other
 programs with a specific NUMA policy and a libnuma shared library ("NUMA API")
