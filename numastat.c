@@ -825,8 +825,9 @@ static double update_hugepages_info(int node_ix, const char *token)
                         printf("cannot open %s: %s\n", fpath, strerror(errno));
                         continue;
                 }
-                fgets(buf, SMALL_BUF_SIZE, fs);
-                unsigned long nr_pages = strtol(buf, NULL, 10);
+		unsigned long nr_pages = 0;
+                if (fgets(buf, SMALL_BUF_SIZE, fs))
+			nr_pages = strtoul(buf, NULL, 10);
                 fclose(fs);
 
                 total += nr_pages * hugepage_size;
