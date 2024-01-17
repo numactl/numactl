@@ -1,6 +1,6 @@
 # numactl
 
-[![Build Status](https://travis-ci.org/numactl/numactl.svg?branch=master)](https://travis-ci.org/numactl/numactl)
+![build test](https://github.com/numactl/numactl/workflows/makefile/badge.svg)
 
 Simple NUMA policy support. It consists of a numactl program to run other
 programs with a specific NUMA policy and a libnuma shared library ("NUMA API")
@@ -45,4 +45,6 @@ Andi Kleen, SUSE Labs
 
 Version 2.0.0 by Cliff Wickman (`cpw@sgi.com`), Christoph Lameter
 (`clameter@sgi.com`) and Lee Schermerhorn (`lee.schermerhorn@hp.com`).
+
+Version 2.0.10 by Andi Kleen and Luo Chen, as well as various contributors.
 
