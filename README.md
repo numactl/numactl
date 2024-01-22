@@ -46,5 +46,5 @@ Andi Kleen, SUSE Labs
 Version 2.0.0 by Cliff Wickman (`cpw@sgi.com`), Christoph Lameter
 (`clameter@sgi.com`) and Lee Schermerhorn (`lee.schermerhorn@hp.com`).
 
-Version 2.0.16+ by Andi Kleen and Luo Shen, as well as various contributors.
+Version 2.0.16+ by Andi Kleen and Luo Chunsheng, as well as various contributors.
 
