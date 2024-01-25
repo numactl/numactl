@@ -1882,7 +1882,7 @@ static struct bitmask *__numa_preferred(void)
 			policy != MPOL_BIND)
 		return bmp;
 
-	if (numa_bitmask_weight(bmp) > 1) {
+	if (policy == MPOL_PREFERRED && numa_bitmask_weight(bmp) > 1) {
 		errno = EINVAL;
 		numa_error(__FILE__);
 	}
