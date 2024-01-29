@@ -341,6 +341,15 @@ struct bitmask *numa_parse_cpustring(const char *);
  * dependency */
 struct bitmask *numa_parse_cpustring_all(const char *);
 
+/* Returns whether or not the system supports setting home_node for mbind
+ * and preferred_many.
+ */
+int numa_has_home_node(void);
+
+/* set the home node for a VMA policy present in the task's address range */
+int numa_set_mempolicy_home_node(void *start, unsigned long len,
+		int home_node, int flags);
+
 /*
  * The following functions are for source code compatibility
  * with releases prior to version 2.

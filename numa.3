@@ -72,6 +72,10 @@ numa \- NUMA policy library
 .br
 .BI "void numa_set_preferred_many(struct bitmask *" nodemask );
 .br
+.BI "int numa_has_home_node(void);
+.br
+.BI "int numa_set_mempolicy_home_node(void *start, unsigned long len, int home_node, int flags);
+.br
 .BI "int numa_get_interleave_node(void);
 .br
 .B struct bitmask *numa_get_interleave_mask(void);
@@ -464,6 +468,15 @@ with the exception that it utilizes a different kernel interface to specify
 multiple preferred nodes.
 The caller is responsible for freeing the mask with
 .BR numa_bitmask_free ().
+
+.BR numa_has_home_node()
+Returns 1 if the system supports setting home_node for mbind and preferred_many.
+
+.BR numa_set_mempolicy_home_node()
+set the home node for a VMA policy present in the task's address range.
+A home node is the NUMA node closest to which page allocation will come from.
+Users should use it after setting up a mbind or perfered_many memory policy
+for the specified range.
 
 .BR numa_get_interleave_mask ()
 returns the current interleave mask if the task's memory allocation policy

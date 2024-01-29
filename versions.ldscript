@@ -164,3 +164,11 @@ libnuma_1.6{
   local:
     *;
 } libnuma_1.5;
+
+libnuma_1.7{
+  global:
+    numa_has_home_node;
+    numa_set_mempolicy_home_node;
+  local:
+    *;
+} libnuma_1.6;
