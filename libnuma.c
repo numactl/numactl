@@ -2060,7 +2060,7 @@ __numa_parse_nodestring(const char *s, struct bitmask *allowed_nodes_ptr)
 			goto err;
 		}
 		if (!numa_bitmask_isbitset(allowed_nodes_ptr, arg)) {
-			numa_warn(W_nodeparse, "node argument %d is out of range\n", arg);
+			numa_warn(W_nodeparse, "node argument %ld is out of range\n", arg);
 			goto err;
 		}
 		i = arg;
@@ -2075,7 +2075,7 @@ __numa_parse_nodestring(const char *s, struct bitmask *allowed_nodes_ptr)
 				goto err;
 			}
 			if (!numa_bitmask_isbitset(allowed_nodes_ptr, arg2)) {
-				numa_warn(W_nodeparse, "node argument %d out of range\n", arg2);
+				numa_warn(W_nodeparse, "node argument %ld out of range\n", arg2);
 				goto err;
 			}
 			while (arg <= arg2) {
