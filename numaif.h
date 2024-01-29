@@ -21,6 +21,9 @@ extern long migrate_pages(int pid, unsigned long maxnode,
 extern long move_pages(int pid, unsigned long count,
 		void **pages, const int *nodes, int *status, int flags);
 
+extern int set_mempolicy_home_node(void *start, unsigned long len,
+		int home_node, int flag);
+
 /* Policies */
 #define MPOL_DEFAULT     0
 #define MPOL_PREFERRED   1

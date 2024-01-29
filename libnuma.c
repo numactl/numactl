@@ -2237,3 +2237,37 @@ struct bitmask * numa_parse_cpustring_all(const char *s)
 {
 	return __numa_parse_cpustring(s, numa_possible_cpus_ptr);
 }
+
+int numa_has_home_node(void)
+{
+	void *mem;
+	static int has_home_node = -1;
+	int page_size = numa_pagesize();
+	struct bitmask *tmp = numa_get_mems_allowed();
+
+	if (has_home_node >= 0)
+		goto out;
+
+	has_home_node = 0;
+	/* Detect whether home_node is supported */
+	mem = mmap(0, page_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	if (mem != MAP_FAILED) {
+		dombind(mem, page_size, MPOL_BIND, tmp);
+		if (set_mempolicy_home_node(mem, page_size, numa_find_first(tmp), 0) == 0)
+			has_home_node = 1;
+		munmap(mem, page_size);
+	}
+
+out:
+	return has_home_node;
+}
+
+int numa_set_mempolicy_home_node(void *start, unsigned long len, int home_node, int flags)
+{
+	if (set_mempolicy_home_node(start, len, home_node, flags)) {
+		numa_error("set_mempolicy_home_node");
+		return -1;
+	}
+
+	return 0;
+}

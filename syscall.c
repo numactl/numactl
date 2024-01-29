@@ -139,6 +139,16 @@
 
 #endif
 
+#if !defined(__NR_set_mempolicy_home_node)
+
+#if defined(__x86_64__) || defined(__aarch64__)
+#define __NR_set_mempolicy_home_node 450
+#else
+#error "Add syscalls for your architecture or update kernel headers"
+#endif
+
+#endif
+
 #ifndef __GLIBC_PREREQ
 # define __GLIBC_PREREQ(x,y) 0
 #endif
@@ -247,6 +257,11 @@ long WEAK move_pages(int pid, unsigned long count,
 	void **pages, const int *nodes, int *status, int flags)
 {
 	return syscall(__NR_move_pages, pid, count, pages, nodes, status, flags);
+}
+
+int WEAK set_mempolicy_home_node(void *start, unsigned long len, int home_node, int flags)
+{
+   return syscall(__NR_set_mempolicy_home_node, start, len, home_node, flags);
 }
 
 /* SLES8 glibc doesn't define those */
