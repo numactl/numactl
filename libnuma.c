@@ -80,7 +80,7 @@ static int numproccpu = -1;
 static int nodemask_sz = 0;
 static int cpumask_sz = 0;
 
-static int has_preferred_many = 0;
+static int has_preferred_many = -1;
 
 int numa_exit_on_error = 0;
 int numa_exit_on_warn = 0;
@@ -623,24 +623,28 @@ set_configured_cpus(void)
 }
 
 static void
-set_kernel_abi()
+set_preferred_many(void)
 {
 	int oldp;
 	struct bitmask *bmp, *tmp;
+
+	if (has_preferred_many >= 0)
+		return;
+
+	has_preferred_many = 0;
+
 	bmp = numa_allocate_nodemask();
 	tmp = numa_get_mems_allowed();
-
-	// partial leak shouldn't happen
 	if (!tmp || !bmp)
-		return;
+		goto out;
 
 	if (get_mempolicy(&oldp, bmp->maskp, bmp->size + 1, 0, 0) < 0)
 		goto out;
 
 	if (set_mempolicy(MPOL_PREFERRED_MANY, tmp->maskp, tmp->size) == 0) {
-		has_preferred_many++;
-		/* reset the old memory policy */
-		setpol(oldp, bmp);
+		has_preferred_many = 1;
+		/* reset the old memory policy ignoring error */
+		(void)set_mempolicy(oldp, bmp->maskp, bmp->size+1);
 	}
 
 out:
@@ -660,7 +664,6 @@ set_sizes(void)
 	set_numa_max_cpu();	/* size of kernel cpumask_t */
 	set_configured_cpus();	/* cpus listed in /sys/devices/system/cpu */
 	set_task_constraints(); /* cpus and nodes for current task */
-	set_kernel_abi();	/* man policy supported */
 }
 
 int
@@ -1108,6 +1111,7 @@ void *numa_alloc_local(size_t size)
 
 void numa_set_bind_policy(int strict)
 {
+	set_preferred_many();
 	if (strict)
 		bind_policy = MPOL_BIND;
 	else if (has_preferred_many)
@@ -1925,6 +1929,7 @@ void numa_set_preferred(int node)
 
 int numa_has_preferred_many(void)
 {
+	set_preferred_many();
 	return has_preferred_many;
 }
 
@@ -1932,6 +1937,7 @@ void numa_set_preferred_many(struct bitmask *bitmask)
 {
 	int first_node = 0;
 
+	set_preferred_many();
 	if (!has_preferred_many) {
 		numa_warn(W_nodeparse,
 			"Unable to handle MANY preferred nodes. Falling back to first node\n");
