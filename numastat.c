@@ -24,12 +24,8 @@ written by Andi Kleen to display the /sys/devices/system/node/node<N>/numastat
 statistics. In 2012, numastat was rewritten as a C program by Red Hat to
 display per-node memory data for applications and the system in general,
 while also remaining strictly compatible by default with the original numastat.
-A copy of the original numastat perl script is included for reference at the
-end of this file.
 
 */
-
-// Compile with: gcc -O -std=gnu99 -Wall -o numastat numastat.c
 
 #define __USE_MISC
 #include <ctype.h>
@@ -1468,8 +1464,7 @@ int main(int argc, char **argv)
                 optind += 1;
         }
         // If there are no program options or arguments, be extremely compatible
-        // with the old numastat perl script (which is included at the end of this
-        // file for reference)
+        // with the old numastat perl script
         compatibility_mode = (argc == 1);
         init_node_ix_map_and_header();	// enumarate the NUMA nodes
         if (compatibility_mode) {
@@ -1499,101 +1494,3 @@ int main(int argc, char **argv)
         free_node_ix_map_and_header();
         exit(EXIT_SUCCESS);
 }
-
-#if 0
-/*
-
-#!/usr/bin/perl
-# Print numa statistics for all nodes
-# Copyright (C) 2003,2004 Andi Kleen, SuSE Labs.
-#
-# numastat is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public
-# License as published by the Free Software Foundation; version
-# 2.
-#
-# numastat is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-
-# You should find a copy of v2 of the GNU General Public License somewhere
-# on your Linux system; if not, write to the Free Software Foundation,
-# Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-#
-# Example: NUMASTAT_WIDTH=80 watch -n1 numastat
-#
-
-# output width
-$WIDTH=80;
-if (defined($ENV{'NUMASTAT_WIDTH'})) {
-	$WIDTH=$ENV{'NUMASTAT_WIDTH'};
-} else {
-	use POSIX;
-	if (POSIX::isatty(fileno(STDOUT))) {
-		if (open(R, "resize |")) {
-			while (<R>) {
-				$WIDTH=$1 if /COLUMNS=(\d+)/;
-			}
-			close R;
-		}
-	} else {
-		# don't split it up for easier parsing
-		$WIDTH=10000000;
-	}
-}
-$WIDTH = 32 if $WIDTH < 32;
-
-if (! -d "/sys/devices/system/node" ) {
-	print STDERR "sysfs not mounted or system not NUMA aware\n";
-	exit 1;
-}
-
-%stat = ();
-$title = "";
-$mode = 0;
-opendir(NODES, "/sys/devices/system/node") || exit 1;
-foreach $nd (readdir(NODES)) {
-	next unless $nd =~ /node(\d+)/;
-	# On newer kernels, readdir may enumerate the 'node(\d+) subdirs
-	# in opposite order from older kernels--e.g., node{0,1,2,...}
-	# as opposed to node{N,N-1,N-2,...}.  Accommodate this by
-	# switching to new mode so that the stats get emitted in
-	# the same order.
-        #print "readdir(NODES) returns $nd\n";
-	if (!$title && $nd =~ /node0/) {
-		$mode = 1;
-	}
-	open(STAT, "/sys/devices/system/node/$nd/numastat") ||
-			die "cannot open $nd: $!\n";
-	if (! $mode) {
-		$title = sprintf("%16s",$nd) . $title;
-	} else {
-		$title = $title . sprintf("%16s",$nd);
-	}
-	@fields = ();
-	while (<STAT>) {
-		($name, $val) = split;
-		if (! $mode) {
-			$stat{$name} = sprintf("%16u", $val) . $stat{$name};
-		} else {
-			$stat{$name} = $stat{$name} . sprintf("%16u", $val);
-		}
-		push(@fields, $name);
-	}
-	close STAT;
-}
-closedir NODES;
-
-$numfields = int(($WIDTH - 16) / 16);
-$l = 16 * $numfields;
-for ($i = 0; $i < length($title); $i += $l) {
-	print "\n" if $i > 0;
-	printf "%16s%s\n","",substr($title,$i,$l);
-	foreach (@fields) {
-		printf "%-16s%s\n",$_,substr($stat{$_},$i,$l);
-	}
-}
-
-*/
-#endif
