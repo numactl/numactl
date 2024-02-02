@@ -672,8 +672,7 @@ static double huge_page_size_in_bytes = 0;
 
 static void display_version_and_exit(void)
 {
-        char *version_string = "20130723";
-        printf("%s version: %s: %s\n", prog_name, version_string, __DATE__);
+        printf("%s\n", VERSION);
         exit(EXIT_SUCCESS);
 }
 

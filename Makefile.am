@@ -21,7 +21,7 @@ numactl_LDADD = libnuma.la
 numactl_CFLAGS = $(AM_CFLAGS) -DVERSION=\"$(shell cat ${srcdir}/VERSION)\"
 
 numastat_SOURCES = numastat.c
-numastat_CFLAGS = $(AM_CFLAGS) -std=gnu99
+numastat_CFLAGS = $(AM_CFLAGS) -std=gnu99 -DVERSION=\"$(shell cat ${srcdir}/VERSION)\"
 
 numademo_SOURCES = numademo.c stream_lib.c stream_lib.h mt.c mt.h clearcache.c util.c clearcache.h
 numademo_CPPFLAGS = $(AM_CPPFLAGS) -DHAVE_STREAM_LIB -DHAVE_MT -DHAVE_CLEAR_CACHE
