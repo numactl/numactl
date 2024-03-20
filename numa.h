@@ -172,6 +172,9 @@ void numa_bind(struct bitmask *nodes);
 /* Set the NUMA node interleaving mask. 0 to turn off interleaving */
 void numa_set_interleave_mask(struct bitmask *nodemask);
 
+/* Set the NUMA node weighted interleaving mask. 0 to turn off */
+void numa_set_weighted_interleave_mask(struct bitmask *nodemask);
+
 /* Return the current interleaving mask */
 struct bitmask *numa_get_interleave_mask(void);
 

@@ -172,3 +172,10 @@ libnuma_1.7{
   local:
     *;
 } libnuma_1.6;
+
+libnuma_2.1{
+  global:
+    numa_set_weighted_interleave_mask;
+  local:
+    *;
+} libnuma_1.7;
