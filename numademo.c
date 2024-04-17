@@ -250,6 +250,8 @@ static void memtest(char *name, unsigned char *mem)
 
 #endif
 		default:
+			gettimeofday(&start,NULL);
+			gettimeofday(&end,NULL);
 			break;
 		}
 
