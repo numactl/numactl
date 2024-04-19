@@ -29,6 +29,8 @@ numactl \- Control NUMA policy for processes or shared memory
 ] [
 .B \-\-interleave nodes
 ] [
+.B \-\-weighted\-interleave nodes
+] [
 .B \-\-preferred node 
 ] [
 .B \-\-preferred-many nodes
@@ -126,6 +128,13 @@ on
 When memory cannot be allocated on the current interleave target fall back
 to other nodes.
 Multiple nodes may be specified on --interleave, --membind and --cpunodebind.
+.TP
+.B \-\-weighted\-interleave=nodes, \-w nodes
+Set a weighted memory interleave policy. Memory will be allocated using the
+weighted ratio for each node, which can be read from
+.I /sys/kernel/mm/mempolicy/weighted_interleave/node*.
+When memory cannot be allocated on the current interleave target fall back
+to other nodes.
 .TP
 .B \-\-membind=nodes, \-m nodes
 Only allocate memory from nodes.  Allocation will fail when there
@@ -297,6 +306,9 @@ Run myapplic on cpus 0-4 and 8-12 of the current cpuset.
 
 numactl \-\-interleave=all bigdatabase arguments
 Run big database with its memory interleaved on all CPUs.
+
+numactl \-\-weighted\-interleave=all bigdatabase arguments
+Run big database with its memory interleaved with weighted ratio on all CPUs.
 
 numactl \-\-cpunodebind=0 \-\-membind=0,1 process
 Run process on node 0 with memory allocated on node 0 and 1.
