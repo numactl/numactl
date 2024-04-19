@@ -75,8 +75,9 @@ static struct option opts[] = {
 static void usage(void)
 {
 	fprintf(stderr,
-		"usage: numactl [--all | -a] [--balancing | -b] [--interleave= | -i <nodes>]\n"
-		"		[--preferred= | -p <node>] [--preferred-many= | -P <nodes>]\n"
+		"usage: numactl [--all | -a] [--balancing | -b]\n"
+		"               [--interleave= | -i <nodes>] [--weighted-interleave= | -w <nodes>]\n"
+		"               [--preferred= | -p <node>] [--preferred-many= | -P <nodes>]\n"
 		"               [--physcpubind= | -C <cpus>] [--cpunodebind= | -N <nodes>]\n"
 		"               [--membind= | -m <nodes>] [--localalloc | -l] command args ...\n"
 		"               [--localalloc | -l] command args ...\n"
@@ -90,7 +91,8 @@ static void usage(void)
 		"               [--huge | -u] [--touch | -T] \n"
 		"               memory policy [--dump | -d] [--dump-nodes | -D]\n"
 		"\n"
-		"memory policy is --interleave | -i, --preferred | -p, --membind | -m, --localalloc | -l\n"
+		"memory policy is --preferred | -p, --membind | -m, --localalloc | -l,\n"
+		"                 --interleave | -i, --weighted-interleave | -w\n"
 		"<nodes> is a comma delimited list of node numbers or A-B ranges or all.\n"
 		"Instead of a number a node can also be:\n"
 		"  netdev:DEV the node connected to network device DEV\n"
