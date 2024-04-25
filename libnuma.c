@@ -1910,6 +1910,7 @@ int numa_preferred(void)
 
 	bmp = __numa_preferred();
 	first_node = numa_find_first(bmp);
+	first_node = first_node >= 0 ? first_node : 0;
 	numa_bitmask_free(bmp);
 	
 	return first_node;
