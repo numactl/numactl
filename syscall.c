@@ -144,7 +144,7 @@
 #if defined(__x86_64__) || defined(__aarch64__) || defined(__i386__) || defined(__powerpc__) || defined(__mips__) || defined(__s390x__)
 #define __NR_set_mempolicy_home_node 450
 #else
-#error "Add syscalls for your architecture or update kernel headers"
+#warning "Add syscalls for your architecture or update kernel headers"
 #endif
 
 #endif
@@ -261,7 +261,12 @@ long WEAK move_pages(int pid, unsigned long count,
 
 int WEAK set_mempolicy_home_node(void *start, unsigned long len, int home_node, int flags)
 {
+#ifndef __NR_set_mempolicy_home_node
+   errno = ENOSYS;
+   return -1;
+#else
    return syscall(__NR_set_mempolicy_home_node, start, len, home_node, flags);
+#endif
 }
 
 /* SLES8 glibc doesn't define those */
