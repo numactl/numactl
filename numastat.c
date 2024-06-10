@@ -84,65 +84,8 @@ static meminfo_t process_meminfo[] = {
 
 #define PROCESS_MEMINFO_ROWS (sizeof(process_meminfo) / sizeof(process_meminfo[0]))
 
-static meminfo_t numastat_meminfo[] = {
-        { 0, "numa_hit", "Numa_Hit" },
-        { 1, "numa_miss", "Numa_Miss" },
-        { 2, "numa_foreign", "Numa_Foreign" },
-        { 3, "interleave_hit", "Interleave_Hit" },
-        { 4, "local_node", "Local_Node" },
-        { 5, "other_node", "Other_Node" },
-};
-
-#define NUMASTAT_MEMINFO_ROWS (sizeof(numastat_meminfo) / sizeof(numastat_meminfo[0]))
-
-static meminfo_t system_meminfo[] = {
-        {  0, "MemTotal", "MemTotal" },
-        {  1, "MemFree", "MemFree" },
-        {  2, "MemUsed", "MemUsed" },
-        {  3, "SwapCached", "SwapCached" },
-        {  4, "HighTotal", "HighTotal" },
-        {  5, "HighFree", "HighFree" },
-        {  6, "LowTotal", "LowTotal" },
-        {  7, "LowFree", "LowFree" },
-        {  8, "Active", "Active" },
-        {  9, "Inactive", "Inactive" },
-        { 10, "Active(anon)", "Active(anon)" },
-        { 11, "Inactive(anon)", "Inactive(anon)" },
-        { 12, "Active(file)", "Active(file)" },
-        { 13, "Inactive(file)", "Inactive(file)" },
-        { 14, "Unevictable", "Unevictable" },
-        { 15, "Mlocked", "Mlocked" },
-        { 16, "Dirty", "Dirty" },
-        { 17, "Writeback", "Writeback" },
-        { 18, "FilePages", "FilePages" },
-        { 19, "Mapped", "Mapped" },
-        { 20, "AnonPages", "AnonPages" },
-        { 21, "Shmem", "Shmem" },
-        { 22, "KernelStack", "KernelStack" },
-        { 23, "ShadowCallStack", "ShadowCallStack" },
-        { 24, "PageTables", "PageTables" },
-        { 25, "SecPageTables", "SecPageTables" },
-        { 26, "NFS_Unstable", "NFS_Unstable" },
-        { 27, "Bounce", "Bounce" },
-        { 28, "WritebackTmp", "WritebackTmp" },
-        { 29, "Slab", "Slab" },
-        { 30, "SReclaimable", "SReclaimable" },
-        { 31, "SUnreclaim", "SUnreclaim" },
-        { 32, "AnonHugePages", "AnonHugePages" },
-        { 33, "ShmemHugePages", "ShmemHugePages" },
-        { 34, "ShmemPmdMapped", "ShmemPmdMapped" },
-        { 35, "FileHugePages", "FileHugePages" },
-        { 36, "FilePmdMapped", "FilePmdMapped" },
-        { 37, "HugePages_Total", "HugePages_Total" },
-        { 38, "HugePages_Free", "HugePages_Free" },
-        { 39, "HugePages_Surp", "HugePages_Surp" },
-        { 40, "KReclaimable", "KReclaimable" }
-};
-
-#define SYSTEM_MEMINFO_ROWS (sizeof(system_meminfo) / sizeof(system_meminfo[0]))
-
-// To allow re-ordering the meminfo memory categories in system_meminfo and
-// numastat_meminfo relative to order in /proc, etc., a simple hash index is
+// To allow re-ordering the /sys/devices/system/node/node<N> meminfo and numastat
+// memory categories relative to order in /sys, etc., a simple hash index is
 // used to look up the meminfo categories. The allocated hash table size must
 // be bigger than necessary to reduce collisions (and because these specific
 // hash algorithms depend on having some unused buckets.
@@ -672,7 +615,7 @@ static double huge_page_size_in_bytes = 0;
 
 static void display_version_and_exit(void)
 {
-        printf("%s\n", VERSION);
+        printf("%s version: %s: %s\n", prog_name, VERSION, __DATE__);
         exit(EXIT_SUCCESS);
 }
 
@@ -820,9 +763,9 @@ static double update_hugepages_info(int node_ix, const char *token)
                         printf("cannot open %s: %s\n", fpath, strerror(errno));
                         continue;
                 }
-		unsigned long nr_pages = 0;
+                unsigned long nr_pages = 0;
                 if (fgets(buf, SMALL_BUF_SIZE, fs))
-			nr_pages = strtoul(buf, NULL, 10);
+                    nr_pages = strtoul(buf, NULL, 10);
                 fclose(fs);
 
                 total += nr_pages * hugepage_size;
@@ -835,8 +778,24 @@ static double update_hugepages_info(int node_ix, const char *token)
         return total;
 }
 
-static void show_info_from_system_file(char *file, meminfo_p meminfo, int meminfo_rows, int tok_offset)
+static void show_info_from_system_file(char *file, int tok_offset)
 {
+        char fname[64];
+        char buf[SMALL_BUF_SIZE];
+        // Open /sys/.../node0/<file>
+        snprintf(fname, sizeof(fname), "/sys/devices/system/node/node0/%s", file);
+        FILE *fs = fopen(fname, "r");
+        if (!fs) {
+                sprintf(buf, "cannot open %s", fname);
+                perror(buf);
+                exit(EXIT_FAILURE);
+        }
+        // and count the lines in the file
+        int meminfo_rows = 0;
+        while (fgets(buf, SMALL_BUF_SIZE, fs)) {
+                meminfo_rows += 1;
+        }
+        fclose(fs);
         // Setup and init table
         vtab_t table;
         int header_rows = 2 - compatibility_mode;
@@ -844,24 +803,17 @@ static void show_info_from_system_file(char *file, meminfo_p meminfo, int meminf
         // Add an extra data column for a total column
         init_table(&table, header_rows, header_cols, meminfo_rows, num_nodes + 1);
         int total_col_ix = header_cols + num_nodes;
-        // Insert token mapping in hash table and assign left header column label for each row in table
         init_hash_table();
-        for (int row = 0; (row < meminfo_rows); row++) {
-                hash_insert(meminfo[row].token, meminfo[row].index);
-                if (compatibility_mode) {
-                        string_assign(&table, (header_rows + row), 0, meminfo[row].token);
-                } else {
-                        string_assign(&table, (header_rows + row), 0, meminfo[row].label);
-                }
-        }
-        // printf("There are %d table hash collisions.\n", hash_collisions);
         // Set left header column width and left justify it
         set_col_width(&table, 0, 16);
         set_col_justification(&table, 0, COL_JUSTIFY_LEFT);
         // Open /sys/devices/system/node/node?/<file> for each node and store data
         // in table.  If not compatibility_mode, do approximately first third of
         // this loop also for (node_ix == num_nodes) to get "Total" column header.
+        // Also, during the first iteration, insert token mapping in hash table
+        // and assign left header column label for each row in table.
         for (int node_ix = 0; (node_ix < (num_nodes + (1 - compatibility_mode))); node_ix++) {
+                int row = 0;
                 int col = header_cols + node_ix;
                 // Assign header row label and horizontal line for this column...
                 string_assign(&table, 0, col, node_header[node_ix]);
@@ -879,9 +831,7 @@ static void show_info_from_system_file(char *file, meminfo_p meminfo, int meminf
                 if (node_ix == num_nodes) {
                         break;
                 }
-                // Open /sys/.../node<N>/numstast file for this node...
-                char buf[SMALL_BUF_SIZE];
-                char fname[64];
+                // Open /sys/.../node<N>/<file> for this node...
                 snprintf(fname, sizeof(fname), "/sys/devices/system/node/node%d/%s", node_ix_map[node_ix], file);
                 FILE *fs = fopen(fname, "r");
                 if (!fs) {
@@ -904,6 +854,34 @@ static void show_info_from_system_file(char *file, meminfo_p meminfo, int meminf
                         }
                         // example line from numastat file: "numa_miss 16463"
                         // example line from meminfo  file: "Node 3 Inactive:  210680 kB"
+                        if (node_ix == 0) {
+                                char *token = strdup(tok[0 + tok_offset]);
+                                if (token == NULL) {
+                                        perror("malloc failed line: " STRINGIFY(__LINE__));
+                                        exit(EXIT_FAILURE);
+                                }
+                                hash_insert(token, row);
+                                // printf("There are %d table hash collisions.\n", hash_collisions);
+                                if ((compatibility_mode) || (!strncmp("meminfo", file, 7))) {
+                                        string_assign(&table, (header_rows + row), 0, token);
+                                } else {
+                                        char *label = strdup(tok[0 + tok_offset]);
+                                        if (label == NULL) {
+                                                perror("malloc failed line: " STRINGIFY(__LINE__));
+                                                exit(EXIT_FAILURE);
+                                        }
+                                        // Capitalize first letter and letters after '_'
+                                        char *p = label;
+                                        while (p) {
+                                                p[0] = toupper(p[0]);
+                                                p = strchr(p, '_');
+                                                if (p) {
+                                                        p += 1;
+                                                }
+                                        }
+                                        string_assign(&table, (header_rows + row), 0, label);
+                                }
+                        }
                         int index = hash_lookup(tok[0 + tok_offset]);
                         if (index < 0) {
                                 printf("Token %s not in hash table.\n", tok[0 + tok_offset]);
@@ -931,10 +909,11 @@ static void show_info_from_system_file(char *file, meminfo_p meminfo, int meminf
                                 double_assign(&table, header_rows + index, col, value);
                                 double_addto(&table, header_rows + index, total_col_ix, value);
                         }
+                        row += 1;
                 }
                 fclose(fs);
         }
-        // Crompress display column widths, if requested
+        // Compress display column widths, if requested
         if (compress_display) {
                 for (int col = 0; (col < header_cols + num_nodes + 1); col++) {
                         auto_set_col_width(&table, col, 4, 16);
@@ -960,13 +939,13 @@ static void show_numastat_info(void)
         if (!compatibility_mode) {
                 printf("\nPer-node numastat info (in MBs):\n");
         }
-        show_info_from_system_file("numastat", numastat_meminfo, NUMASTAT_MEMINFO_ROWS, 0);
+        show_info_from_system_file("numastat", 0);
 }
 
 static void show_system_info(void)
 {
         printf("\nPer-node system memory usage (in MBs):\n");
-        show_info_from_system_file("meminfo", system_meminfo, SYSTEM_MEMINFO_ROWS, 2);
+        show_info_from_system_file("meminfo", 2);
 }
 
 static void show_process_info(void)
@@ -1128,7 +1107,7 @@ static void show_process_info(void)
                 // If showing individual tables, or we just added the last total line,
                 // prepare the table for display and display it...
                 if ((show_sub_categories) || (pid_ix + 1 == num_pids)) {
-                        // Crompress display column widths, if requested
+                        // Compress display column widths, if requested
                         if (compress_display) {
                                 for (int col = 0; (col < header_cols + num_nodes + 1); col++) {
                                         auto_set_col_width(&table, col, 4, 16);
