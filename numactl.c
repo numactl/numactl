@@ -225,19 +225,19 @@ static void print_distances(int maxnode)
 		return;
 	}
 	printf("node distances:\n");
-	printf("node ");
+	printf("node  ");
 	for (i = 0; i <= maxnode; i++)
 		if (numa_bitmask_isbitset(numa_nodes_ptr, i))
-			printf("% 3d ", i);
+			printf("% 4d ", i);
 	printf("\n");
 	for (i = 0; i <= maxnode; i++) {
 		if (!numa_bitmask_isbitset(numa_nodes_ptr, i))
 			continue;
-		printf("% 3d: ", i);
+		printf("% 4d: ", i);
 		for (k = 0; k <= maxnode; k++)
 			if (numa_bitmask_isbitset(numa_nodes_ptr, i) &&
 			    numa_bitmask_isbitset(numa_nodes_ptr, k))
-				printf("% 3d ", numa_distance(i,k));
+				printf("% 4d ", numa_distance(i,k));
 		printf("\n");
 	}
 }
