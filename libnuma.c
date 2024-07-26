@@ -862,7 +862,7 @@ make_internal_alias(numa_node_size64);
 
 long numa_node_size(int node, long *freep)
 {
-	long long f2;
+	long long f2 = 0;
 	long sz = numa_node_size64_int(node, &f2);
 	if (freep)
 		*freep = f2;
@@ -1249,8 +1249,8 @@ SYMVER("numa_get_membind_v2", "numa_get_membind@@libnuma_1.2")
 struct bitmask *
 numa_get_membind_v2(void)
 {
-	int oldpolicy;
-	struct bitmask *bmp;
+	int oldpolicy = 0;
+	struct bitmask *bmp = NULL;
 
 	bmp = numa_allocate_nodemask();
 	if (!bmp)
