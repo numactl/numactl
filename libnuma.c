@@ -427,7 +427,7 @@ done:
 		nodemask_sz = 16;
 		do {
 			nodemask_sz <<= 1;
-			mask = realloc(mask, nodemask_sz / 8);
+			mask = realloc(mask, nodemask_sz / 8 + sizeof(unsigned long));
 			if (!mask)
 				return;
 		} while (get_mempolicy(&pol, mask, nodemask_sz + 1, 0, 0) < 0 && errno == EINVAL &&
