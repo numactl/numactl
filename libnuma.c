@@ -627,9 +627,12 @@ set_preferred_many(void)
 {
 	int oldp;
 	struct bitmask *bmp, *tmp;
+	int old_errno;
 
 	if (has_preferred_many >= 0)
 		return;
+
+	old_errno = errno;
 
 	has_preferred_many = 0;
 
@@ -650,6 +653,7 @@ set_preferred_many(void)
 out:
 	numa_bitmask_free(tmp);
 	numa_bitmask_free(bmp);
+	errno = old_errno;
 }
 
 /*
