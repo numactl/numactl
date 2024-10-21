@@ -871,7 +871,7 @@ long numa_node_size(int node, long *freep)
 
 int numa_available(void)
 {
-	if (get_mempolicy(NULL, NULL, 0, 0, 0) < 0 && errno == ENOSYS)
+	if (get_mempolicy(NULL, NULL, 0, 0, 0) < 0 && (errno == ENOSYS || errno == EPERM))
 		return -1;
 	return 0;
 }
