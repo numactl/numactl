@@ -1050,7 +1050,7 @@ SYMVER("numa_get_interleave_mask_v1", "numa_get_interleave_mask@libnuma_1.1")
 nodemask_t
 numa_get_interleave_mask_v1(void)
 {
-	int oldpolicy;
+	int oldpolicy = 0;
 	struct bitmask *bmp;
 	nodemask_t mask;
 
@@ -1070,7 +1070,7 @@ SYMVER("numa_get_interleave_mask_v2", "numa_get_interleave_mask@@libnuma_1.2")
 struct bitmask *
 numa_get_interleave_mask_v2(void)
 {
-	int oldpolicy;
+	int oldpolicy = 0;
 	struct bitmask *bmp;
 
 	bmp = numa_allocate_nodemask();
@@ -1226,7 +1226,7 @@ SYMVER("numa_get_membind_v1", "numa_get_membind@libnuma_1.1")
 nodemask_t
 numa_get_membind_v1(void)
 {
-	int oldpolicy;
+	int oldpolicy = 0;
 	struct bitmask *bmp;
 	nodemask_t nmp;
 
@@ -1883,7 +1883,7 @@ out:
 
 static struct bitmask *__numa_preferred(void)
 {
-	int policy;
+	int policy = 0;
 	struct bitmask *bmp;
 
 	bmp = numa_allocate_nodemask();
