@@ -144,8 +144,8 @@ static int numa_find_first(struct bitmask *mask)
  * The following bitmask declarations, bitmask_*() routines, and associated
  * _setbit() and _getbit() routines are:
  * Copyright (c) 2004_2007 Silicon Graphics, Inc. (SGI) All rights reserved.
- * SGI publishes it under the terms of the GNU General Public License, v2,
- * as published by the Free Software Foundation.
+ * SGI publishes it under the terms of the Library GNU General Public License,
+ * v2, as published by the Free Software Foundation.
  */
 static unsigned int
 _getbit(const struct bitmask *bmp, unsigned int n)
