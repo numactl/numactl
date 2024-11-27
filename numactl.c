@@ -737,7 +737,6 @@ int main(int ac, char **av)
 	numa_bitmask_free(mask);
 
 	av += optind;
-	ac -= optind;
 
 	if (shmfd >= 0) {
 		if (*av)
