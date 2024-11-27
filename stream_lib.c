@@ -212,7 +212,7 @@ static int checktick(void)
 	for (i = 0; i < M; i++) {
 		t1 = mysecond();
 		while (((t2 = mysecond()) - t1) < 1.0E-6);
-		timesfound[i] = t1 = t2;
+		timesfound[i] = t2;
 	}
 
 /*
