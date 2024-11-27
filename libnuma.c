@@ -2278,6 +2278,7 @@ int numa_has_home_node(void)
 	}
 
 out:
+	numa_bitmask_free(tmp);
 	return has_home_node;
 }
 
