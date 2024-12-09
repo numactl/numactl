@@ -640,7 +640,8 @@ On error, NULL is returned.
 .BR numa_alloc_interleaved_subset ()
 attempts to allocate
 .I size
-bytes of memory page interleaved on all nodes.
+bytes of memory page interleaved on nodes specified in
+.IR nodemask .
 The
 .I size
 argument will be rounded up to a multiple of the system page size.
