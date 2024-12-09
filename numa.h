@@ -223,6 +223,11 @@ int numa_get_interleave_node(void);
 void *numa_alloc_interleaved_subset(size_t size, struct bitmask *nodemask);
 /* Alloc memory page interleaved on all nodes. */
 void *numa_alloc_interleaved(size_t size);
+/* Alloc memory page interleaved on nodes in mask using weights */
+void *numa_alloc_weighted_interleaved_subset(size_t size, struct bitmask *nodemask);
+/* Alloc memory page interleaved on all nodes using weights */
+void *numa_alloc_weighted_interleaved(size_t size);
+
 /* Alloc memory located on node */
 void *numa_alloc_onnode(size_t size, int node);
 /* Alloc memory on local node */
@@ -239,6 +244,8 @@ void numa_free(void *mem, size_t size);
 
 /* Interleave a memory area. */
 void numa_interleave_memory(void *mem, size_t size, struct bitmask *mask);
+/* Interleave a memory area using weights. */
+void numa_weighted_interleave_memory(void *mem, size_t size, struct bitmask *mask);
 
 /* Allocate a memory area on a specific node. */
 void numa_tonode_memory(void *start, size_t size, int node);

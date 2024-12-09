@@ -84,6 +84,8 @@ numa \- NUMA policy library
 .br
 .BI "void numa_interleave_memory(void *" start ", size_t " size ", struct bitmask *" nodemask );
 .br
+.BI "void numa_weighted_interleave_memory(void *" start ", size_t " size ", struct bitmask *" nodemask );
+.br
 .BI "void numa_bind(struct bitmask *" nodemask );
 .br
 .BI "void numa_set_localalloc(void);
@@ -101,6 +103,10 @@ numa \- NUMA policy library
 .BI "void *numa_alloc_interleaved(size_t " size );
 .br
 .BI "void *numa_alloc_interleaved_subset(size_t " size ",  struct bitmask *" nodemask );
+.br
+.BI "void *numa_alloc_weighted_interleaved(size_t " size );
+.br
+.BI "void *numa_alloc_weighted_interleaved_subset(size_t " size ", struct bitmask *" nodemask );
 .br
 .BI "void *numa_alloc(size_t " size );
 .br
@@ -538,6 +544,41 @@ If the
 flag is true then the operation will cause a numa_error if there were already
 pages in the mapping that do not follow the policy.
 
+.BR numa_weighted_interleave_memory ()
+interleaves
+.I size
+bytes of memory page by page from
+.I start
+on nodes specified in
+.IR nodemask
+according to the weights in
+.I /sys/kernel/mm/mempolicy/weighted_interleave/node*.
+The
+.I size
+argument will be rounded up to a multiple of the system page size.
+If
+.I nodemask
+contains nodes that are externally denied to this process,
+this call will fail.
+This is a lower level function to interleave allocated but not yet faulted in
+memory. Not yet faulted in means the memory is allocated using
+.BR mmap (2)
+or
+.BR shmat (2),
+but has not been accessed by the current process yet. The memory is page
+interleaved to all nodes specified in
+.IR nodemask .
+Normally
+.BR numa_alloc_weighted_interleaved ()
+should be used for private memory instead, but this function is useful to
+handle shared memory areas. To be useful the memory area should be
+several megabytes at least (or tens of megabytes of hugetlbfs mappings)
+If the
+.BR numa_set_strict ()
+flag is true then the operation will cause a numa_error if there were already
+pages in the mapping that do not follow the policy.
+
+
 .BR numa_bind ()
 binds the current task and its children to the nodes
 specified in
@@ -637,11 +678,46 @@ The allocated memory must be freed with
 .BR numa_free ().
 On error, NULL is returned.
 
+.BR numa_alloc_weighted_interleaved ()
+allocates
+.I size
+bytes of memory page interleaved on all nodes according to the weights in
+.I /sys/kernel/mm/mempolicy/weighted_interleave/node*.
+This function is relatively slow and should only be used for large areas
+consisting of multiple pages. The interleaving works at page level and will
+only show an effect when the area is large.
+The allocated memory must be freed with
+.BR numa_free ().
+On error, NULL is returned.
+
 .BR numa_alloc_interleaved_subset ()
 attempts to allocate
 .I size
 bytes of memory page interleaved on nodes specified in
 .IR nodemask .
+The
+.I size
+argument will be rounded up to a multiple of the system page size.
+The nodes on which a process is allowed to allocate memory may
+be constrained externally.
+If this is the case, this function may fail.
+This function is relatively slow compared to the
+.IR malloc (3)
+family of functions and should only be used for large areas consisting
+of multiple pages.
+The interleaving works at page level and will only show an effect when the
+area is large.
+The allocated memory must be freed with
+.BR numa_free ().
+On error, NULL is returned.
+
+.BR numa_alloc_weighted_interleaved_subset ()
+attempts to allocate
+.I size
+bytes of memory page interleaved on nodes specified in
+.IR nodemask
+according to the weights in
+.I /sys/kernel/mm/mempolicy/weighted_interleave/node*.
 The
 .I size
 argument will be rounded up to a multiple of the system page size.
