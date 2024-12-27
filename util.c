@@ -92,6 +92,7 @@ static struct policy {
 	{ "membind",    MPOL_BIND, },
 	{ "preferred",   MPOL_PREFERRED, },
 	{ "default",    MPOL_DEFAULT, 1 },
+	{ "weighted-interleave", MPOL_WEIGHTED_INTERLEAVE, },
 	{ NULL },
 };
 

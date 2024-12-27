@@ -339,6 +339,7 @@ static void test(enum test type)
 	memtest("local memory", numa_alloc_local(msize));
 
 	memtest("memory interleaved on all nodes", numa_alloc_interleaved(msize));
+	memtest("memory weighted interleaved on all nodes", numa_alloc_weighted_interleaved(msize));
 	for (i = 0; i < numnodes; i++) {
 		if (regression_testing && (i % fract_nodes)) {
 		/* for regression testing (-t) do only every eighth node */
@@ -374,6 +375,7 @@ static void test(enum test type)
 				strcat(buf, buf2);
 			}
 		memtest(buf, numa_alloc_interleaved_subset(msize, nodes));
+		memtest(buf, numa_alloc_weighted_interleaved_subset(msize, nodes));
 
 		if (!numa_has_preferred_many())
 			continue;
@@ -408,6 +410,20 @@ static void test(enum test type)
 		numa_set_interleave_mask(nodes);
 		memtest("manual interleaving on first two nodes", numa_alloc(msize));
 		printf("current interleave node %d\n", numa_get_interleave_node());
+
+	}
+
+	numa_set_weighted_interleave_mask(numa_all_nodes_ptr);
+	memtest("manual interleaving to all nodes", numa_alloc(msize));
+
+	if (numnodes > 0) {
+		numa_bitmask_clearall(nodes);
+		numa_bitmask_setbit(nodes, node_to_use[0]);
+		numa_bitmask_setbit(nodes, node_to_use[1]);
+		numa_set_weighted_interleave_mask(nodes);
+		memtest("manual weighted interleaving on first two nodes", numa_alloc(msize));
+		printf("current weighted interleave node %d\n", numa_get_interleave_node());
+
 	}
 
 	numa_bitmask_free(nodes);
@@ -431,12 +447,19 @@ static void test(enum test type)
 		memtest("memory interleaved on all nodes",
 			numa_alloc_interleaved(msize));
 
+		memtest("memory weighted interleaved on all nodes",
+			numa_alloc_weighted_interleaved(msize));
+
+
 		if (numnodes >= 2) {
 			numa_bitmask_clearall(nodes);
 			numa_bitmask_setbit(nodes, node_to_use[0]);
 			numa_bitmask_setbit(nodes, node_to_use[1]);
 			memtest("memory interleaved on first two nodes",
 				numa_alloc_interleaved_subset(msize, nodes));
+			memtest("memory weighted interleaved on first two nodes",
+				numa_alloc_weighted_interleaved_subset(msize, nodes));
+
 		}
 
 		for (k = 0; k < numnodes; k++) {
