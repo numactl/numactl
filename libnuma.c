@@ -1107,6 +1107,21 @@ numa_get_interleave_mask_v2(void)
 	return bmp;
 }
 
+struct bitmask *
+numa_get_weighted_interleave_mask(void)
+{
+	int oldpolicy = 0;
+	struct bitmask *bmp;
+
+	bmp = numa_allocate_nodemask();
+	if (!bmp)
+		return NULL;
+	getpol(&oldpolicy, bmp);
+	if (oldpolicy != MPOL_WEIGHTED_INTERLEAVE)
+		copy_bitmask_to_bitmask(numa_no_nodes_ptr, bmp);
+	return bmp;
+}
+
 /* (undocumented) */
 int numa_get_interleave_node(void)
 {

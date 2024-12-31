@@ -176,6 +176,7 @@ libnuma_1.7{
 libnuma_2.1{
   global:
     numa_set_weighted_interleave_mask;
+    numa_get_weighted_interleave_mask;
     numa_alloc_weighted_interleaved;
     numa_alloc_weighted_interleaved_subset;
     numa_weighted_interleave_memory;
