@@ -28,6 +28,7 @@
 #include "numaint.h"
 #include "util.h"
 #include "shm.h"
+#include "sysfs.h"
 
 #define CPUSET 0
 #define ALL 1
@@ -143,9 +144,37 @@ static void show_physcpubind(void)
 	}
 }
 
+static void show_weighted_interleave_weights(void)
+{
+	struct bitmask *weighted_interleave_mask;
+	int maxnode = numa_max_node();
+	const char *sysfs_path = "/sys/kernel/mm/mempolicy/weighted_interleave/node%d";
+	char buf[64];
+	int i;
+	char *weight;
+
+	weighted_interleave_mask = numa_get_weighted_interleave_mask();
+	if (!weighted_interleave_mask)
+		return;
+
+	printf("interleaveweights:");
+	for (i = 0; i <= maxnode; i++) {
+		if (numa_bitmask_isbitset(weighted_interleave_mask, i)) {
+			int w;
+
+			snprintf(buf, sizeof(buf), sysfs_path, i);
+			weight = sysfs_read(buf);
+			if (sscanf(weight, "%d", &w) == 1)
+				printf(" %d", w);
+		}
+	}
+	printf("\n");
+	numa_bitmask_free(weighted_interleave_mask);
+}
+
 static void show(void)
 {
-	struct bitmask *membind, *interleave, *cpubind, *preferred;
+	struct bitmask *membind, *interleave, *cpubind, *preferred, *weighted_interleave;
 	unsigned long cur;
 	int policy;
 
@@ -159,6 +188,7 @@ static void show(void)
 
 	preferred = numa_preferred_many();
 	interleave = numa_get_interleave_mask();
+	weighted_interleave = numa_get_weighted_interleave_mask();
 	membind = numa_get_membind();
 	cur = numa_get_interleave_node();
 
@@ -180,6 +210,7 @@ static void show(void)
 		printf("current\n");
 		break;
 	case MPOL_INTERLEAVE:
+	case MPOL_WEIGHTED_INTERLEAVE:
 		printf("%ld (interleave next)\n",cur);
 		break;
 	case MPOL_BIND:
@@ -192,6 +223,10 @@ static void show(void)
 	if (policy == MPOL_INTERLEAVE) {
 		printmask("interleavemask", interleave);
 		printf("interleavenode: %ld\n", cur);
+	} else if (policy == MPOL_WEIGHTED_INTERLEAVE) {
+		printmask("interleavemask", weighted_interleave);
+		show_weighted_interleave_weights();
+		printf("interleavenode: %ld\n", cur);
 	}
 	show_physcpubind();
 	printmask("cpubind", cpubind);  // for compatibility
@@ -202,6 +237,7 @@ static void show(void)
 	numa_bitmask_free(membind);
 	numa_bitmask_free(preferred);
 	numa_bitmask_free(interleave);
+	numa_bitmask_free(weighted_interleave);
 }
 
 static char *fmt_mem(unsigned long long mem, char *buf)
