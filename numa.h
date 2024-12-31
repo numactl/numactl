@@ -178,6 +178,9 @@ void numa_set_weighted_interleave_mask(struct bitmask *nodemask);
 /* Return the current interleaving mask */
 struct bitmask *numa_get_interleave_mask(void);
 
+/* Return the current weighted interleaving mask */
+struct bitmask *numa_get_weighted_interleave_mask(void);
+
 /* allocate a bitmask big enough for all nodes */
 struct bitmask *numa_allocate_nodemask(void);
 

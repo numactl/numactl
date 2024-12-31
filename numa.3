@@ -84,6 +84,10 @@ numa \- NUMA policy library
 .br
 .BI "void numa_interleave_memory(void *" start ", size_t " size ", struct bitmask *" nodemask );
 .br
+.B struct bitmask *numa_get_weighted_interleave_mask(void);
+.br
+.BI "void numa_set_weighted_interleave_mask(struct bitmask *" nodemask );
+.br
 .BI "void numa_weighted_interleave_memory(void *" start ", size_t " size ", struct bitmask *" nodemask );
 .br
 .BI "void numa_bind(struct bitmask *" nodemask );
@@ -511,6 +515,25 @@ target.
 .\" .BR numa_alloc_interleaved ()
 .\" or
 .\" .BR numa_alloc_interleaved_subset ().
+
+.BR numa_get_weighted_interleave_mask ()
+returns the current weighted interleave mask if the task's memory
+allocation policy is weighted interleaving.
+Otherwise, this function returns an empty mask.
+
+.BR numa_set_weighted_interleave_mask ()
+sets the memory weighted interleave mask for the current task to
+.IR nodemask .
+All new memory allocations
+are weighted-interleaved over all nodes in the weighted interleave mask,
+according to the weights in
+.I /sys/kernel/mm/mempolicy/weighted_interleave/node*.
+Interleaving can be turned off again by passing an empty mask
+.RI ( numa_no_nodes ) .
+The weighted interleaving only occurs on the actual page fault that puts a
+new page into the current address space. It is also only a hint: the kernel
+will fall back to other nodes if no memory is available on the weighted
+interleave target.
 
 .BR numa_interleave_memory ()
 interleaves
