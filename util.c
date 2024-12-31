@@ -96,7 +96,7 @@ static struct policy {
 	{ NULL },
 };
 
-static char *policy_names[] = { "default", "preferred", "bind", "interleave", "local", "preferred-many" };
+static char *policy_names[] = { "default", "preferred", "bind", "interleave", "local", "preferred-many", "weighted-interleave" };
 
 char *policy_name(int policy)
 {
