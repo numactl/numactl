@@ -198,7 +198,10 @@ static void show(void)
 	printmask("nodebind", cpubind);
 	printmask("membind", membind);
 	printmask("preferred", preferred);
+	numa_bitmask_free(cpubind);
+	numa_bitmask_free(membind);
 	numa_bitmask_free(preferred);
+	numa_bitmask_free(interleave);
 }
 
 static char *fmt_mem(unsigned long long mem, char *buf)
