@@ -45,6 +45,7 @@ libnuma_1.1 {
     numa_parse_bitmap;
     numa_police_memory;
     numa_preferred;
+    numa_preferred_err;
     numa_run_on_node;
     numa_run_on_node_mask;
     numa_sched_getaffinity;

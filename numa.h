@@ -140,6 +140,9 @@ int numa_max_node(void);
 int numa_max_possible_node(void);
 /* Return preferred node */
 int numa_preferred(void);
+/* If the preferred node is unavailable, return an error;
+   otherwise, return the preferred node */
+int numa_preferred_err(void);
 
 /* Return node size and free memory */
 long long numa_node_size64(int node, long long *freep);
