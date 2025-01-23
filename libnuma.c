@@ -1947,7 +1947,7 @@ static struct bitmask *__numa_preferred(void)
 	return bmp;
 }
 
-int numa_preferred(void)
+int numa_preferred_err(void)
 {
 	int first_node = 0;
 	struct bitmask *bmp;
@@ -1956,6 +1956,16 @@ int numa_preferred(void)
 	first_node = numa_find_first(bmp);
 	numa_bitmask_free(bmp);
 	
+	return first_node;
+}
+
+int numa_preferred(void)
+{
+	int first_node = 0;
+
+	first_node = numa_preferred_err();
+	first_node = first_node >= 0 ? first_node : 0;
+
 	return first_node;
 }
 
