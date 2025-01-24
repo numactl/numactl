@@ -64,6 +64,8 @@ numa \- NUMA policy library
 .sp
 .B int numa_preferred(void);
 .br
+.B int numa_preferred_err(void);
+.br
 .B int numa_has_preferred_many(void);
 .br
 .B struct bitmask *numa_preferred_many(void);
@@ -447,6 +449,10 @@ allocates memory, unless some other policy overrides this.
 .\" patches go in.  In the latter case, we'd need to know the
 .\" order of the current node's zonelist to return the correct
 .\" node.  Need to tighten this up with the syscall results.
+
+.BR numa_preferred_err ()
+Similiar to numa_preferred(), but If the preferred node is unavailable,
+return an error instead of zero.
 
 .BR numa_has_preferred_many ()
 Returns > 0 if the system supports multiple preferred nodes.
