@@ -782,8 +782,9 @@ static void show_info_from_system_file(char *file, int tok_offset)
 {
         char fname[64];
         char buf[SMALL_BUF_SIZE];
-        // Open /sys/.../node0/<file>
-        snprintf(fname, sizeof(fname), "/sys/devices/system/node/node0/%s", file);
+	
+	// Use the first available node for initial row counting
+	snprintf(fname, sizeof(fname), "/sys/devices/system/node/node%d/%s", node_ix_map[0], file);
         FILE *fs = fopen(fname, "r");
         if (!fs) {
                 sprintf(buf, "cannot open %s", fname);
