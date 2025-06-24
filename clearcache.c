@@ -54,24 +54,5 @@ static void fallback_clearcache(void)
 
 void clearcache(unsigned char *mem, unsigned size)
 {
-#if defined(__i386__) || defined(__x86_64__)
-	unsigned i, cl, eax, feat;
-	/* get clflush unit and feature */
-	asm("cpuid" : "=a" (eax), "=b" (cl), "=d" (feat) : "0" (1) : "cx");
-	if (!(feat & (1 << 19)))
-		fallback_clearcache();
-	cl = ((cl >> 8) & 0xff) * 8;
-	for (i = 0; i < size; i += cl)
-		asm("clflush %0" :: "m" (mem[i]));
-#elif defined(__ia64__)
-        unsigned long cl, endcl;
-        // flush probable 128 byte cache lines (but possibly 64 bytes)
-        cl = (unsigned long)mem;
-        endcl = (unsigned long)(mem + (size-1));
-        for (; cl <= endcl; cl += 64)
-                asm ("fc %0" :: "r"(cl) : "memory" );
-#else
-#warning "Consider adding a clearcache implementation for your architecture"
-	fallback_clearcache();
-#endif
+     __builtin___clear_cache(mem, (mem + (size-1)));
 }
