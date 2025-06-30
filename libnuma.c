@@ -1415,7 +1415,14 @@ numa_parse_bitmap_v2(char *line, struct bitmask *mask)
 static void init_node_cpu_mask_v2(void)
 {
 	int nnodes = numa_max_possible_node_v2_int() + 1;
-	node_cpu_mask_v2 = calloc (nnodes, sizeof(struct bitmask *));
+	struct bitmask **new_ncm, **null_ncm = NULL;
+	new_ncm = calloc (nnodes, sizeof(struct bitmask *));
+	/* Check for races with another thread */
+	if (new_ncm && !__atomic_compare_exchange_n(&node_cpu_mask_v2, &null_ncm,
+			new_ncm, 1,
+			__ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
+		free(new_ncm);
+	}
 }
 
 static void cleanup_node_cpu_mask_v2(void)
@@ -1535,7 +1542,7 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 	size_t len = 0;
 	struct bitmask *mask;
 
-	if (!node_cpu_mask_v2)
+	if (!__atomic_load_n(&node_cpu_mask_v2, __ATOMIC_CONSUME))
 		init_node_cpu_mask_v2();
 
 	if (node > nnodes) {
