@@ -184,3 +184,10 @@ libnuma_2.1{
   local:
     *;
 } libnuma_1.7;
+
+libnuma_2.2{
+  global:
+    numa_fail_alloc_on_error;
+  local:
+    *;
+} libnuma_1.7;

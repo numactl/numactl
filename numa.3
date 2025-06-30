@@ -197,6 +197,8 @@ numa \- NUMA policy library
 .br
 .BI "extern int " numa_exit_on_warn ;
 .br
+.BI "extern int " numa_fail_on_error_error ;
+.br
 .BI "void numa_warn(int " number ", char *" where ", ...);"
 .br
 
@@ -1168,6 +1170,11 @@ is set to a non-zero value.
 The default value of
 .I numa_exit_on_error
 is zero.
+When the
+.I numa_fail_alloc_on_error
+variable is set to 1 make
+.I numa_alloc
+functions fail with a NULL return if the policy cannot be set. Default 0.
 
 .BR numa_warn ()
 is a

@@ -84,6 +84,7 @@ static int has_preferred_many = -1;
 
 int numa_exit_on_error = 0;
 int numa_exit_on_warn = 0;
+int numa_fail_alloc_on_error = 0;
 static void set_sizes(void);
 
 /*
@@ -320,11 +321,23 @@ static void getpol(int *oldpolicy, struct bitmask *bmp)
 		numa_error("get_mempolicy");
 }
 
-static void dombind(void *mem, size_t size, int pol, struct bitmask *bmp)
+static int dombind(void *mem, size_t size, int pol, struct bitmask *bmp)
 {
 	if (mbind(mem, size, pol, bmp ? bmp->maskp : NULL, bmp ? bmp->size + 1 : 0,
-		  mbind_flags) < 0)
+		  mbind_flags) < 0) {
 		numa_error("mbind");
+		return -1;
+	}
+	return 0;
+}
+
+static void *dombind_or_free(void *mem, size_t size, int pol, struct bitmask *bmp)
+{
+	if (dombind(mem, size, pol, bmp) < 0 && numa_fail_alloc_on_error) {
+		munmap(mem, size);
+		return NULL;
+	}
+	return mem;
 }
 
 /* (undocumented) */
@@ -990,7 +1003,7 @@ void *numa_alloc_interleaved_subset_v1(size_t size, const nodemask_t *mask)
 		return NULL;
 	bitmask.maskp = (unsigned long *)mask;
 	bitmask.size  = sizeof(nodemask_t);
-	dombind(mem, size, MPOL_INTERLEAVE, &bitmask);
+	mem = dombind_or_free(mem, size, MPOL_INTERLEAVE, &bitmask);
 	return mem;
 }
 
@@ -1003,7 +1016,7 @@ void *numa_alloc_interleaved_subset_v2(size_t size, struct bitmask *bmp)
 		   0, 0);
 	if (mem == (char *)-1)
 		return NULL;
-	dombind(mem, size, MPOL_INTERLEAVE, bmp);
+	mem = dombind_or_free(mem, size, MPOL_INTERLEAVE, bmp);
 	return mem;
 }
 
@@ -1025,7 +1038,7 @@ numa_alloc_weighted_interleaved_subset(size_t size, struct bitmask *bmp)
 		   0, 0);
 	if (mem == (char *)-1)
 		return NULL;
-	dombind(mem, size, MPOL_WEIGHTED_INTERLEAVE, bmp);
+	mem = dombind_or_free(mem, size, MPOL_WEIGHTED_INTERLEAVE, bmp);
 	return mem;
 }
 
@@ -1148,7 +1161,8 @@ void *numa_alloc_onnode(size_t size, int node)
 	if (mem == (char *)-1)
 		mem = NULL;
 	else
-		dombind(mem, size, bind_policy, bmp);
+		mem = dombind_or_free(mem, size, bind_policy, bmp);
+
 	numa_bitmask_free(bmp);
 	return mem;
 }
@@ -1161,7 +1175,7 @@ void *numa_alloc_local(size_t size)
 	if (mem == (char *)-1)
 		mem =  NULL;
 	else
-		dombind(mem, size, MPOL_LOCAL, NULL);
+		mem = dombind_or_free(mem, size, MPOL_LOCAL, NULL);
 	return mem;
 }
 

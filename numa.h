@@ -332,6 +332,10 @@ extern int numa_exit_on_error;
 /* When true exit when libnuma would print a warning. */
 extern int numa_exit_on_warn;
 
+/* When true make numa_alloc functions fail when policy could not be set.
+   Default false. */
+extern int numa_fail_alloc_on_error;
+
 /* Warning function. Can also be overwritten. Default is to print on stderr
    once. */
 void numa_warn(int num, char *fmt, ...);
