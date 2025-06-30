@@ -423,13 +423,16 @@ set_nodemask_size(void)
 done:
 	if (nodemask_sz == 0) {/* fall back on error */
 		int pol;
-		unsigned long *mask = NULL;
+		unsigned long *mask = NULL, *origmask;
 		nodemask_sz = 16;
 		do {
 			nodemask_sz <<= 1;
+			origmask = mask;
 			mask = realloc(mask, nodemask_sz / 8 + sizeof(unsigned long));
-			if (!mask)
+			if (!mask) {
+				free(origmask);
 				return;
+			}
 		} while (get_mempolicy(&pol, mask, nodemask_sz + 1, 0, 0) < 0 && errno == EINVAL &&
 				nodemask_sz < 4096*8);
 		free(mask);
@@ -1478,7 +1481,7 @@ numa_node_to_cpus_v1(int node, unsigned long *buffer, int bufferlen)
 	}
 
 	free(line);
-	memcpy(buffer, mask, buflen_needed);
+	memmove(buffer, mask, buflen_needed);
 
 	/* slightly racy, see above */
 	if (node_cpu_mask_v1[node]) {
