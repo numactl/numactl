@@ -326,6 +326,7 @@ static void test(enum test type)
 	int i, k;
 	char buf[512];
 	struct bitmask *nodes;
+	int old_eoe = numa_exit_on_error;
 
 	nodes = numa_allocate_nodemask();
 	thistest = type;
@@ -339,7 +340,10 @@ static void test(enum test type)
 	memtest("local memory", numa_alloc_local(msize));
 
 	memtest("memory interleaved on all nodes", numa_alloc_interleaved(msize));
+
+	numa_exit_on_error = 0; /* Do no exit for old kernels */
 	memtest("memory weighted interleaved on all nodes", numa_alloc_weighted_interleaved(msize));
+	numa_exit_on_error = old_eoe;
 	for (i = 0; i < numnodes; i++) {
 		if (regression_testing && (i % fract_nodes)) {
 		/* for regression testing (-t) do only every eighth node */
@@ -375,7 +379,10 @@ static void test(enum test type)
 				strcat(buf, buf2);
 			}
 		memtest(buf, numa_alloc_interleaved_subset(msize, nodes));
+
+		numa_exit_on_error = 0;
 		memtest(buf, numa_alloc_weighted_interleaved_subset(msize, nodes));
+		numa_exit_on_error = old_eoe;
 
 		if (!numa_has_preferred_many())
 			continue;
@@ -413,6 +420,7 @@ static void test(enum test type)
 
 	}
 
+	numa_exit_on_error = 0;
 	numa_set_weighted_interleave_mask(numa_all_nodes_ptr);
 	memtest("manual interleaving to all nodes", numa_alloc(msize));
 
@@ -425,6 +433,8 @@ static void test(enum test type)
 		printf("current weighted interleave node %d\n", numa_get_interleave_node());
 
 	}
+
+	numa_exit_on_error = old_eoe;
 
 	numa_bitmask_free(nodes);
 
@@ -447,9 +457,10 @@ static void test(enum test type)
 		memtest("memory interleaved on all nodes",
 			numa_alloc_interleaved(msize));
 
+		numa_exit_on_error = 0;
 		memtest("memory weighted interleaved on all nodes",
 			numa_alloc_weighted_interleaved(msize));
-
+		numa_exit_on_error = old_eoe;
 
 		if (numnodes >= 2) {
 			numa_bitmask_clearall(nodes);
@@ -457,8 +468,12 @@ static void test(enum test type)
 			numa_bitmask_setbit(nodes, node_to_use[1]);
 			memtest("memory interleaved on first two nodes",
 				numa_alloc_interleaved_subset(msize, nodes));
+
+		old_eoe = numa_exit_on_error;
+			numa_exit_on_error = 0;
 			memtest("memory weighted interleaved on first two nodes",
 				numa_alloc_weighted_interleaved_subset(msize, nodes));
+			numa_exit_on_error = old_eoe;
 
 		}
 
