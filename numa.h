@@ -328,6 +328,10 @@ void numa_error(char *where);
 /* When true exit the program when a NUMA system call (except numa_available)
    fails */
 extern int numa_exit_on_error;
+
+/* When true exit when libnuma would print a warning. */
+extern int numa_exit_on_warn;
+
 /* Warning function. Can also be overwritten. Default is to print on stderr
    once. */
 void numa_warn(int num, char *fmt, ...);
