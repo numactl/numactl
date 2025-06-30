@@ -528,6 +528,7 @@ int main(int ac, char **av)
 	int nr_nodes;
 	int force = 0;
 
+	numa_fail_alloc_on_error = 1;
 	while (av[1] && av[1][0] == '-') {
 		ac--;
 		switch (av[1][1]) {
