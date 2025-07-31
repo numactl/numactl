@@ -17,7 +17,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
    All calls are undefined when numa_available returns an error. */
-#define _GNU_SOURCE 1
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -1979,7 +1979,7 @@ int numa_preferred_err(void)
 	bmp = __numa_preferred();
 	first_node = numa_find_first(bmp);
 	numa_bitmask_free(bmp);
-	
+
 	return first_node;
 }
 

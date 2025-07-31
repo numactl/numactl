@@ -1,5 +1,5 @@
 /* Utility functions for reading sysfs values */
-#define _GNU_SOURCE 1
+#define _GNU_SOURCE
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>

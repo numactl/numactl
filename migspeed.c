@@ -4,6 +4,7 @@
  * (C) 2007 Silicon Graphics, Inc. Christoph Lameter <clameter@sgi.com>
  *
  */
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include "numa.h"

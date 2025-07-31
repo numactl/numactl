@@ -1,5 +1,5 @@
 /* Unit test bitmap parser */
-#define _GNU_SOURCE 1
+#define _GNU_SOURCE
 //#include <asm/bitops.h>
 #include <stdio.h>
 #include <string.h>
