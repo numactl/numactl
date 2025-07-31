@@ -71,7 +71,7 @@ void clearcache(unsigned char *mem, unsigned size)
         for (; cl <= endcl; cl += 64)
                 asm ("fc %0" :: "r"(cl) : "memory" );
 #else
-#warning "Consider adding a clearcache implementation for your architecture"
+#pragma message "Consider adding a clearcache implementation for your architecture"
 	fallback_clearcache();
 #endif
 }
