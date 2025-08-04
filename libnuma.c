@@ -627,9 +627,6 @@ set_kernel_abi(void)
 {
 	int oldp;
 	struct bitmask *bmp, *tmp;
-	int old_errno;
-
-	old_errno = errno;
 
 	bmp = numa_allocate_nodemask();
 	tmp = numa_get_mems_allowed();
@@ -648,7 +645,6 @@ set_kernel_abi(void)
 out:
 	numa_bitmask_free(tmp);
 	numa_bitmask_free(bmp);
-	errno = old_errno;
 }
 
 /*
