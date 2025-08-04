@@ -1419,7 +1419,7 @@ static void init_node_cpu_mask_v2(void)
 	new_ncm = calloc (nnodes, sizeof(struct bitmask *));
 	/* Check for races with another thread */
 	if (new_ncm && !__atomic_compare_exchange_n(&node_cpu_mask_v2, &null_ncm,
-			new_ncm, 1,
+			new_ncm, 0,
 			__ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE)) {
 		free(new_ncm);
 	}
