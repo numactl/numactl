@@ -311,19 +311,19 @@ WEAK void numa_warn(int num, char *fmt, ...)
 
 static void setpol(int policy, struct bitmask *bmp)
 {
-	if (set_mempolicy(policy, bmp->maskp, bmp->size + 1) < 0)
+	if (set_mempolicy(policy, bmp->maskp, bmp->size) < 0)
 		numa_error("set_mempolicy");
 }
 
 static void getpol(int *oldpolicy, struct bitmask *bmp)
 {
-	if (get_mempolicy(oldpolicy, bmp->maskp, bmp->size + 1, 0, 0) < 0)
+	if (get_mempolicy(oldpolicy, bmp->maskp, bmp->size, 0, 0) < 0)
 		numa_error("get_mempolicy");
 }
 
 static int dombind(void *mem, size_t size, int pol, struct bitmask *bmp)
 {
-	if (mbind(mem, size, pol, bmp ? bmp->maskp : NULL, bmp ? bmp->size + 1 : 0,
+	if (mbind(mem, size, pol, bmp ? bmp->maskp : NULL, bmp ? bmp->size : 0,
 		  mbind_flags) < 0) {
 		numa_error("mbind");
 		return -1;
@@ -446,7 +446,7 @@ done:
 				free(origmask);
 				return;
 			}
-		} while (get_mempolicy(&pol, mask, nodemask_sz + 1, 0, 0) < 0 && errno == EINVAL &&
+		} while (get_mempolicy(&pol, mask, nodemask_sz, 0, 0) < 0 && errno == EINVAL &&
 				nodemask_sz < 4096*8);
 		free(mask);
 	}
@@ -657,7 +657,7 @@ set_preferred_many(void)
 	if (!tmp || !bmp)
 		goto out;
 
-	if (get_mempolicy(&oldp, bmp->maskp, bmp->size + 1, 0, 0) < 0)
+	if (get_mempolicy(&oldp, bmp->maskp, bmp->size, 0, 0) < 0)
 		goto out;
 
 	if (set_mempolicy(MPOL_PREFERRED_MANY, tmp->maskp, tmp->size) == 0) {
@@ -1329,7 +1329,7 @@ struct bitmask *numa_get_mems_allowed(void)
 	bmp = numa_allocate_nodemask();
 	if (!bmp)
 		return NULL;
-	if (get_mempolicy(NULL, bmp->maskp, bmp->size + 1, 0,
+	if (get_mempolicy(NULL, bmp->maskp, bmp->size, 0,
 				MPOL_F_MEMS_ALLOWED) < 0)
 		numa_error("get_mempolicy");
 	return bmp;
