@@ -12,7 +12,7 @@ int main(void)
 		exit(1);
 	}
 	maxnode = numa_max_node();
-	node_to_use = (int *)malloc(maxnode * sizeof(int));
+	node_to_use = malloc((maxnode + 1) * sizeof(*node_to_use));
 	for (a = 0; a <= maxnode; a++) {
 		if (numa_bitmask_isbitset(numa_nodes_ptr, a)){
 			node_to_use[got_nodes++] = a;
