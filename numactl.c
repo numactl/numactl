@@ -148,7 +148,6 @@ static void show_weighted_interleave_weights(void)
 {
 	struct bitmask *weighted_interleave_mask;
 	int maxnode = numa_max_node();
-	const char *sysfs_path = "/sys/kernel/mm/mempolicy/weighted_interleave/node%d";
 	char buf[64];
 	int i;
 	char *weight;
@@ -162,7 +161,8 @@ static void show_weighted_interleave_weights(void)
 		if (numa_bitmask_isbitset(weighted_interleave_mask, i)) {
 			int w;
 
-			snprintf(buf, sizeof(buf), sysfs_path, i);
+			snprintf(buf, sizeof(buf),
+				"/sys/kernel/mm/mempolicy/weighted_interleave/node%d", i);
 			weight = sysfs_read(buf);
 			if (sscanf(weight, "%d", &w) == 1)
 				printf(" %d", w);
