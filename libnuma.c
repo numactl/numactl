@@ -2152,7 +2152,8 @@ __numa_parse_nodestring(const char *s, struct bitmask *allowed_nodes_ptr)
 			numa_warn(W_nodeparse, "unparseable node description `%s'\n", s);
 			goto err;
 		}
-		if (!numa_bitmask_isbitset(allowed_nodes_ptr, arg)) {
+		if (arg >= allowed_nodes_ptr->size ||
+		    !numa_bitmask_isbitset(allowed_nodes_ptr, arg)) {
 			numa_warn(W_nodeparse, "node argument %ld is out of range\n", arg);
 			goto err;
 		}
@@ -2167,7 +2168,8 @@ __numa_parse_nodestring(const char *s, struct bitmask *allowed_nodes_ptr)
 				numa_warn(W_nodeparse, "missing node argument %s\n", s);
 				goto err;
 			}
-			if (!numa_bitmask_isbitset(allowed_nodes_ptr, arg2)) {
+			if (arg2 >= allowed_nodes_ptr->size ||
+			    !numa_bitmask_isbitset(allowed_nodes_ptr, arg2)) {
 				numa_warn(W_nodeparse, "node argument %ld out of range\n", arg2);
 				goto err;
 			}
@@ -2266,7 +2268,8 @@ __numa_parse_cpustring(const char *s, struct bitmask *allowed_cpus_ptr)
 			numa_warn(W_cpuparse, "unparseable cpu description `%s'\n", s);
 			goto err;
 		}
-		if (!numa_bitmask_isbitset(allowed_cpus_ptr, arg)) {
+		if (arg >= allowed_cpus_ptr->size ||
+		    !numa_bitmask_isbitset(allowed_cpus_ptr, arg)) {
 			numa_warn(W_cpuparse, "cpu argument %s is out of range\n", s);
 			goto err;
 		}
@@ -2281,7 +2284,8 @@ __numa_parse_cpustring(const char *s, struct bitmask *allowed_cpus_ptr)
 				numa_warn(W_cpuparse, "missing cpu argument %s\n", s);
 				goto err;
 			}
-			if (!numa_bitmask_isbitset(allowed_cpus_ptr, arg2)) {
+			if (arg2 >= allowed_cpus_ptr->size ||
+			    !numa_bitmask_isbitset(allowed_cpus_ptr, arg2)) {
 				numa_warn(W_cpuparse, "cpu argument %s out of range\n", s);
 				goto err;
 			}
