@@ -142,7 +142,7 @@
 
 #if !defined(__NR_set_mempolicy_home_node)
 
-#if defined(__x86_64__) || defined(__aarch64__) || defined(__i386__) || defined(__powerpc__) || defined(__mips__) || defined(__s390x__)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(__i386__) || defined(__powerpc__) || defined(__mips__) || defined(__s390x__) || defined(__riscv)
 #define __NR_set_mempolicy_home_node 450
 #else
 #warning "Add syscalls for your architecture or update kernel headers"
