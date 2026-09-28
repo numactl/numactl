@@ -2268,8 +2268,7 @@ __numa_parse_cpustring(const char *s, struct bitmask *allowed_cpus_ptr)
 			numa_warn(W_cpuparse, "unparseable cpu description `%s'\n", s);
 			goto err;
 		}
-		if (arg >= allowed_cpus_ptr->size ||
-		    !numa_bitmask_isbitset(allowed_cpus_ptr, arg)) {
+		if (arg >= conf_cpus) {
 			numa_warn(W_cpuparse, "cpu argument %s is out of range\n", s);
 			goto err;
 		}
@@ -2284,8 +2283,7 @@ __numa_parse_cpustring(const char *s, struct bitmask *allowed_cpus_ptr)
 				numa_warn(W_cpuparse, "missing cpu argument %s\n", s);
 				goto err;
 			}
-			if (arg2 >= allowed_cpus_ptr->size ||
-			    !numa_bitmask_isbitset(allowed_cpus_ptr, arg2)) {
+			if (arg2 >= conf_cpus) {
 				numa_warn(W_cpuparse, "cpu argument %s out of range\n", s);
 				goto err;
 			}

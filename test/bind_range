@@ -42,10 +42,15 @@ function check_physcpubind
 {
 	reset_mask
 	set_cpu_affinity 0
-	numactl --physcpubind=$HIGHESTCPU ls > /dev/null 2>&1
-	if [ $? == 0 ] ; then # shouldn't pass so easy
+	# A cpu id at/above the configured cpu count is rejected by the parser
+	# (documented upper bound: "Cpu numbers are limited by the number in
+	# the system", numa_num_configured_cpus).
+	local oor_cpu=$(getconf _NPROCESSORS_CONF)
+	numactl --physcpubind=$oor_cpu ls > /dev/null 2>&1
+	if [ $? == 0 ] ; then # out-of-range must not parse
 		return 1;
 	fi
+	# A configured cpu still parses; --all must not fail either.
 	numactl --all --physcpubind=$HIGHESTCPU ls > /dev/null 2>&1
 	if [ $? == 1 ] ; then # shouldn't fail
 		return 1;
