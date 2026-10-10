@@ -96,7 +96,35 @@ function reset_mask
 	#echo -e "\taffinity of shell was reset to" $old_mask
 }
 
-HIGHESTCPU=$(ls /sys/bus/cpu/devices | sed s/cpu// | sort -n | tail -1)
+online_cpus=$(cat /sys/devices/system/cpu/online 2>/dev/null) ||
+	online_cpus=$(printf '0-%d' $(( $(getconf _NPROCESSORS_ONLN) - 1 )))
+HIGHESTCPU=$(awk -v online="$online_cpus" '
+	function expand(list, arr) {
+		n = split(list, p, ",")
+		for (i = 1; i <= n; i++) {
+			if ((d = index(p[i], "-")) > 0) {
+				lo = substr(p[i], 1, d - 1) + 0
+				hi = substr(p[i], d + 1) + 0
+				for (c = lo; c <= hi; c++) arr[c] = 1
+			} else
+				arr[p[i] + 0] = 1
+		}
+	}
+	/^Cpus_allowed_list:/ { expand($2, al) }
+	END {
+		expand(online, on)
+		max = -1
+		for (c in on)
+			if (al[c] && c + 0 > max)
+				max = c + 0
+		if (max < 0)
+			exit 1
+		print max
+	}
+' /proc/self/status) || {
+	echo "Unable to determine a bindable CPU for the test process" >&2
+	exit 1
+}
 HIGHESTNODE=$(numactl -H | grep -Pzo 'node [0-9]* cpus: [0-9].*(.|\n)node [0-9]* size: [1-9].* MB' | tail -n1 | cut -f2 -d' ')
 LOWESTNODE=$(numactl -H | grep -Pzo 'node [0-9]* cpus: [0-9].*(.|\n)node [0-9]* size: [1-9].* MB' | head -n1 | cut -f2 -d' ')
 
