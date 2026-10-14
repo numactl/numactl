@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
 	if (verbose)
 		printf("Dirtying memory....\n");
 
-	for (p = memory; p <= memory + bytes; p += pagesize)
+	for (p = memory; p < memory + bytes; p += pagesize)
 		*p = 1;
 
 	if (verbose)
