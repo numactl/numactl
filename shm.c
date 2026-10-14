@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <limits.h>
 #include <sys/mman.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -101,8 +103,12 @@ static key_t sysvkey(char *name)
 void attach_sysvshm(char *name, char *opt)
 {
 	struct shmid_ds s;
-	key_t key = sysvkey(name);
+	key_t key;
 
+	if (shmoffset > SIZE_MAX || shmlen > SIZE_MAX - shmoffset)
+		complain("shared memory offset/length is out of range");
+
+	key = sysvkey(name);
 	shmfd = shmget(key, shmlen, shmflags);
 	if (shmfd < 0 && errno == ENOENT) {
 		if (shmlen == 0)
@@ -120,6 +126,8 @@ void attach_sysvshm(char *name, char *opt)
 		if (shmctl(shmfd, IPC_STAT, &s) < 0)
 			err("shmctl IPC_STAT");
 		shmlen = s.shm_segsz;
+		if (shmlen > SIZE_MAX - shmoffset)
+			complain("shared memory offset/length is out of range");
 	}
 
 	shmptr = shmat(shmfd, NULL, 0);
@@ -136,6 +144,10 @@ void attach_sysvshm(char *name, char *opt)
 void attach_shared(char *name, char *opt)
 {
 	struct stat st;
+	unsigned long long maxoff = (1ULL << (sizeof(off_t) * CHAR_BIT - 1)) - 1;
+
+	if (shmlen > SIZE_MAX || shmoffset > maxoff || shmlen > maxoff - shmoffset)
+		complain("shared file offset/length is out of range");
 
 	shmfd = open(name, O_RDWR);
 	if (shmfd < 0) {
