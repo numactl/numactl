@@ -1,0 +1,48 @@
+#!/bin/sh
+# Check shared memory range errors before files or segments are created.
+
+set -eu
+testdir=$(dirname "$0")
+: ${srcdir:=${testdir}/..}
+: ${builddir:=${srcdir}}
+numactl=${builddir}/numactl
+
+tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/numactl-shm-range.XXXXXX")
+trap 'rm -rf "$tmpdir"' 0
+trap 'exit 1' 1 2 15
+
+range_error()
+{
+	status=0
+	"$numactl" --length="$2" --offset="$3" "$1" "${4:-$tmpdir/region}" \
+		> "$tmpdir/output" 2>&1 || status=$?
+	if [ "$status" -ne 1 ] || ! grep -q 'offset/length is out of range' "$tmpdir/output"; then
+		cat "$tmpdir/output"
+		echo "Expected a range error for $*"
+		exit 1
+	fi
+}
+
+# The sum wraps to 4096 on a 64-bit system. The existing file must not grow.
+printf 'unchanged\n' > "$tmpdir/region"
+cp "$tmpdir/region" "$tmpdir/original"
+range_error --file 18446744073709547520 8192
+cmp "$tmpdir/region" "$tmpdir/original"
+rm "$tmpdir/region"
+
+range_error --file 18446744073709547520 8192
+test ! -e "$tmpdir/region"
+
+# A missing parent prevents a broken check from leaving a SysV segment behind.
+range_error --shm 18446744073709547520 8192 "$tmpdir/missing/key"
+test ! -e "$tmpdir/missing"
+
+# The sum fits unsigned long long but not a signed 64-bit file offset.
+range_error --file 4096 9223372036854775807
+test ! -e "$tmpdir/region"
+
+# A normal file range, including its offset, still works.
+pagesize=$(getconf PAGESIZE)
+"$numactl" --length="$((2 * pagesize))" --offset="$pagesize" \
+	--file "$tmpdir/region" --touch
+test "$(wc -c < "$tmpdir/region")" -eq "$((3 * pagesize))"

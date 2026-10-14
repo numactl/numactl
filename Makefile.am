@@ -71,6 +71,7 @@ EXTRA_DIST += \
 	test/regress2 \
 	test/regress-io \
 	test/runltp \
+	test/shm-range \
 	test/shmtest
 
 test_cpuless_SOURCES = test/cpuless.c
@@ -144,6 +145,7 @@ TESTS = \
 	test/nodemap \
 	test/numademo \
 	test/regress \
+	test/shm-range \
 	test/tbitmap
 
 # These are known to be broken:
