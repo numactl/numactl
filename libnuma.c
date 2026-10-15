@@ -1547,7 +1547,7 @@ numa_node_to_cpus_v2(int node, struct bitmask *buffer)
 	if (!__atomic_load_n(&node_cpu_mask_v2, __ATOMIC_CONSUME))
 		init_node_cpu_mask_v2();
 
-	if (node > nnodes) {
+	if (node < 0 || node > nnodes) {
 		errno = ERANGE;
 		return -1;
 	}
@@ -1924,7 +1924,7 @@ int numa_run_on_node(int node)
 	int ret = -1;
 	struct bitmask *cpus;
 
-	if (node >= numa_num_nodes){
+	if (node < -1 || node >= numa_num_nodes){
 		errno = EINVAL;
 		goto out;
 	}
