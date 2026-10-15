@@ -51,6 +51,7 @@ check_PROGRAMS = \
 	test/migrate_pages \
 	test/move_pages \
 	test/mynode \
+	test/negative-node \
 	test/node-parse \
 	test/nodemap \
 	test/pagesize \
@@ -94,6 +95,9 @@ test_move_pages_LDADD = libnuma.la
 
 test_mynode_SOURCES = test/mynode.c
 test_mynode_LDADD = libnuma.la
+
+test_negative_node_SOURCES = test/negative-node.c
+test_negative_node_LDADD = libnuma.la
 
 test_node_parse_SOURCES = test/node-parse.c util.c
 test_node_parse_LDADD = libnuma.la
@@ -142,6 +146,7 @@ TESTS = \
 	test/cpuless \
 	test/distance \
 	test/move_pages \
+	test/negative-node \
 	test/nodemap \
 	test/numademo \
 	test/regress \
