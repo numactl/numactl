@@ -479,15 +479,17 @@ read_mask(char *s, struct bitmask *bmp)
 		/* End of string. No mask */
 		return -1;
 
+	if (n >= tmplen)
+		return -1;
 	start[n++] = i;
 	/* Read sequence of ints */
 	while (*end++ == ',') {
 		i = strtoul(end, &end, 16);
-		start[n++] = i;
 
 		/* buffer overflow */
-		if (n > tmplen)
+		if (n >= tmplen)
 			return -1;
+		start[n++] = i;
 	}
 
 	/*
