@@ -93,7 +93,7 @@ static void do_stream(char *name, unsigned char *mem)
 	clearcache(mem, msize);
 	stream_init(mem);
 	stream_test(res);
-	sprintf(title, "%s%s%s", name, delim, "STREAM");
+	snprintf(title, sizeof(title), "%s%s%s", name, delim, "STREAM");
 	buf[0] = '\0';
 	for (i = 0; i < STREAM_NRESULTS; i++) {
 		if (buf[0])
@@ -264,7 +264,7 @@ static void memtest(char *name, unsigned char *mem)
 		if (r < min) min = r;
 		sum += r;
 	}
-	sprintf(title, "%s%s%s", name, delim, testname[thistest]);
+	snprintf(title, sizeof(title), "%s%s%s", name, delim, testname[thistest]);
 #define H(t) (((double)msize/factor) / ((double)t))
 #define D3 delim,delim,delim
 	sprintf(result, "Avg%s%.2f%sMB/s%sMax%s%.2f%sMB/s%sMin%s%.2f%sMB/s",
