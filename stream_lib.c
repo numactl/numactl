@@ -90,7 +90,7 @@ void stream_check(void)
 {
 	int quantum;
 	int BytesPerWord;
-	register int j;
+	register long j;
 	double t;
 
 	/* --- SETUP --- determine precision and check timing --- */
@@ -145,7 +145,8 @@ void stream_check(void)
 
 void stream_test(double *res)
 {
-	register int j, k;
+	register long j;
+	register int k;
 	double scalar, times[4][NTIMES];
 
 	/*  --- MAIN LOOP --- repeat test cases NTIMES times --- */
