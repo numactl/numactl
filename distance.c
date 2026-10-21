@@ -26,6 +26,13 @@
 static int distance_numnodes;
 static int *distance_table;
 
+void numa_distance_cleanup(void)
+{
+	free(distance_table);
+	distance_table = NULL;
+	distance_numnodes = 0;
+}
+
 static void parse_numbers(char *s, int *iptr)
 {
 	int i, d, j;
