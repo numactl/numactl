@@ -55,3 +55,5 @@ enum numa_warn {
 #define bitsperint (8 * sizeof(unsigned int))
 #define longsperbits(n) howmany(n, bitsperlong)
 #define bytesperbits(x) ((x+7)/8)
+
+hidden void numa_distance_cleanup(void);

@@ -37,5 +37,6 @@ int main(void)
 		}
 		printf("\n");
 	}
+	free(node_to_use);
 	return 0;
 }

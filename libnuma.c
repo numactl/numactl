@@ -130,6 +130,7 @@ numa_fini(void)
 	FREE_AND_ZERO(numa_memnode_ptr);
 	FREE_AND_ZERO(numa_nodes_ptr);
 	cleanup_node_cpu_mask_v2();
+	numa_distance_cleanup();
 }
 
 static int numa_find_first(struct bitmask *mask)

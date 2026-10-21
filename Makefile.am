@@ -46,6 +46,7 @@ libnuma_la_LDFLAGS = -version-info 1:0:0 -Wl,--version-script,$(srcdir)/versions
 check_PROGRAMS = \
 	test/cpuless \
 	test/distance \
+	test/distance-dlopen \
 	test/ftok \
 	test/mbind_mig_pages \
 	test/migrate_pages \
@@ -80,6 +81,10 @@ test_cpuless_LDADD = libnuma.la
 
 test_distance_SOURCES = test/distance.c
 test_distance_LDADD = libnuma.la
+
+test_distance_dlopen_SOURCES = test/distance-dlopen.c
+test_distance_dlopen_CPPFLAGS = $(AM_CPPFLAGS) -DLIBNUMA_PATH=\"$(abs_builddir)/.libs/libnuma.so\"
+test_distance_dlopen_LDADD = -ldl
 
 test_ftok_SOURCES = test/ftok.c
 test_ftok_LDADD = libnuma.la
@@ -145,6 +150,7 @@ TESTS = \
 	test/checktopology \
 	test/cpuless \
 	test/distance \
+	test/distance-dlopen \
 	test/move_pages \
 	test/negative-node \
 	test/nodemap \
