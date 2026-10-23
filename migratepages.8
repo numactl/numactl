@@ -22,7 +22,7 @@ each page in each nodeset.
 
 For example if we move from nodes 2-5 to 7,9,12-13 then the preferred mode of
 operation is to move pages from 2->7, 3->9, 4->12 and 5->13. However, this
-is only posssible if enough memory is available.
+is only possible if enough memory is available.
 .TP
 Valid node specifiers
 .TS
@@ -39,11 +39,11 @@ Requires a NUMA policy aware kernel with support for page migration
 (linux 2.6.16 and later).
 
 migratepages will only move pages that are not shared with other
-processes if called by a user without administrative priviledges (but
+processes if called by a user without administrative privileges (but
 with the right to modify the process).
 
 migratepages will move all pages if invoked from root (or a user with
-administrative priviledges).
+administrative privileges).
 
 .SH FILES
 .I /proc/<pid>/numa_maps
