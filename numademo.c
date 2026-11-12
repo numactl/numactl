@@ -87,13 +87,16 @@ static void output(char *title, char *result)
 static void do_stream(char *name, unsigned char *mem)
 {
 	int i;
-	char title[100], buf[100];
+	char *title, buf[100];
 	double res[STREAM_NRESULTS];
 	stream_verbose = 0;
 	clearcache(mem, msize);
 	stream_init(mem);
 	stream_test(res);
-	snprintf(title, sizeof(title), "%s%s%s", name, delim, "STREAM");
+	if (asprintf(&title, "%s%s%s", name, delim, "STREAM") < 0) {
+		perror("asprintf");
+		return;
+	}
 	buf[0] = '\0';
 	for (i = 0; i < STREAM_NRESULTS; i++) {
 		if (buf[0])
@@ -102,6 +105,7 @@ static void do_stream(char *name, unsigned char *mem)
 			stream_names[i], delim, res[i], delim);
 	}
 	output(title, buf);
+	free(title);
 	clearcache(mem, msize);
 }
 #endif
@@ -153,7 +157,7 @@ static void memtest(char *name, unsigned char *mem)
 	struct timeval start, end, res;
 	unsigned long long max, min, sum, r;
 	int i;
-	char title[128], result[128];
+	char *title, result[128];
 	unsigned long factor = 1;
 
 	if (!mem) {
@@ -264,7 +268,10 @@ static void memtest(char *name, unsigned char *mem)
 		if (r < min) min = r;
 		sum += r;
 	}
-	snprintf(title, sizeof(title), "%s%s%s", name, delim, testname[thistest]);
+	if (asprintf(&title, "%s%s%s", name, delim, testname[thistest]) < 0) {
+		perror("asprintf");
+		goto out;
+	}
 #define H(t) (((double)msize/factor) / ((double)t))
 #define D3 delim,delim,delim
 	sprintf(result, "Avg%s%.2f%sMB/s%sMax%s%.2f%sMB/s%sMin%s%.2f%sMB/s",
@@ -278,10 +285,9 @@ static void memtest(char *name, unsigned char *mem)
 #undef H
 #undef D3
 	output(title,result);
+	free(title);
 
-#ifdef HAVE_STREAM_LIB
  out:
-#endif
 	/* Just to make sure that when we switch CPUs that the old guy
 	   doesn't still keep it around. */
 	clearcache(mem, msize);
