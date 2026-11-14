@@ -91,12 +91,14 @@ affinity_class(struct bitmask *mask, char *cls, const char *dev)
 	   much about the actual sysfs layout. */
 	char path[1024];
 	char *fn = NULL;
+	ssize_t len;
 	if (asprintf(&fn, "/sys/class/%s/%s", cls, dev) > 0 &&
-	    readlink(fn, path, sizeof path) > 0) {
+	    (len = readlink(fn, path, sizeof path - 1)) > 0) {
 		regex_t re;
 		regmatch_t match[2];
 		char *p;
 
+		path[len] = 0;
 		regcomp(&re, "(/devices/pci[0-9a-fA-F:/]+\\.[0-9]+)/",
 			REG_EXTENDED);
 		ret = regexec(&re, path, 2, match, 0);
