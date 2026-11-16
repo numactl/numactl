@@ -5,22 +5,15 @@
  * Threat model
  * ============
  * 1. Untrusted input: applications link libnuma and feed it values that are
- *    ultimately attacker- or user-influenced: node ids, cpu ids, allocation
+ *    ultimately user-influenced: node ids, cpu ids, allocation
  *    sizes, policy enums, affinity masks and migration arguments. The numactl
  *    CLI is the canonical example: `numactl --membind <string> -- <cmd>`
  *    parses an untrusted string and hands the resulting mask to numa_bind(),
  *    numa_set_membind(), numa_migrate_pages() and friends. System agents
  *    (numad, monitoring, orchestrators) do the same with externally visible
- *    topology data.
- * 2. Trust boundary: the public libnuma API surface (everything exported via
- *    versions.ldscript, v1 compat inlines included).
- * 3. Attacker-controlled at the boundary: node/cpu indices, allocation and
- *    migration sizes, mask contents, policy selections, strictness flags.
- *    The harness generates exactly those, bounded to documented API contracts
- *    (nodes < NUMA_NUM_NODES for nodemask_t compat, n >= 1 for
- *    numa_bitmask_alloc, sizes bounded so OOM cannot be a harness fault).
- * 4. Real bug here: a memory-safety violation (ASan/UBSan), leak on an error
- *    path, or hang reachable through public APIs with in-contract arguments.
+ *    topology data. However the input is not untrusted and is not expected
+ *    to cross trust boundaries, because that would be unsafe anyways (changing
+ *    CPU or node affinity can cause DoS)
  *
  * Why this target (coverage rationale)
  * ====================================
