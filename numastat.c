@@ -778,6 +778,18 @@ static double update_hugepages_info(int node_ix, const char *token)
         return total;
 }
 
+static int node_number_to_ix(int node)
+{
+        // Node numbers can be sparse, so find the node_ix_map[] index
+        // (i.e. the data column offset) for this node number, if present.
+        for (int ix = 0; (ix < num_nodes); ix++) {
+                if (node_ix_map[ix] == node) {
+                        return ix;
+                }
+        }
+        return -1;
+}
+
 static void show_info_from_system_file(char *file, int tok_offset)
 {
         char fname[64];
@@ -923,10 +935,11 @@ static void show_info_from_system_file(char *file, int tok_offset)
         // Optionally sort the table data
         if (sort_table) {
                 int sort_col;
-                if ((sort_table_node < 0) || (sort_table_node >= num_nodes)) {
+                int sort_ix = node_number_to_ix(sort_table_node);
+                if (sort_ix < 0) {
                         sort_col = total_col_ix;
                 } else {
-                        sort_col = header_cols + node_ix_map[sort_table_node];
+                        sort_col = header_cols + sort_ix;
                 }
                 sort_rows_descending_by_col(&table, header_rows, header_rows + meminfo_rows - 1, sort_col);
         }
@@ -1127,10 +1140,11 @@ static void show_process_info(void)
                         // Optionally sort the table data
                         if (sort_table) {
                                 int sort_col;
-                                if ((sort_table_node < 0) || (sort_table_node >= num_nodes)) {
+                                int sort_ix = node_number_to_ix(sort_table_node);
+                                if (sort_ix < 0) {
                                         sort_col = total_col_ix;
                                 } else {
-                                        sort_col = header_cols + node_ix_map[sort_table_node];
+                                        sort_col = header_cols + sort_ix;
                                 }
                                 sort_rows_descending_by_col(&table, header_rows, header_rows + data_rows - 1, sort_col);
                         }
