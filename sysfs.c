@@ -21,6 +21,10 @@ hidden char *sysfs_read(char *name)
 	if (!buf)
 		return NULL;
 	fd = open(name, O_RDONLY);
+	if (fd < 0) {
+		free(buf);
+		return NULL;
+	}
 	n = read(fd, buf, SYSFS_BLOCK - 1);
 	close(fd);
 	if (n <= 0) {
