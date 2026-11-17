@@ -528,7 +528,7 @@ set_task_constraints(void)
 	numa_all_cpus_ptr = numa_allocate_cpumask();
 	numa_possible_cpus_ptr = numa_allocate_cpumask();
 	numa_all_nodes_ptr = numa_allocate_nodemask();
-	numa_possible_nodes_ptr = numa_allocate_cpumask();
+	numa_possible_nodes_ptr = numa_allocate_nodemask();
 	numa_no_nodes_ptr = numa_allocate_nodemask();
 
 	// partial leak shouldn't happen because its transient
