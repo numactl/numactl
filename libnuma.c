@@ -258,6 +258,11 @@ int
 numa_bitmask_equal(const struct bitmask *bmp1, const struct bitmask *bmp2)
 {
 	unsigned int i;
+
+	if (!bmp1 && !bmp2)
+		return 1;
+	if (!bmp1 || !bmp2)
+		return 0;
 	for (i = 0; i < bmp1->size || i < bmp2->size; i++)
 		if (_getbit(bmp1, i) != _getbit(bmp2, i))
 			return 0;
