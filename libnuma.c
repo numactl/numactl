@@ -104,7 +104,7 @@ numa_init(void)
 	set_sizes();
 	/* numa_all_nodes should represent existing nodes on this system */
         max = numa_num_configured_nodes();
-        for (i = 0; i < max; i++)
+        for (i = 0; i < max && i < NUMA_NUM_NODES; i++)
                 nodemask_set_compat((nodemask_t *)&numa_all_nodes, i);
 	memset(&numa_no_nodes, 0, sizeof(numa_no_nodes));
 
@@ -1500,7 +1500,8 @@ numa_node_to_cpus_v1(int node, unsigned long *buffer, int bufferlen)
 	int maxnode = numa_max_node_int();
 
 	buflen_needed = CPU_BYTES(ncpus);
-	if ((unsigned)node > maxnode || bufferlen < buflen_needed) {
+	if ((unsigned)node > maxnode || node >= NUMA_NUM_NODES ||
+	    bufferlen < buflen_needed) {
 		errno = ERANGE;
 		return -1;
 	}
