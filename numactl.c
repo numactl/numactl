@@ -252,14 +252,20 @@ static char *fmt_mem(unsigned long long mem, char *buf)
 static void print_distances(int maxnode)
 {
 	int i,k;
-	int fst = 0;
+	int fst = 0, lst = 0;
 
 	for (i = 0; i <= maxnode; i++)
 		if (numa_bitmask_isbitset(numa_nodes_ptr, i)) {
 			fst = i;
 			break;
 		}
-	if (numa_distance(maxnode,fst) == 0) {
+	/* maxnode may be a possible node that is not online yet */
+	for (i = maxnode; i >= 0; i--)
+		if (numa_bitmask_isbitset(numa_nodes_ptr, i)) {
+			lst = i;
+			break;
+		}
+	if (numa_distance(lst,fst) == 0) {
 		printf("No distance information available.\n");
 		return;
 	}
@@ -376,11 +382,11 @@ static void hardware(void)
 				}
 				prevnode=i;
 			}
-
-			if ((i == maxnode) && skip)
-				printf("%d", prevnode);
 		}
 	}
+	/* close an open range, the last present node may be below maxnode */
+	if (skip)
+		printf("%d", prevnode);
 	printf(")\n");
 
 	for (i = 0; i <= maxnode; i++) {
