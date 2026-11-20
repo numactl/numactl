@@ -355,8 +355,46 @@ int numa_pagesize(void)
 make_internal_alias(numa_pagesize);
 
 /*
+ * The kernel only creates node%d in sysfs once a node is online, so a node
+ * brought up later by memory hotplug (CXL or ACPI memory onlined into a
+ * node without memory at boot) is missing from the readdir in
+ * set_configured_nodes(). /sys/devices/system/node/possible lists every
+ * node the kernel can bring online in cpulist format ("0-3", "0,2-5"), so
+ * raise maxconfigurednode to the highest node in it. Everything sized
+ * from numa_max_node(), such as the distance table, then has room for a
+ * node that appears after we initialised.
+ */
+static void
+set_possible_max_node(void)
+{
+	FILE *f;
+	char *line = NULL, *s, *end;
+	size_t len = 0;
+	long nd;
+
+	f = fopen("/sys/devices/system/node/possible", "r");
+	if (!f)
+		return;
+	if (getline(&line, &len, f) > 0) {
+		for (s = line; ; s = end + 1) {
+			nd = strtol(s, &end, 10);
+			if (s == end)
+				break;
+			/* A node past the kernel nodemask size cannot be real */
+			if (nd > maxconfigurednode && nd < nodemask_sz)
+				maxconfigurednode = nd;
+			if (*end != ',' && *end != '-')
+				break;
+		}
+	}
+	free(line);
+	fclose(f);
+}
+
+/*
  * Find nodes (numa_nodes_ptr), nodes with memory (numa_memnode_ptr)
- * and the highest numbered existing node (maxconfigurednode).
+ * and the highest numbered node the kernel can have (maxconfigurednode),
+ * which includes possible nodes that are not online yet.
  */
 static void
 set_configured_nodes(void)
@@ -384,6 +422,7 @@ set_configured_nodes(void)
 				maxconfigurednode = nd;
 		}
 		closedir(d);
+		set_possible_max_node();
 	}
 }
 

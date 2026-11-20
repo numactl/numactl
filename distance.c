@@ -44,7 +44,7 @@ static void parse_numbers(char *s, int *iptr)
 		/* Skip unavailable nodes */
 		while (j<=maxnode && !numa_bitmask_isbitset(numa_nodes_ptr, j))
 			j++;
-		if (s == end)
+		if (s == end || j > maxnode)
 			break;
 		*(iptr+j) = d;
 		s = end;
@@ -72,6 +72,12 @@ static int read_distance_table(void)
 				continue;
 			else
 				break;
+		}
+		/* Node past what numa_init() sized the table for, no row for it */
+		if (nd >= maxnode) {
+			fclose(dfh);
+			err = 0;
+			break;
 		}
 		len = getdelim(&line, &linelen, '\n', dfh);
 		fclose(dfh);
