@@ -302,7 +302,10 @@ This count is derived from /proc/self/status, field Mems_allowed.
 
 .BR numa_max_node ()
 returns the highest node number available on the current system.
-(See the node numbers in /sys/devices/system/node/ ).  Also see
+This includes nodes the kernel can bring online later but that are not
+present yet (see /sys/devices/system/node/possible), so not every node
+number up to it needs to exist. (See the node numbers in
+/sys/devices/system/node/ ).  Also see
 .BR numa_num_configured_nodes().
 
 .BR numa_num_configured_nodes()
