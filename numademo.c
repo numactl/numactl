@@ -22,7 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <sys/time.h>
+#include <time.h>
 #include "numa.h"
 #include "util.h"
 #ifdef HAVE_STREAM_LIB
@@ -144,9 +144,9 @@ static void **ptrchase_init(unsigned char *mem)
 	return (void **)nodes;
 }
 
-static inline unsigned long long timerfold(struct timeval *tv)
+static inline unsigned long long timerfold(struct timespec *ts)
 {
-	return tv->tv_sec * 1000000ULL + tv->tv_usec;
+	return ts->tv_sec * 1000000000ULL + ts->tv_nsec;
 }
 
 #define LOOPS 10
@@ -154,7 +154,7 @@ static inline unsigned long long timerfold(struct timeval *tv)
 static void memtest(char *name, unsigned char *mem)
 {
 	long k;
-	struct timeval start, end, res;
+	struct timespec start, end;
 	unsigned long long max, min, sum, r;
 	int i;
 	char *title, result[128];
@@ -175,7 +175,7 @@ static void memtest(char *name, unsigned char *mem)
 #endif
 
 	max = 0;
-	min = ~0UL;
+	min = ~0ULL;
 	sum = 0;
 
 	/*
@@ -188,42 +188,42 @@ static void memtest(char *name, unsigned char *mem)
 		{
 			void **ptr;
 			ptr = ptrchase_init(mem);
-			gettimeofday(&start,NULL);
+			clock_gettime(CLOCK_MONOTONIC, &start);
 			while (*ptr)
 				ptr = (void **)*ptr;
-			gettimeofday(&end,NULL);
+			clock_gettime(CLOCK_MONOTONIC, &end);
 			/* Side effect to trick the optimizer */
 			*ptr = "bla";
 			break;
 		}
 
 		case MEMSET:
-			gettimeofday(&start,NULL);
+			clock_gettime(CLOCK_MONOTONIC, &start);
 			memset(mem, 0xff, msize);
-			gettimeofday(&end,NULL);
+			clock_gettime(CLOCK_MONOTONIC, &end);
 			break;
 
 		case MEMCPY:
-			gettimeofday(&start,NULL);
+			clock_gettime(CLOCK_MONOTONIC, &start);
 			memcpy(mem, mem + msize/2, msize/2);
-			gettimeofday(&end,NULL);
+			clock_gettime(CLOCK_MONOTONIC, &end);
 			factor = 2;
 			break;
 
 		case FORWARD:
 			/* simple kernel to just fetch cachelines and write them back.
 			   will trigger hardware prefetch */
-			gettimeofday(&start,NULL);
+			clock_gettime(CLOCK_MONOTONIC, &start);
 			for (k = 0; k < msize; k+=CACHELINESIZE)
 				mem[k]++;
-			gettimeofday(&end,NULL);
+			clock_gettime(CLOCK_MONOTONIC, &end);
 			break;
 
 		case BACKWARD:
-			gettimeofday(&start,NULL);
+			clock_gettime(CLOCK_MONOTONIC, &start);
 			for (k = msize-5; k > 0; k-=CACHELINESIZE)
 				mem[k]--;
-			gettimeofday(&end,NULL);
+			clock_gettime(CLOCK_MONOTONIC, &end);
 			break;
 
 #ifdef HAVE_MT
@@ -242,28 +242,28 @@ static void memtest(char *name, unsigned char *mem)
 			 * we assume (hope) that the distribution of the MT
 			 * is good enough to touch most.
 			 */
-			gettimeofday(&start,NULL);
+			clock_gettime(CLOCK_MONOTONIC, &start);
 			for (k = 0; k < max; k++) {
 				unsigned idx = mt_random() & mask;
 				if (idx >= max)
 					idx -= max;
 				m[idx]++;
 			}
-			gettimeofday(&end,NULL);
+			clock_gettime(CLOCK_MONOTONIC, &end);
+			break;
 		}
 
 #endif
 		default:
-			gettimeofday(&start,NULL);
-			gettimeofday(&end,NULL);
+			clock_gettime(CLOCK_MONOTONIC, &start);
+			clock_gettime(CLOCK_MONOTONIC, &end);
 			break;
 		}
 
 		if (!i)
 			continue;  /* don't count allocation pass */
 
-		timersub(&end, &start, &res);
-		r = timerfold(&res);
+		r = timerfold(&end) - timerfold(&start);
 		if (r > max) max = r;
 		if (r < min) min = r;
 		sum += r;
@@ -272,7 +272,7 @@ static void memtest(char *name, unsigned char *mem)
 		perror("asprintf");
 		goto out;
 	}
-#define H(t) (((double)msize/factor) / ((double)t))
+#define H(t) (((double)msize/factor * 1000.0) / ((double)t))
 #define D3 delim,delim,delim
 	sprintf(result, "Avg%s%.2f%sMB/s%sMax%s%.2f%sMB/s%sMin%s%.2f%sMB/s",
 		delim,
